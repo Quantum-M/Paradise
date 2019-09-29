@@ -40838,7 +40838,9 @@
 	pixel_x = 0;
 	pixel_y = -30
 	},
-/obj/machinery/vending/dinnerware,
+/obj/machinery/vending/dinnerware{
+	req_one_access_txt = "28"
+	},
 /turf/simulated/floor/plasteel{
 	dir = 2;
 	icon_state = "cafeteria";
