@@ -39,7 +39,8 @@
 	if(command_completed(cur_command))
 		cur_command = null
 	else
-		START_PROCESSING(SSmachines, src)
+		if(!isprocessing)
+			START_PROCESSING(SSmachines, src)
 
 /obj/machinery/door/airlock/proc/do_command(command)
 	switch(command)
@@ -126,10 +127,10 @@
 	return
 
 /obj/machinery/door/airlock/proc/set_frequency(new_frequency)
-	SSradio.remove_object(src, frequency)
+	radio_controller.remove_object(src, frequency)
 	if(new_frequency)
 		frequency = new_frequency
-		radio_connection = SSradio.add_object(src, frequency, RADIO_AIRLOCK)
+		radio_connection = radio_controller.add_object(src, frequency, RADIO_AIRLOCK)
 
 /obj/machinery/door/airlock/Initialize()
 	..()
@@ -142,7 +143,7 @@
 /obj/machinery/door/airlock/New()
 	..()
 
-	if(SSradio)
+	if(radio_controller)
 		set_frequency(frequency)
 
 /obj/machinery/airlock_sensor
@@ -150,7 +151,6 @@
 	icon_state = "airlock_sensor_off"
 	name = "airlock sensor"
 	anchored = 1
-	resistance_flags = FIRE_PROOF
 	power_channel = ENVIRON
 
 	var/id_tag
@@ -203,9 +203,9 @@
 			update_icon()
 
 /obj/machinery/airlock_sensor/proc/set_frequency(new_frequency)
-	SSradio.remove_object(src, frequency)
+	radio_controller.remove_object(src, frequency)
 	frequency = new_frequency
-	radio_connection = SSradio.add_object(src, frequency, RADIO_AIRLOCK)
+	radio_connection = radio_controller.add_object(src, frequency, RADIO_AIRLOCK)
 
 /obj/machinery/airlock_sensor/Initialize()
 	..()
@@ -213,12 +213,12 @@
 
 /obj/machinery/airlock_sensor/New()
 	..()
-	if(SSradio)
+	if(radio_controller)
 		set_frequency(frequency)
 
 /obj/machinery/airlock_sensor/Destroy()
-	if(SSradio)
-		SSradio.remove_object(src, frequency)
+	if(radio_controller)
+		radio_controller.remove_object(src, frequency)
 	radio_connection = null
 	return ..()
 
@@ -236,7 +236,7 @@
 	power_channel = ENVIRON
 
 	var/master_tag
-	var/frequency = AIRLOCK_FREQ
+	var/frequency = 1449
 	var/command = "cycle"
 
 	var/datum/radio_frequency/radio_connection
@@ -254,17 +254,12 @@
 	if(istype(I, /obj/item/card/id) || istype(I, /obj/item/pda))
 		attack_hand(user)
 		return
-	return ..()
-
-/obj/machinery/access_button/attack_ghost(mob/user)
-	if(user.can_advanced_admin_interact())
-		return attack_hand(user)
+	..()
 
 /obj/machinery/access_button/attack_hand(mob/user)
 	add_fingerprint(usr)
-
-	if(!allowed(user) && !user.can_advanced_admin_interact())
-		to_chat(user, "<span class='warning'>Access denied.</span>")
+	if(!allowed(user))
+		to_chat(user, "<span class='warning'>Access Denied</span>")
 
 	else if(radio_connection)
 		var/datum/signal/signal = new
@@ -276,9 +271,9 @@
 	flick("access_button_cycle", src)
 
 /obj/machinery/access_button/proc/set_frequency(new_frequency)
-	SSradio.remove_object(src, frequency)
+	radio_controller.remove_object(src, frequency)
 	frequency = new_frequency
-	radio_connection = SSradio.add_object(src, frequency, RADIO_AIRLOCK)
+	radio_connection = radio_controller.add_object(src, frequency, RADIO_AIRLOCK)
 
 /obj/machinery/access_button/Initialize()
 	..()
@@ -287,12 +282,12 @@
 /obj/machinery/access_button/New()
 	..()
 
-	if(SSradio)
+	if(radio_controller)
 		set_frequency(frequency)
 
 /obj/machinery/access_button/Destroy()
-	if(SSradio)
-		SSradio.remove_object(src, frequency)
+	if(radio_controller)
+		radio_controller.remove_object(src, frequency)
 	radio_connection = null
 	return ..()
 

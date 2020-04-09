@@ -3,7 +3,7 @@
 /area/awaymission/centcomAway
 	name = "XCC-P5831"
 	icon_state = "away"
-	report_alerts = FALSE
+	report_alerts = 0
 
 /area/awaymission/centcomAway/general
 	name = "XCC-P5831"

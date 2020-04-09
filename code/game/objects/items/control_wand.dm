@@ -50,7 +50,6 @@
 		to_chat(user, "<span class='danger'>[D]'s ID scan is disabled!</span>")
 		return
 	if(D.check_access(src.ID))
-		D.add_hiddenprint(user)
 		switch(mode)
 			if(WAND_OPEN)
 				if(D.density)
@@ -111,7 +110,7 @@
 	name = "civillian door remote"
 	icon_state = "gangtool-white"
 	region_access = list(REGION_GENERAL, REGION_SUPPLY)
-	additional_access = list(ACCESS_HOP)
+	additional_access = list(access_hop)
 
 /obj/item/door_remote/centcomm
 	name = "centcomm door remote"

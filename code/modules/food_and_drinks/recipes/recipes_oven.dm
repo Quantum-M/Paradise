@@ -163,22 +163,13 @@
 	)
 	result = /obj/item/reagent_containers/food/snacks/loadedbakedpotato
 
-////cookies by Ume
-
-/datum/recipe/oven/cookies
+/datum/recipe/oven/cookie
+	reagents = list("milk" = 5, "sugar" = 5)
 	items = list(
-		/obj/item/reagent_containers/food/snacks/rawcookies/chocochips,
+		/obj/item/reagent_containers/food/snacks/dough,
+		/obj/item/reagent_containers/food/snacks/chocolatebar,
 	)
-	result = /obj/item/storage/bag/tray/cookies_tray
-
-/datum/recipe/oven/sugarcookies
-	items = list(
-		/obj/item/reagent_containers/food/snacks/rawcookies,
-	)
-	result = /obj/item/storage/bag/tray/cookies_tray/sugarcookie
-
-
-////
+	result = /obj/item/reagent_containers/food/snacks/cookie
 
 /datum/recipe/oven/fortunecookie
 	reagents = list("sugar" = 5)
@@ -364,17 +355,6 @@
 	)
 	result = /obj/item/reagent_containers/food/snacks/sliceable/orangecake
 
-/datum/recipe/oven/bananacake
-	reagents = list("milk" = 5)
-	items = list(
-		/obj/item/reagent_containers/food/snacks/dough,
-		/obj/item/reagent_containers/food/snacks/dough,
-		/obj/item/reagent_containers/food/snacks/dough,
-		/obj/item/reagent_containers/food/snacks/grown/banana,
-		/obj/item/reagent_containers/food/snacks/grown/banana
-	)
-	result = /obj/item/reagent_containers/food/snacks/sliceable/bananacake
-
 /datum/recipe/oven/limecake
 	reagents = list("milk" = 5)
 	items = list(
@@ -446,6 +426,14 @@
 	)
 	result = /obj/item/reagent_containers/food/snacks/cracker
 
+/datum/recipe/oven/sugarcookie
+	reagents = list("sugar" = 5)
+	items = list(
+		/obj/item/reagent_containers/food/snacks/dough,
+		/obj/item/reagent_containers/food/snacks/egg,
+	)
+	result = /obj/item/reagent_containers/food/snacks/sugarcookie
+
 /datum/recipe/oven/sugarcookie/make_food(obj/container)
 	var/obj/item/reagent_containers/food/snacks/sugarcookie/being_cooked = ..()
 	being_cooked.reagents.del_reagent("egg")
@@ -467,16 +455,3 @@
 		/obj/item/reagent_containers/food/snacks/stuffing
 	)
 	result = /obj/item/reagent_containers/food/snacks/sliceable/turkey
-
-/datum/recipe/oven/lasagna
-	items = list(
-		/obj/item/reagent_containers/food/snacks/meat,
-		/obj/item/reagent_containers/food/snacks/meat,
-		/obj/item/reagent_containers/food/snacks/cheesewedge,
-		/obj/item/reagent_containers/food/snacks/cheesewedge,
-		/obj/item/reagent_containers/food/snacks/cheesewedge,
-		/obj/item/reagent_containers/food/snacks/grown/tomato,
-		/obj/item/reagent_containers/food/snacks/grown/tomato,
-		/obj/item/reagent_containers/food/snacks/dough
-	)
-	result = /obj/item/reagent_containers/food/snacks/lasagna

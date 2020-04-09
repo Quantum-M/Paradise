@@ -28,7 +28,6 @@
 	var/impacted_z_levels // The list of z-levels that this weather is actively affecting
 
 	var/overlay_layer = AREA_LAYER //Since it's above everything else, this is the layer used by default. TURF_LAYER is below mobs and walls if you need to use that.
-	var/overlay_plane = BLACKNESS_PLANE
 	var/aesthetic = FALSE //If the weather has no purpose other than looks
 	var/immunity_type = "storm" //Used by mobs to prevent them from being affected by the weather
 
@@ -107,8 +106,6 @@
 
 /datum/weather/proc/can_weather_act(mob/living/L) //Can this weather impact a mob?
 	var/turf/mob_turf = get_turf(L)
-	if(!istype(L))
-		return
 	if(mob_turf && !(mob_turf.z in impacted_z_levels))
 		return
 	if(immunity_type in L.weather_immunities)
@@ -124,7 +121,6 @@
 	for(var/V in impacted_areas)
 		var/area/N = V
 		N.layer = overlay_layer
-		N.plane = overlay_plane
 		N.icon = 'icons/effects/weather_effects.dmi'
 		N.invisibility = 0
 		N.color = weather_color
@@ -139,6 +135,6 @@
 				N.color = null
 				N.icon_state = ""
 				N.icon = 'icons/turf/areas.dmi'
-				N.layer = initial(N.layer)
-				N.plane = initial(N.plane)
+				N.layer = AREA_LAYER //Just default back to normal area stuff since I assume setting a var is faster than initial
+				N.invisibility = INVISIBILITY_MAXIMUM
 				N.set_opacity(FALSE)

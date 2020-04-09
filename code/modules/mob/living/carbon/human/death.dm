@@ -21,7 +21,7 @@
 			var/atom/movable/thing = I.remove(src)
 			if(thing)
 				thing.forceMove(get_turf(src))
-				thing.throw_at(get_edge_target_turf(src, pick(GLOB.alldirs)), rand(1,3), 5)
+				thing.throw_at(get_edge_target_turf(src, pick(alldirs)), rand(1,3), 5)
 
 	for(var/obj/item/organ/external/E in bodyparts)
 		if(istype(E, /obj/item/organ/external/chest))
@@ -50,16 +50,11 @@
 /mob/living/carbon/human/dust()
 	if(!death(TRUE) && stat != DEAD)
 		return FALSE
+	var/atom/movable/overlay/animation = null
 	notransform = 1
 	canmove = 0
 	icon = null
 	invisibility = 101
-	dust_animation()
-	QDEL_IN(src, 15)
-	return TRUE
-
-/mob/living/carbon/human/dust_animation()
-	var/atom/movable/overlay/animation = null
 
 	animation = new(loc)
 	animation.icon_state = "blank"
@@ -68,6 +63,7 @@
 
 	flick("dust-h", animation)
 	new dna.species.remains_type(get_turf(src))
+	QDEL_IN(src, 0)
 	QDEL_IN(animation, 15)
 	return TRUE
 
@@ -92,8 +88,8 @@
 	return TRUE
 
 /mob/living/carbon/human/death(gibbed)
-	if(can_die() && !gibbed && deathgasp_on_death)
-		emote("deathgasp", force = TRUE) //let the world KNOW WE ARE DEAD
+	if(can_die() && !gibbed)
+		emote("deathgasp") //let the world KNOW WE ARE DEAD
 
 	// Only execute the below if we successfully died
 	. = ..(gibbed)
@@ -101,18 +97,18 @@
 		return FALSE
 
 	set_heartattack(FALSE)
-	SSmobs.cubemonkeys -= src
+
 	if(dna.species)
 		dna.species.handle_hud_icons(src)
 		//Handle species-specific deaths.
-		dna.species.handle_death(gibbed, src)
+		dna.species.handle_death(src)
 
 	if(ishuman(LAssailant))
 		var/mob/living/carbon/human/H=LAssailant
 		if(H.mind)
 			H.mind.kills += "[key_name(src)]"
 
-	if(SSticker && SSticker.mode)
+	if(ticker && ticker.mode)
 //		log_world("k")
 		sql_report_death(src)
 
@@ -158,14 +154,10 @@
 	return
 
 /mob/living/carbon/human/proc/ChangeToHusk()
-
-	// If the target has no DNA to begin with, its DNA can't be damaged beyond repair.
-	if(NO_DNA in dna.species.species_traits)
-		return
+	var/obj/item/organ/external/head/H = bodyparts_by_name["head"]
 	if(HUSK in mutations)
 		return
 
-	var/obj/item/organ/external/head/H = bodyparts_by_name["head"]
 	if(istype(H))
 		H.disfigured = TRUE //makes them unknown without fucking up other stuff like admintools
 		if(H.f_style)
@@ -184,12 +176,3 @@
 	ChangeToHusk()
 	mutations |= NOCLONE
 	return
-
-/mob/living/carbon/human/proc/cure_husk()
-	mutations.Remove(HUSK)
-	var/obj/item/organ/external/head/H = bodyparts_by_name["head"]
-	if(istype(H))
-		H.disfigured = FALSE
-	update_body(0)
-	update_mutantrace(0)
-	UpdateAppearance() // reset hair from DNA

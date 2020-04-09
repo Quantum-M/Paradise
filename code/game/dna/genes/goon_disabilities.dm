@@ -17,7 +17,7 @@
 
 /datum/dna/gene/disability/mute/New()
 	..()
-	block=GLOB.muteblock
+	block=MUTEBLOCK
 
 /datum/dna/gene/disability/mute/OnSay(var/mob/M, var/message)
 	return ""
@@ -36,7 +36,7 @@
 
 /datum/dna/gene/disability/radioactive/New()
 	..()
-	block=GLOB.radblock
+	block=RADBLOCK
 
 
 /datum/dna/gene/disability/radioactive/can_activate(var/mob/M,var/flags)
@@ -76,7 +76,7 @@
 
 /datum/dna/gene/disability/fat/New()
 	..()
-	block=GLOB.fatblock
+	block=FATBLOCK
 
 // WAS: /datum/bioEffect/chav
 /datum/dna/gene/disability/speech/chav
@@ -88,7 +88,7 @@
 
 /datum/dna/gene/disability/speech/chav/New()
 	..()
-	block=GLOB.chavblock
+	block=CHAVBLOCK
 
 /datum/dna/gene/disability/speech/chav/OnSay(var/mob/M, var/message)
 	// THIS ENTIRE THING BEGS FOR REGEX
@@ -127,7 +127,7 @@
 
 /datum/dna/gene/disability/speech/swedish/New()
 	..()
-	block=GLOB.swedeblock
+	block=SWEDEBLOCK
 
 /datum/dna/gene/disability/speech/swedish/OnSay(var/mob/M, var/message)
 	// svedish
@@ -142,7 +142,7 @@
 	message = replacetextEx(message,"bo","bjo")
 	message = replacetextEx(message,"O",pick("Ö","Ø","O"))
 	message = replacetextEx(message,"o",pick("ö","ø","o"))
-	if(prob(30) && !M.is_muzzled())
+	if(prob(30))
 		message += " Bork[pick("",", bork",", bork, bork")]!"
 	return message
 
@@ -157,7 +157,7 @@
 
 /datum/dna/gene/disability/unintelligable/New()
 	..()
-	block=GLOB.scrambleblock
+	block=SCRAMBLEBLOCK
 
 /datum/dna/gene/disability/unintelligable/OnSay(var/mob/M, var/message)
 	var/prefix=copytext(message,1,2)
@@ -182,6 +182,18 @@
 			rearranged += cword
 	return "[prefix][uppertext(jointext(rearranged," "))]!!"
 
+// WAS: /datum/bioEffect/toxic_farts
+/datum/dna/gene/disability/toxic_farts
+	name = "Toxic Farts"
+	desc = "Causes the subject's digestion to create a significant amount of noxious gas."
+	activation_message = "Your stomach grumbles unpleasantly."
+	deactivation_message = "Your stomach stops acting up. Phew!"
+	mutation = TOXIC_FARTS
+
+/datum/dna/gene/disability/toxic_farts/New()
+	..()
+	block=TOXICFARTBLOCK
+
 //////////////////
 // USELESS SHIT //
 //////////////////
@@ -197,7 +209,7 @@
 
 /datum/dna/gene/disability/strong/New()
 	..()
-	block=GLOB.strongblock
+	block=STRONGBLOCK
 
 // WAS: /datum/bioEffect/horns
 /datum/dna/gene/disability/horns
@@ -209,7 +221,7 @@
 
 /datum/dna/gene/disability/horns/New()
 	..()
-	block=GLOB.hornsblock
+	block=HORNSBLOCK
 
 /datum/dna/gene/disability/horns/OnDrawUnderlays(var/mob/M,var/g,var/fat)
 	return "horns_s"
@@ -227,7 +239,7 @@
 
 /datum/dna/gene/basic/grant_spell/immolate/New()
 	..()
-	block = GLOB.immolateblock
+	block = IMMOLATEBLOCK
 
 /obj/effect/proc_holder/spell/targeted/immolate
 	name = "Incendiary Mitochondria"

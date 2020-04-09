@@ -3,7 +3,7 @@
 	icon = 'icons/mob/screen_gen.dmi'
 	icon_state = "x2"
 	anchored = 1.0
-	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
+	unacidable = 1
 
 /obj/effect/landmark/New()
 
@@ -13,80 +13,79 @@
 
 	switch(name)			//some of these are probably obsolete
 		if("start")
-			GLOB.newplayer_start += loc
+			newplayer_start += loc
 			qdel(src)
 
 		if("wizard")
-			GLOB.wizardstart += loc
+			wizardstart += loc
 			qdel(src)
 
+		if("avatarspawn")
+			avatarspawn += loc
+
 		if("JoinLate")
-			GLOB.latejoin += loc
+			latejoin += loc
 			qdel(src)
 
 		if("JoinLateGateway")
-			GLOB.latejoin_gateway += loc
+			latejoin_gateway += loc
 			qdel(src)
 
 		if("JoinLateCryo")
-			GLOB.latejoin_cryo += loc
+			latejoin_cryo += loc
 			qdel(src)
 
 		if("JoinLateCyborg")
-			GLOB.latejoin_cyborg += loc
+			latejoin_cyborg += loc
 			qdel(src)
 
 		if("prisonwarp")
-			GLOB.prisonwarp += loc
+			prisonwarp += loc
 			qdel(src)
 
 		if("prisonsecuritywarp")
-			GLOB.prisonsecuritywarp += loc
+			prisonsecuritywarp += loc
 			qdel(src)
 
 		if("tdome1")
-			GLOB.tdome1	+= loc
+			tdome1	+= loc
 
 		if("tdome2")
-			GLOB.tdome2 += loc
+			tdome2 += loc
 
 		if("tdomeadmin")
-			GLOB.tdomeadmin	+= loc
+			tdomeadmin	+= loc
 
 		if("tdomeobserve")
-			GLOB.tdomeobserve += loc
+			tdomeobserve += loc
 
 		if("aroomwarp")
-			GLOB.aroomwarp += loc
+			aroomwarp += loc
 
 		if("blobstart")
-			GLOB.blobstart += loc
+			blobstart += loc
 			qdel(src)
 
 		if("xeno_spawn")
-			GLOB.xeno_spawn += loc
+			xeno_spawn += loc
 			qdel(src)
 
 		if("ninjastart")
-			GLOB.ninjastart += loc
+			ninjastart += loc
 			qdel(src)
 
 		if("carpspawn")
-			GLOB.carplist += loc
+			carplist += loc
 
 		if("voxstart")
-			GLOB.raider_spawn += loc
+			raider_spawn += loc
 
 		if("ERT Director")
-			GLOB.ertdirector += loc
+			ertdirector += loc
 			qdel(src)
 
 		if("Response Team")
-			GLOB.emergencyresponseteamspawn += loc
-			qdel(src)
-
-		if("Syndicate Officer")
-			GLOB.syndicateofficer += loc
+			emergencyresponseteamspawn += loc
 			qdel(src)
 
 	GLOB.landmarks_list += src
@@ -100,16 +99,6 @@
 /obj/effect/landmark/proc/set_tag()
 	tag = text("landmark*[]", name)
 
-
-/obj/effect/landmark/singularity_act()
-	return
-
-// Please stop bombing the Observer-Start landmark.
-/obj/effect/landmark/ex_act()
-	return
-
-/obj/effect/landmark/singularity_pull()
-	return
 
 /obj/effect/landmark/start
 	name = "start"
@@ -257,8 +246,8 @@
 	qdel(src)
 
 /obj/effect/landmark/costume/sexyclown/New()
-	new /obj/item/clothing/mask/gas/clown_hat/sexy(loc)
-	new /obj/item/clothing/under/rank/clown/sexy(loc)
+	new /obj/item/clothing/mask/gas/sexyclown(src.loc)
+	new /obj/item/clothing/under/sexyclown(src.loc)
 	qdel(src)
 
 /obj/effect/landmark/costume/sexymime/New()
@@ -297,10 +286,3 @@
 	..()
 	var/turf/simulated/T = get_turf(src)
 	T.burn_tile()
-
-
-/obj/effect/landmark/battle_mob_point
-	name = "Nanomob Battle Avatar Spawn Point"
-
-/obj/effect/landmark/free_golem_spawn
-	name = "Free Golem Spawn Point"

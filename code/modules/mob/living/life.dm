@@ -3,20 +3,11 @@
 	set background = BACKGROUND_ENABLED
 
 	if(notransform)
-		return FALSE
+		return
 	if(!loc)
-		return FALSE
+		return
 	var/datum/gas_mixture/environment = loc.return_air()
 
-	if(client || registered_z) // This is a temporary error tracker to make sure we've caught everything
-		var/turf/T = get_turf(src)
-		if(client && registered_z != T.z)
-			message_admins("[src] [ADMIN_FLW(src, "FLW")] has somehow ended up in Z-level [T.z] despite being registered in Z-level [registered_z]. If you could ask them how that happened and notify the coders, it would be appreciated.")
-			log_game("Z-TRACKING: [src] has somehow ended up in Z-level [T.z] despite being registered in Z-level [registered_z].")
-			update_z(T.z)
-		else if (!client && registered_z)
-			log_game("Z-TRACKING: [src] of type [src.type] has a Z-registration despite not having a client.")
-			update_z(null)
 	if(stat != DEAD)
 		//Chemicals in the body
 		handle_chemicals_in_body()
@@ -33,10 +24,6 @@
 		. = 1
 
 	handle_diseases()
-
-	//Heart Attack, if applicable
-	if(stat != DEAD)
-		handle_heartattack()
 
 	//Handle temperature/pressure differences between body and environment
 	if(environment)
@@ -59,14 +46,14 @@
 		handle_status_effects() //all special effects, stunned, weakened, jitteryness, hallucination, sleeping, etc
 
 	if(client)
-		handle_regular_hud_updates()
+		//regular_hud_updates() //THIS DOESN'T FUCKING UPDATE SHIT
+		handle_regular_hud_updates() //IT JUST REMOVES FUCKING HUD IMAGES
+	if(get_nations_mode())
+		process_nations()
 
 	..()
 
 /mob/living/proc/handle_breathing(times_fired)
-	return
-
-/mob/living/proc/handle_heartattack()
 	return
 
 /mob/living/proc/handle_mutations_and_radiation()
@@ -205,15 +192,28 @@
 		if(!remote_view && !client.adminobs)
 			reset_perspective(null)
 
+/mob/living/proc/update_sight()
+	if(stat == DEAD)
+		grant_death_vision()
+	return
+
 // Gives a mob the vision of being dead
 /mob/living/proc/grant_death_vision()
 	sight |= SEE_TURFS
 	sight |= SEE_MOBS
 	sight |= SEE_OBJS
-	lighting_alpha = LIGHTING_PLANE_ALPHA_INVISIBLE
 	see_in_dark = 8
 	see_invisible = SEE_INVISIBLE_OBSERVER
-	sync_lighting_plane_alpha()
+
+// See through walls, dark, etc.
+// basically the same as death vision except you can't
+// see ghosts
+/mob/living/proc/grant_xray_vision()
+	sight |= SEE_TURFS
+	sight |= SEE_MOBS
+	sight |= SEE_OBJS
+	see_in_dark = 8
+	see_invisible = SEE_INVISIBLE_LEVEL_TWO
 
 /mob/living/proc/handle_hud_icons()
 	handle_hud_icons_health()
@@ -221,3 +221,9 @@
 
 /mob/living/proc/handle_hud_icons_health()
 	return
+
+/mob/living/proc/process_nations()
+	if(client)
+		var/client/C = client
+		for(var/mob/living/carbon/human/H in view(src, world.view))
+			C.images += H.hud_list[NATIONS_HUD]

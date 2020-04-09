@@ -4,8 +4,7 @@
 	icon_state = "chronohelmet"
 	item_state = "chronohelmet"
 	slowdown = 1
-	armor = list("melee" = 60, "bullet" = 60, "laser" = 60, "energy" = 60, "bomb" = 30, "bio" = 90, "rad" = 90, "fire" = 100, "acid" = 100)
-	resistance_flags = FIRE_PROOF | ACID_PROOF
+	armor = list(melee = 60, bullet = 30/*bullet through the visor*/, laser = 60, energy = 60, bomb = 30, bio = 90, rad = 90)
 	var/obj/item/clothing/suit/space/chronos/suit = null
 
 /obj/item/clothing/head/helmet/space/chronos/dropped()
@@ -24,8 +23,7 @@
 	icon_state = "chronosuit"
 	item_state = "chronosuit"
 	actions_types = list(/datum/action/item_action/toggle)
-	armor = list("melee" = 60, "bullet" = 60, "laser" = 60, "energy" = 60, "bomb" = 30, "bio" = 90, "rad" = 90, "fire" = 100, "acid" = 1000)
-	resistance_flags = FIRE_PROOF | ACID_PROOF
+	armor = list(melee = 60, bullet = 60, laser = 60, energy = 60, bomb = 30, bio = 90, rad = 90)
 	var/obj/item/clothing/head/helmet/space/chronos/helmet = null
 	var/obj/effect/chronos_cam/camera = null
 	var/activating = 0
@@ -82,7 +80,9 @@
 		phaseanim.layer = FLY_LAYER
 		phaseanim.master = user
 		user.ExtinguishMob()
-		user.forceMove(holder)
+		if(user.buckled)
+			user.buckled.unbuckle_mob()
+		user.loc = holder
 		flick("chronophase", phaseanim)
 		spawn(7)
 			if(user)
@@ -122,7 +122,7 @@
 			else
 				new_camera(user)
 	else
-		STOP_PROCESSING(SSobj, src)
+		processing_objects.Remove(src)
 
 /obj/item/clothing/suit/space/chronos/proc/activate()
 	if(!activating && !activated && !teleporting)
@@ -143,7 +143,7 @@
 					to_chat(user, "\[ <span style='color: #00ff00;'>ok</span> \] Starting ui display driver")
 					to_chat(user, "\[ <span style='color: #00ff00;'>ok</span> \] Initializing chronowalk4-view")
 					new_camera(user)
-					START_PROCESSING(SSobj, src)
+					processing_objects.Add(src)
 					activated = 1
 				else
 					to_chat(user, "\[ <span style='color: #ff0000;'>fail</span> \] Mounting /dev/helmet")
@@ -185,12 +185,6 @@
 	opacity = 0
 	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 	var/mob/holder = null
-
-/obj/effect/chronos_cam/singularity_act()
-	return
-
-/obj/effect/chronos_cam/singularity_pull()
-	return
 
 /obj/effect/chronos_cam/relaymove(var/mob/user, direction)
 	if(holder)

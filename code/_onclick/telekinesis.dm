@@ -3,7 +3,7 @@
 
 	This needs more thinking out, but I might as well.
 */
-#define TK_MAXRANGE 15
+var/const/tk_maxrange = 15
 
 /*
 	Telekinetic attack:
@@ -65,8 +65,8 @@
 	flags = NOBLUDGEON | ABSTRACT | DROPDEL
 	//item_state = null
 	w_class = WEIGHT_CLASS_GIGANTIC
-	layer = ABOVE_HUD_LAYER
-	plane = ABOVE_HUD_PLANE
+	layer = 20
+	plane = HUD_PLANE
 
 	var/last_throw = 0
 	var/atom/movable/focus = null
@@ -118,7 +118,7 @@
 	var/d = get_dist(user, target)
 	if(focus)
 		d = max(d,get_dist(user,focus)) // whichever is further
-	if(d > TK_MAXRANGE)
+	if(d > tk_maxrange)
 		to_chat(user, "<span class='warning'>Your mind won't reach that far.</span>")
 		return
 

@@ -1,17 +1,10 @@
 /datum/reagent/medicine
 	name = "Medicine"
 	id = "medicine"
-	taste_description = "bitterness"
-	harmless = TRUE
 
 /datum/reagent/medicine/on_mob_life(mob/living/M)
 	current_cycle++
-	var/total_depletion_rate = (metabolization_rate / M.metabolism_efficiency) * M.digestion_ratio // Cache it
-
-	handle_addiction(M, total_depletion_rate)
-
-	holder.remove_reagent(id, total_depletion_rate) //medicine reagents stay longer if you have a better metabolism
-	return STATUS_UPDATE_NONE
+	holder.remove_reagent(id, (metabolization_rate / M.metabolism_efficiency) * M.digestion_ratio) //medicine reagents stay longer if you have a better metabolism
 
 /datum/reagent/medicine/hydrocodone
 	name = "Hydrocodone"
@@ -21,7 +14,13 @@
 	color = "#C805DC"
 	metabolization_rate = 0.3 // Lasts 1.5 minutes for 15 units
 	shock_reduction = 200
-	taste_description = "numbness"
+
+/datum/reagent/medicine/hydrocodone/on_mob_life(mob/living/M)
+	if(ishuman(M))
+		var/mob/living/carbon/human/H = M
+		if(H.traumatic_shock < 100)
+			H.shock_stage = 0
+	return ..()
 
 /datum/reagent/medicine/sterilizine
 	name = "Sterilizine"
@@ -29,11 +28,10 @@
 	description = "Sterilizes wounds in preparation for surgery."
 	reagent_state = LIQUID
 	color = "#C8A5DC" // rgb: 200, 165, 220
-	taste_description = "antiseptic"
 
 	//makes you squeaky clean
-/datum/reagent/medicine/sterilizine/reaction_mob(mob/living/M, method=REAGENT_TOUCH, volume)
-	if(method == REAGENT_TOUCH)
+/datum/reagent/medicine/sterilizine/reaction_mob(mob/living/M, method=TOUCH, volume)
+	if(method == TOUCH)
 		M.germ_level -= min(volume*20, M.germ_level)
 
 /datum/reagent/medicine/sterilizine/reaction_obj(obj/O, volume)
@@ -49,8 +47,6 @@
 	reagent_state = LIQUID
 	color = "#FA46FA"
 	overdose_threshold = 40
-	harmless = FALSE
-	taste_description = "stimulant"
 
 /datum/reagent/medicine/synaptizine/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -93,7 +89,6 @@
 	description = "A specialized drug that stimulates the mitochondria of cells to encourage healing of internal organs."
 	reagent_state = LIQUID
 	color = "#C8A5DC" // rgb: 200, 165, 220
-	taste_description = "nurturing"
 
 /datum/reagent/medicine/mitocholide/on_mob_life(mob/living/M)
 	if(ishuman(M))
@@ -117,11 +112,10 @@
 	reagent_state = LIQUID
 	color = "#0000C8" // rgb: 200, 165, 220
 	heart_rate_decrease = 1
-	taste_description = "a safe refuge"
 
 /datum/reagent/medicine/cryoxadone/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
-	if(M.bodytemperature < TCRYO)
+	if(M.bodytemperature < 265)
 		update_flags |= M.adjustCloneLoss(-4, FALSE)
 		update_flags |= M.adjustOxyLoss(-10, FALSE)
 		update_flags |= M.adjustToxLoss(-3, FALSE)
@@ -141,8 +135,6 @@
 	reagent_state = SOLID
 	color = "#669900" // rgb: 102, 153, 0
 	overdose_threshold = 30
-	harmless = FALSE
-	taste_description = "reformation"
 
 /datum/reagent/medicine/rezadone/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -171,7 +163,6 @@
 	reagent_state = LIQUID
 	color = "#0AB478"
 	metabolization_rate = 0.2
-	taste_description = "antibiotics"
 
 /datum/reagent/medicine/silver_sulfadiazine
 	name = "Silver Sulfadiazine"
@@ -180,21 +171,19 @@
 	reagent_state = LIQUID
 	color = "#F0C814"
 	metabolization_rate = 3
-	harmless = FALSE	//toxic if ingested, and I am NOT going to account for the difference
-	taste_description = "burn cream"
 
 /datum/reagent/medicine/silver_sulfadiazine/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
 	update_flags |= M.adjustFireLoss(-2*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 	return ..() | update_flags
 
-/datum/reagent/medicine/silver_sulfadiazine/reaction_mob(mob/living/M, method=REAGENT_TOUCH, volume, show_message = 1)
+/datum/reagent/medicine/silver_sulfadiazine/reaction_mob(mob/living/M, method=TOUCH, volume, show_message = 1)
 	if(iscarbon(M))
-		if(method == REAGENT_TOUCH)
+		if(method == TOUCH)
 			M.adjustFireLoss(-volume)
 			if(show_message)
 				to_chat(M, "<span class='notice'>The silver sulfadiazine soothes your burns.</span>")
-		if(method == REAGENT_INGEST)
+		if(method == INGEST)
 			M.adjustToxLoss(0.5*volume)
 			if(show_message)
 				to_chat(M, "<span class='warning'>You feel sick...</span>")
@@ -207,22 +196,20 @@
 	reagent_state = LIQUID
 	color = "#C8A5DC"
 	metabolization_rate = 3
-	harmless = FALSE
-	taste_description = "wound cream"
 
 /datum/reagent/medicine/styptic_powder/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
 	update_flags |= M.adjustBruteLoss(-2*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 	return ..() | update_flags
 
-/datum/reagent/medicine/styptic_powder/reaction_mob(mob/living/M, method=REAGENT_TOUCH, volume, show_message = 1)
+/datum/reagent/medicine/styptic_powder/reaction_mob(mob/living/M, method=TOUCH, volume, show_message = 1)
 	if(iscarbon(M))
-		if(method == REAGENT_TOUCH)
+		if(method == TOUCH)
 			M.adjustBruteLoss(-volume)
 			if(show_message)
 				to_chat(M, "<span class='notice'>The styptic powder stings like hell as it closes some of your wounds!</span>")
 			M.emote("scream")
-		if(method == REAGENT_INGEST)
+		if(method == INGEST)
 			M.adjustToxLoss(0.5*volume)
 			if(show_message)
 				to_chat(M, "<span class='warning'>You feel gross!</span>")
@@ -236,7 +223,7 @@
 	color = "#C8A5DC"
 	penetrates_skin = TRUE
 	metabolization_rate = 0.15
-	taste_description = "salt"
+	taste_message = "salt"
 
 /datum/reagent/medicine/salglu_solution/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -256,11 +243,10 @@
 	description = "A resorbable microfibrillar collagen and protein mixture that can rapidly heal injuries when applied topically."
 	reagent_state = LIQUID
 	color = "#FFEBEB"
-	taste_description = "blood"
 
-/datum/reagent/medicine/synthflesh/reaction_mob(mob/living/M, method=REAGENT_TOUCH, volume, show_message = 1)
+/datum/reagent/medicine/synthflesh/reaction_mob(mob/living/M, method=TOUCH, volume, show_message = 1)
 	if(iscarbon(M))
-		if(method == REAGENT_TOUCH)
+		if(method == TOUCH)
 			M.adjustBruteLoss(-1.5*volume)
 			M.adjustFireLoss(-1.5*volume)
 			if(show_message)
@@ -278,7 +264,6 @@
 	description = "Activated charcoal helps to absorb toxins."
 	reagent_state = LIQUID
 	color = "#000000"
-	taste_description = "dust"
 
 /datum/reagent/medicine/charcoal/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -297,11 +282,7 @@
 	color = "#C8A5DC"
 	metabolization_rate = 0.2
 	overdose_threshold = 30
-	addiction_chance = 1
-	addiction_chance_additional = 20
-	addiction_threshold = 5
-	harmless = FALSE
-	taste_description = "health"
+	addiction_chance = 5
 
 /datum/reagent/medicine/omnizine/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -357,8 +338,6 @@
 	reagent_state = LIQUID
 	color = "#22AB35"
 	metabolization_rate = 0.8
-	harmless = FALSE
-	taste_description = "a painful cleansing"
 
 /datum/reagent/medicine/calomel/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -377,7 +356,6 @@
 	description = "Potassium Iodide is a medicinal drug used to counter the effects of radiation poisoning."
 	reagent_state = LIQUID
 	color = "#B4DCBE"
-	taste_description = "cleansing"
 
 /datum/reagent/medicine/potass_iodide/on_mob_life(mob/living/M)
 	if(prob(80))
@@ -390,8 +368,6 @@
 	description = "Pentetic Acid is an aggressive chelation agent. May cause tissue damage. Use with caution."
 	reagent_state = LIQUID
 	color = "#C8A5DC"
-	harmless = FALSE
-	taste_description = "a purge"
 
 /datum/reagent/medicine/pen_acid/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -411,36 +387,19 @@
 	id = "sal_acid"
 	description = "This is a is a standard salicylate pain reliever and fever reducer."
 	reagent_state = LIQUID
-	color = "#B54848"
+	color = "#B3B3B3"
 	metabolization_rate = 0.1
 	shock_reduction = 25
 	overdose_threshold = 25
-	harmless = FALSE
-	taste_description = "relief"
 
 /datum/reagent/medicine/sal_acid/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
 	if(prob(55))
-		update_flags |= M.adjustBruteLoss(-2 * REAGENTS_EFFECT_MULTIPLIER, FALSE)
-	if(M.bodytemperature > 310.15)
-		M.bodytemperature = max(310.15, M.bodytemperature - 10)
-	return ..() | update_flags
-
-/datum/reagent/medicine/menthol
-	name = "Menthol"
-	id = "menthol"
-	description = "Menthol relieves burns and aches while providing a cooling sensation."
-	reagent_state = LIQUID
-	color = "#F0F9CA"
-	metabolization_rate = 0.1
-	taste_description = "soothing"
-
-/datum/reagent/medicine/menthol/on_mob_life(mob/living/M)
-	var/update_flags = STATUS_UPDATE_NONE
-	if(prob(55))
-		update_flags |= M.adjustFireLoss(-2 * REAGENTS_EFFECT_MULTIPLIER, FALSE)
-	if(M.bodytemperature > 280)
-		M.bodytemperature = max(280, M.bodytemperature - 10)
+		update_flags |= M.adjustBruteLoss(-2*REAGENTS_EFFECT_MULTIPLIER, FALSE)
+	if(ishuman(M))
+		var/mob/living/carbon/human/H = M
+		if(H.traumatic_shock < 100)
+			H.shock_stage = 0
 	return ..() | update_flags
 
 /datum/reagent/medicine/salbutamol
@@ -450,7 +409,6 @@
 	reagent_state = LIQUID
 	color = "#00FFFF"
 	metabolization_rate = 0.2
-	taste_description = "safety"
 
 /datum/reagent/medicine/salbutamol/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -465,17 +423,14 @@
 	reagent_state = LIQUID
 	color = "#C8A5DC"
 	metabolization_rate = 0.2
-	addiction_chance = 1
-	addiction_chance_additional = 20
-	addiction_threshold = 10
-	harmless = FALSE
-	taste_description = "oxygenation"
+	addiction_chance = 20
 
 /datum/reagent/medicine/perfluorodecalin/on_mob_life(mob/living/carbon/human/M)
 	var/update_flags = STATUS_UPDATE_NONE
 	update_flags |= M.adjustOxyLoss(-25*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 	if(volume >= 4)
 		M.LoseBreath(6)
+		M.Silence(6)
 	if(prob(33))
 		update_flags |= M.adjustBruteLoss(-1*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 		update_flags |= M.adjustFireLoss(-1*REAGENTS_EFFECT_MULTIPLIER, FALSE)
@@ -489,11 +444,7 @@
 	color = "#C8A5DC"
 	metabolization_rate = 0.3
 	overdose_threshold = 35
-	addiction_chance = 1
-	addiction_chance = 10
-	addiction_threshold = 10
-	harmless = FALSE
-	taste_description = "stimulation"
+	addiction_chance = 25
 
 /datum/reagent/medicine/ephedrine/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -503,7 +454,7 @@
 	update_flags |= M.AdjustWeakened(-1, FALSE)
 	update_flags |= M.adjustStaminaLoss(-1*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 	M.AdjustLoseBreath(-1, bound_lower = 5)
-	if(M.getOxyLoss() > 75)
+	if(M.oxyloss > 75)
 		update_flags |= M.adjustOxyLoss(-1, FALSE)
 	if(M.health < 0 || M.health > 0 && prob(33))
 		update_flags |= M.adjustToxLoss(-1, FALSE)
@@ -541,10 +492,7 @@
 	description = "Anti-allergy medication. May cause drowsiness, do not operate heavy machinery while using this."
 	reagent_state = LIQUID
 	color = "#5BCBE1"
-	addiction_chance = 1
-	addiction_threshold = 10
-	harmless = FALSE
-	taste_description = "antihistamine"
+	addiction_chance = 10
 
 /datum/reagent/medicine/diphenhydramine/on_mob_life(mob/living/M)
 	M.AdjustJitter(-20)
@@ -565,14 +513,10 @@
 	reagent_state = LIQUID
 	color = "#C8A5DC"
 	overdose_threshold = 20
-	addiction_chance = 10
-	addiction_threshold = 15
+	addiction_chance = 50
 	shock_reduction = 50
-	harmless = FALSE
-	taste_description = "a delightful numbing"
 
 /datum/reagent/medicine/morphine/on_mob_life(mob/living/M)
-	var/update_flags = STATUS_UPDATE_NONE
 	M.AdjustJitter(-25)
 	switch(current_cycle)
 		if(1 to 15)
@@ -581,9 +525,13 @@
 		if(16 to 35)
 			M.Drowsy(20)
 		if(36 to INFINITY)
-			update_flags |= M.Paralyse(15, FALSE)
+			M.Paralyse(15)
 			M.Drowsy(20)
-	return ..() | update_flags
+	if(ishuman(M))
+		var/mob/living/carbon/human/H = M
+		if(H.traumatic_shock < 100)
+			H.shock_stage = 0
+	..()
 
 /datum/reagent/medicine/oculine
 	name = "Oculine"
@@ -591,7 +539,6 @@
 	description = "Oculine is a saline eye medication with mydriatic and antibiotic effects."
 	reagent_state = LIQUID
 	color = "#C8A5DC"
-	taste_description = "clarity"
 
 /datum/reagent/medicine/oculine/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -623,8 +570,6 @@
 	color = "#000000"
 	metabolization_rate = 0.2
 	overdose_threshold = 25
-	harmless = FALSE
-	taste_description = "a moment of respite"
 
 /datum/reagent/medicine/atropine/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -633,7 +578,7 @@
 	if(prob(4))
 		M.emote("collapse")
 	M.AdjustLoseBreath(-5, bound_lower = 5)
-	if(M.getOxyLoss() > 65)
+	if(M.oxyloss > 65)
 		update_flags |= M.adjustOxyLoss(-10*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 	if(M.health < -25)
 		update_flags |= M.adjustToxLoss(-1, FALSE)
@@ -652,8 +597,6 @@
 	color = "#96B1AE"
 	metabolization_rate = 0.2
 	overdose_threshold = 20
-	harmless = FALSE
-	taste_description = "borrowed time"
 
 /datum/reagent/medicine/epinephrine/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -670,7 +613,7 @@
 		update_flags |= M.adjustBrainLoss(-1, FALSE)
 	holder.remove_reagent("histamine", 15)
 	M.AdjustLoseBreath(-1, bound_lower = 3)
-	if(M.getOxyLoss() > 35)
+	if(M.oxyloss > 35)
 		update_flags |= M.adjustOxyLoss(-10*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 	if(M.health < -10 && M.health > -65)
 		update_flags |= M.adjustToxLoss(-1*REAGENTS_EFFECT_MULTIPLIER, FALSE)
@@ -709,9 +652,6 @@
 	reagent_state = LIQUID
 	color = "#A0E85E"
 	metabolization_rate = 0.2
-	taste_description = "life"
-	harmless = FALSE
-	var/revive_type = SENTIENCE_ORGANIC //So you can't revive boss monsters or robots with it
 
 /datum/reagent/medicine/strange_reagent/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -720,33 +660,39 @@
 		update_flags |= M.adjustToxLoss(2*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 	return ..() | update_flags
 
-/datum/reagent/medicine/strange_reagent/reaction_mob(mob/living/M, method = REAGENT_TOUCH, volume)
+/datum/reagent/medicine/strange_reagent/reaction_mob(mob/living/M, method=TOUCH, volume)
 	if(volume < 1)
 		// gotta pay to play
 		return ..()
-	if(isanimal(M) && method == REAGENT_TOUCH)
-		var/mob/living/simple_animal/SM = M
-		if(SM.sentience_type != revive_type) // No reviving Ash Drakes for you
-			return
-		if(SM.stat == DEAD)
-			SM.revive()
-			SM.loot.Cut() //no abusing strange reagent for farming unlimited resources
-			SM.visible_message("<span class='warning'>[SM] seems to rise from the dead!</span>")
+	if(isanimal(M))
+		if(method == TOUCH)
+			var/mob/living/simple_animal/SM = M
+			if(SM.stat == DEAD)
+				SM.revive()
+				SM.loot.Cut() //no abusing strange reagent for unlimited farming of resources
+				SM.visible_message("<span class='warning'>[M] seems to rise from the dead!</span>")
 
 	if(iscarbon(M))
-		if(method == REAGENT_INGEST || (method == REAGENT_TOUCH && prob(25)))
+		if(method == INGEST)
 			if(M.stat == DEAD)
-				if(M.getBruteLoss() + M.getFireLoss() + M.getCloneLoss() >= 150)
-					M.delayed_gib()
+				if(M.getBruteLoss()+M.getFireLoss()+M.getCloneLoss() >= 150)
+					M.visible_message("<span class='warning'>[M]'s body starts convulsing!</span>")
+					M.gib()
 					return
-				if(!M.suiciding && !(NOCLONE in M.mutations) && (!M.mind || M.mind && M.mind.is_revivable()))
+				var/mob/dead/observer/ghost = M.get_ghost()
+				if(ghost)
+					to_chat(ghost, "<span class='ghostalert'>You are attempting to be revived with Strange Reagent. Return to your body if you want to be revived!</span> (Verbs -> Ghost -> Re-enter corpse)")
+					window_flash(ghost.client)
+					ghost << sound('sound/effects/genetics.ogg')
+					M.visible_message("<span class='notice'>[M] doesn't appear to respond, perhaps try again later?</span>")
+				if(!M.suiciding && !ghost && !(NOCLONE in M.mutations))
 					var/time_dead = world.time - M.timeofdeath
 					M.visible_message("<span class='warning'>[M] seems to rise from the dead!</span>")
 					M.adjustCloneLoss(50)
 					M.setOxyLoss(0)
-					M.adjustBruteLoss(rand(0, 15))
-					M.adjustToxLoss(rand(0, 15))
-					M.adjustFireLoss(rand(0, 15))
+					M.adjustBruteLoss(rand(0,15))
+					M.adjustToxLoss(rand(0,15))
+					M.adjustFireLoss(rand(0,15))
 					if(ishuman(M))
 						var/mob/living/carbon/human/H = M
 						var/necrosis_prob = 40 * min((20 MINUTES), max((time_dead - (1 MINUTES)), 0)) / ((20 MINUTES) - (1 MINUTES))
@@ -761,8 +707,8 @@
 									O.germ_level = INFECTION_LEVEL_THREE
 						H.update_body()
 
-					M.grab_ghost()
 					M.update_revive()
+					M.stat = UNCONSCIOUS
 					add_attack_logs(M, M, "Revived with strange reagent") //Yes, the logs say you revived yourself.
 	..()
 
@@ -771,7 +717,6 @@
 	id = "mannitol"
 	description = "Mannitol is a sugar alcohol that can help alleviate cranial swelling."
 	color = "#D1D1F1"
-	taste_description = "sweetness"
 
 /datum/reagent/medicine/mannitol/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -783,7 +728,6 @@
 	id = "mutadone"
 	description = "Mutadone is an experimental bromide that can cure genetic abnomalities."
 	color = "#5096C8"
-	taste_description = "cleanliness"
 
 /datum/reagent/medicine/mutadone/on_mob_life(mob/living/carbon/human/M)
 	if(M.mind && M.mind.assigned_role == "Cluwne") // HUNKE
@@ -793,10 +737,9 @@
 	var/needs_update = M.mutations.len > 0 || M.disabilities > 0
 
 	if(needs_update)
-		for(var/block = 1; block<=DNA_SE_LENGTH; block++)
-			if(!(block in M.dna.default_blocks))
-				M.dna.SetSEState(block, FALSE, TRUE)
-				genemutcheck(M, block, null, MUTCHK_FORCED)
+		for(var/block=1;block<=DNA_SE_LENGTH;block++)
+			M.dna.SetSEState(block,0, 1)
+			genemutcheck(M,block,null,MUTCHK_FORCED)
 		M.dna.UpdateSE()
 
 		M.dna.struc_enzymes = M.dna.struc_enzymes_original
@@ -805,21 +748,20 @@
 		if(ishuman(M))
 			var/mob/living/carbon/human/H = M
 			H.update_mutations()
-	return ..()
+	..()
 
 /datum/reagent/medicine/antihol
 	name = "Antihol"
 	id = "antihol"
 	description = "A medicine which quickly eliminates alcohol in the body."
 	color = "#009CA8"
-	taste_description = "sobriety"
 
 /datum/reagent/medicine/antihol/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
 	M.SetSlur(0)
 	M.AdjustDrunk(-4)
 	M.reagents.remove_all_type(/datum/reagent/consumable/ethanol, 8, 0, 1)
-	if(M.getToxLoss() <= 25)
+	if(M.toxloss <= 25)
 		update_flags |= M.adjustToxLoss(-2.0, FALSE)
 	return ..() | update_flags
 
@@ -828,9 +770,7 @@
 	id = "stimulants"
 	description = "Increases run speed and eliminates stuns, can heal minor damage. If overdosed it will deal toxin damage and stun."
 	color = "#C8A5DC"
-	harmless = FALSE
 	can_synth = FALSE
-	taste_description = "<span class='userdanger'>an unstoppable force</span>"
 
 /datum/reagent/medicine/stimulants/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -867,7 +807,6 @@
 	color = "#C8A5DC"
 	metabolization_rate = 0.5 * REAGENTS_METABOLISM
 	overdose_threshold = 60
-	harmless = FALSE
 	can_synth = FALSE
 
 /datum/reagent/medicine/stimulative_agent/on_mob_life(mob/living/M)
@@ -902,48 +841,16 @@
 	description = "A hormone generated by the pancreas responsible for metabolizing carbohydrates and fat in the bloodstream."
 	reagent_state = LIQUID
 	color = "#C8A5DC"
-	taste_description = "tiredness"
 
 /datum/reagent/medicine/insulin/on_mob_life(mob/living/M)
 	M.reagents.remove_reagent("sugar", 5)
-	return ..()
+	..()
 
-/datum/reagent/heparin
-	name = "Heparin"
-	id = "heparin"
-	description = "An anticoagulant used in heart surgeries, and in the treatment of heart attacks and blood clots."
-	reagent_state = LIQUID
-	color = "#eee6da"
-	overdose_threshold = 20
-	taste_description = "bitterness"
-
-/datum/reagent/heparin/on_mob_life(mob/living/M)
-	M.reagents.remove_reagent("cholesterol", 2)
-	return ..()
-
-/datum/reagent/heparin/overdose_process(mob/living/carbon/M, severity)
-	var/list/overdose_info = ..()
-	var/effect = overdose_info[REAGENT_OVERDOSE_EFFECT]
-	var/update_flags = overdose_info[REAGENT_OVERDOSE_FLAGS]
-	if(severity == 1)
-		if(effect <= 2)
-			M.vomit(0, TRUE, FALSE)
-			M.blood_volume = max(M.blood_volume - rand(5, 10), 0)
-		else if(effect <= 4)
-			M.vomit(0, TRUE, FALSE)
-			M.blood_volume = max(M.blood_volume - rand(1, 2), 0)
-	else if(severity == 2)
-		if(effect <= 2)
-			M.visible_message("<span class='warning'>[M] is bleeding from [M.p_their()] very pores!</span>")
-			M.bleed(rand(10, 20))
-		else if(effect <= 4)
-			M.vomit(0, TRUE, FALSE)
-			M.blood_volume = max(M.blood_volume - rand(5, 10), 0)
-		else if(effect <= 8)
-			M.vomit(0, TRUE, FALSE)
-			M.blood_volume = max(M.blood_volume - rand(1, 2), 0)
-	return list(effect, update_flags)
-
+/datum/reagent/medicine/simethicone
+	name = "Simethicone"
+	id = "simethicone"
+	description = "This strange liquid seems to have no bubbles on the surface."
+	color = "#14AA46"
 
 /datum/reagent/medicine/teporone
 	name = "Teporone"
@@ -951,18 +858,15 @@
 	description = "This experimental plasma-based compound seems to regulate body temperature."
 	reagent_state = LIQUID
 	color = "#D782E6"
-	addiction_chance = 1
-	addiction_chance_additional = 10
-	addiction_threshold = 10
+	addiction_chance = 20
 	overdose_threshold = 50
-	taste_description = "warmth and stability"
 
 /datum/reagent/medicine/teporone/on_mob_life(mob/living/M)
 	if(M.bodytemperature > 310)
 		M.bodytemperature = max(310, M.bodytemperature - (40 * TEMPERATURE_DAMAGE_COEFFICIENT))
 	else if(M.bodytemperature < 311)
 		M.bodytemperature = min(310, M.bodytemperature + (40 * TEMPERATURE_DAMAGE_COEFFICIENT))
-	return ..()
+	..()
 
 /datum/reagent/medicine/haloperidol
 	name = "Haloperidol"
@@ -970,7 +874,6 @@
 	description = "Haloperidol is a powerful antipsychotic and sedative. Will help control psychiatric problems, but may cause brain damage."
 	reagent_state = LIQUID
 	color = "#FFDCFF"
-	taste_description = "stability"
 
 /datum/reagent/medicine/haloperidol/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -1002,11 +905,8 @@
 	reagent_state = LIQUID
 	color = "#96DEDE"
 	metabolization_rate = 0.1
-	harmless = FALSE
-	taste_description = "sleepiness"
 
 /datum/reagent/medicine/ether/on_mob_life(mob/living/M)
-	var/update_flags = STATUS_UPDATE_NONE
 	M.AdjustJitter(-25)
 	switch(current_cycle)
 		if(1 to 30)
@@ -1015,9 +915,9 @@
 		if(31 to 40)
 			M.Drowsy(20)
 		if(41 to INFINITY)
-			update_flags |= M.Paralyse(15, FALSE)
+			M.Paralyse(15)
 			M.Drowsy(20)
-	return ..() | update_flags
+	..()
 
 /datum/reagent/medicine/syndicate_nanites //Used exclusively by Syndicate medical cyborgs
 	name = "Restorative Nanites"
@@ -1026,7 +926,6 @@
 	reagent_state = SOLID
 	color = "#555555"
 	can_synth = FALSE
-	taste_description = "bodily perfection"
 
 /datum/reagent/medicine/syndicate_nanites/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -1046,14 +945,6 @@
 	color = "#DCDCDC"
 	overdose_threshold = 30
 	metabolization_rate = 0.1
-	harmless = FALSE
-	taste_description = "faint hope"
-
-/datum/reagent/medicine/omnizine_diluted/godblood
-	name = "Godblood"
-	id = "godblood"
-	description = "Slowly heals all damage types. Has a rather high overdose threshold. Glows with mysterious power."
-	overdose_threshold = 150
 
 /datum/reagent/medicine/omnizine_diluted/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -1071,6 +962,26 @@
 	update_flags |= M.adjustFireLoss(1.5*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 	return list(0, update_flags)
 
+//virus-specific symptom reagents
+
+/datum/reagent/medicine/synaphydramine
+	name = "Diphen-Synaptizine"
+	id = "synaphydramine"
+	description = "Reduces drowsiness and hallucinations while also purging histamine from the body."
+	color = "#EC536D" // rgb: 236, 83, 109
+
+/datum/reagent/medicine/synaphydramine/on_mob_life(mob/living/M)
+	var/update_flags = STATUS_UPDATE_NONE
+	M.AdjustDrowsy(-5)
+	if(holder.has_reagent("lsd"))
+		holder.remove_reagent("lsd", 5)
+	if(holder.has_reagent("histamine"))
+		holder.remove_reagent("histamine", 5)
+	M.AdjustHallucinate(-10)
+	if(prob(30))
+		update_flags |= M.adjustToxLoss(1, FALSE)
+	return ..() | update_flags
+
 //////////////////////////////
 //		Synth-Meds			//
 //////////////////////////////
@@ -1083,7 +994,6 @@
 	reagent_state = LIQUID
 	color = "#CC7A00"
 	process_flags = SYNTHETIC
-	taste_description = "overclocking"
 
 /datum/reagent/medicine/degreaser/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -1114,7 +1024,6 @@
 	reagent_state = LIQUID
 	color = "#D7B395"
 	process_flags = SYNTHETIC
-	taste_description = "heavy metals"
 
 /datum/reagent/medicine/liquid_solder/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -1131,8 +1040,6 @@
 	reagent_state = LIQUID
 	color = "#C8A5DC"
 	overdose_threshold = 30
-	harmless = FALSE
-	taste_description = "knitting wounds"
 
 /datum/reagent/medicine/bicaridine/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -1151,8 +1058,6 @@
 	reagent_state = LIQUID
 	color = "#C8A5DC"
 	overdose_threshold = 30
-	harmless = FALSE
-	taste_description = "soothed burns"
 
 /datum/reagent/medicine/kelotane/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -1171,8 +1076,6 @@
 	description = "Ichor from an extremely powerful plant. Great for restoring wounds, but it's a little heavy on the brain."
 	color = "#FFAF00"
 	overdose_threshold = 25
-	harmless = FALSE
-	taste_description = "a gift from nature"
 
 /datum/reagent/medicine/earthsblood/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -1198,7 +1101,6 @@
 	id = "corazone"
 	description = "A medication used to treat pain, fever, and inflammation, along with heart attacks."
 	color = "#F5F5F5"
-	taste_description = "a brief respite"
 
 // This reagent's effects are handled in heart attack handling code
 
@@ -1209,8 +1111,6 @@
 	color = "#9b3401"
 	metabolization_rate = 0.5
 	can_synth = FALSE
-	harmless = FALSE
-	taste_description = "wholeness"
 
 /datum/reagent/medicine/nanocalcium/on_mob_life(mob/living/carbon/human/M)
 	var/update_flags = STATUS_UPDATE_NONE
@@ -1241,27 +1141,4 @@
 							to_chat(M, "<span class='notice'>You feel a burning sensation in your [E.name] as it straightens involuntarily!</span>")
 							E.rejuvenate() //Repair it completely.
 							break
-	return ..() | update_flags
-
-/datum/reagent/medicine/lavaland_extract
-	name = "Lavaland Extract"
-	id = "lavaland_extract"
-	description = "An extract of lavaland atmospheric and mineral elements. Heals the user in small doses, but is extremely toxic otherwise."
-	color = "#C8A5DC" // rgb: 200, 165, 220
-	overdose_threshold = 3 //To prevent people stacking massive amounts of a very strong healing reagent
-	harmless = FALSE
-	can_synth = FALSE
-
-/datum/reagent/medicine/lavaland_extract/on_mob_life(mob/living/carbon/M)
-	var/update_flags = STATUS_UPDATE_NONE
-	update_flags |= M.adjustBruteLoss(-5*REAGENTS_EFFECT_MULTIPLIER, FALSE)
-	update_flags |= M.adjustFireLoss(-5*REAGENTS_EFFECT_MULTIPLIER, FALSE)
-	return ..() | update_flags
-
-/datum/reagent/medicine/lavaland_extract/overdose_process(mob/living/M) // This WILL be brutal
-	var/update_flags = STATUS_UPDATE_NONE
-	M.AdjustConfused(5)
-	update_flags |= M.adjustBruteLoss(3*REAGENTS_EFFECT_MULTIPLIER, FALSE)
-	update_flags |= M.adjustFireLoss(3*REAGENTS_EFFECT_MULTIPLIER, FALSE)
-	update_flags |= M.adjustToxLoss(3*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 	return ..() | update_flags

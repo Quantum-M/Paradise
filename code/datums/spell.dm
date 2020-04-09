@@ -5,15 +5,8 @@
 	var/panel = "Debug"//What panel the proc holder needs to go on.
 	var/active = FALSE //Used by toggle based abilities.
 	var/ranged_mousepointer
-	var/mob/living/ranged_ability_user
 
-/obj/effect/proc_holder/singularity_act()
-	return
-
-/obj/effect/proc_holder/singularity_pull()
-	return
-
-GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
+var/list/spells = typesof(/obj/effect/proc_holder/spell) //needed for the badmin verb for now
 
 /obj/effect/proc_holder/proc/InterceptClickOn(mob/living/user, params, atom/A)
 	if(user.ranged_ability != src)
@@ -31,7 +24,6 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 		to_chat(user, "<span class='warning'><b>[user.ranged_ability.name]</b> has been replaced by <b>[name]</b>.")
 		user.ranged_ability.remove_ranged_ability(user)
 	user.ranged_ability = src
-	ranged_ability_user = user
 	user.client.click_intercept = user.ranged_ability
 	add_mousepointer(user.client)
 	active = TRUE
@@ -51,7 +43,6 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 	if(!user || !user.client || (user.ranged_ability && user.ranged_ability != src)) //To avoid removing the wrong ability
 		return
 	user.ranged_ability = null
-	ranged_ability_user = null
 	user.client.click_intercept = null
 	remove_mousepointer(user.client)
 	active = FALSE
@@ -71,7 +62,6 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 	var/charge_type = "recharge" //can be recharge or charges, see charge_max and charge_counter descriptions; can also be based on the holder's vars now, use "holder_var" for that
 
 	var/charge_max = 100 //recharge time in deciseconds if charge_type = "recharge" or starting charges if charge_type = "charges"
-	var/starts_charged = TRUE //Does this spell start ready to go?
 	var/charge_counter = 0 //can only cast spells if it equals recharge, ++ each decisecond if charge_type = "recharge" or -- each cast if charge_type = "charges"
 	var/still_recharging_msg = "<span class='notice'>The spell is still recharging.</span>"
 
@@ -110,7 +100,6 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 	var/action_icon = 'icons/mob/actions/actions.dmi'
 	var/action_icon_state = "spell_default"
 	var/action_background_icon_state = "bg_spell"
-	var/special_availability_check = 0//Whether the spell needs to bypass the action button's IsAvailable()
 
 	var/sound = null //The sound the spell makes when it is cast
 
@@ -151,14 +140,14 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 	var/obj/effect/proc_holder/spell/noclothes/clothes_spell = locate() in (user.mob_spell_list | (user.mind ? user.mind.spell_list : list()))
 	if((ishuman(user) && clothes_req) && !istype(clothes_spell))//clothes check
 		var/mob/living/carbon/human/H = user
-		var/obj/item/clothing/robe = H.wear_suit
-		var/obj/item/clothing/hat = H.head
-		var/obj/item/clothing/shoes = H.shoes
-		if(!robe || !hat || !shoes)
-			to_chat(user, "<span class='notice'>Your outfit isn't complete, you should put on your robe and wizard hat, as well as sandals.</span>")
+		if(!istype(H.wear_suit, /obj/item/clothing/suit/wizrobe) && !istype(H.wear_suit, /obj/item/clothing/suit/space/hardsuit/wizard) && !istype(H.wear_suit, /obj/item/clothing/suit/space/eva/plasmaman/wizard))
+			to_chat(user, "<span class='notice'>I don't feel strong enough without my robe.</span>")
 			return 0
-		if(!robe.magical || !hat.magical || !shoes.magical)
-			to_chat(user, "<span class='notice'>Your outfit isn't magical enough, you should put on your robe and wizard hat, as well as your sandals.</span>")
+		if(!istype(H.shoes, /obj/item/clothing/shoes/sandal))
+			to_chat(user, "<span class='notice'>I don't feel strong enough without my sandals.</span>")
+			return 0
+		if(!istype(H.head, /obj/item/clothing/head/wizard) && !istype(H.head, /obj/item/clothing/head/helmet/space/hardsuit/wizard) && !istype(H.head, /obj/item/clothing/head/helmet/space/eva/plasmaman/wizard))
+			to_chat(user, "<span class='notice'>I don't feel strong enough without my hat.</span>")
 			return 0
 	else if(!ishuman(user))
 		if(clothes_req || human_req)
@@ -177,15 +166,13 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 			if("holdervar")
 				adjust_var(user, holder_var_type, holder_var_amount)
 
-	if(action)
-		action.UpdateButtonIcon()
 	return 1
 
 /obj/effect/proc_holder/spell/proc/invocation(mob/user = usr) //spelling the spell out and setting it on recharge/reducing charges amount
 	switch(invocation_type)
 		if("shout")
 			if(!user.IsVocal())
-				user.custom_emote(1, "makes frantic gestures!")
+				user.emote("makes frantic gestures!")
 			else
 				if(prob(50))//Auto-mute? Fuck that noise
 					user.say(invocation)
@@ -205,11 +192,9 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 /obj/effect/proc_holder/spell/New()
 	..()
 	action = new(src)
+
 	still_recharging_msg = "<span class='notice'>[name] is still recharging.</span>"
-	if(starts_charged)
-		charge_counter = charge_max
-	else
-		start_recharge()
+	charge_counter = charge_max
 
 /obj/effect/proc_holder/spell/Destroy()
 	QDEL_NULL(action)
@@ -226,14 +211,9 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 /obj/effect/proc_holder/spell/proc/start_recharge()
 	if(action)
 		action.UpdateButtonIcon()
-	START_PROCESSING(SSfastprocess, src)
-
-/obj/effect/proc_holder/spell/process()
-	charge_counter += 2
-	if(charge_counter < charge_max)
-		return
-	STOP_PROCESSING(SSfastprocess, src)
-	charge_counter = charge_max
+	while(charge_counter < charge_max)
+		sleep(1)
+		charge_counter++
 	if(action)
 		action.UpdateButtonIcon()
 
@@ -241,7 +221,7 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 	before_cast(targets)
 	invocation()
 	if(user && user.ckey)
-		add_attack_logs(user, null, "cast the spell [name]", ATKLOG_ALL)
+		user.create_attack_log("<font color='red'>[key_name(user)] cast the spell [name].</font>")
 	spawn(0)
 		if(charge_type == "recharge" && recharge)
 			start_recharge()
@@ -254,8 +234,6 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 	else
 		cast(targets, user = user)
 	after_cast(targets)
-	if(action)
-		action.UpdateButtonIcon()
 
 /obj/effect/proc_holder/spell/proc/before_cast(list/targets)
 	if(overlay)
@@ -312,12 +290,8 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 			charge_counter++
 		if("holdervar")
 			adjust_var(user, holder_var_type, -holder_var_amount)
-	if(action)
-		action.UpdateButtonIcon()
 
-/obj/effect/proc_holder/spell/proc/updateButtonIcon()
-	if(action)
-		action.UpdateButtonIcon()
+	return
 
 /obj/effect/proc_holder/spell/proc/adjust_var(mob/living/target = usr, type, amount) //handles the adjustment of the var when the spell is used. has some hardcoded types
 	switch(type)
@@ -484,12 +458,11 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 		var/clothcheck = locate(/obj/effect/proc_holder/spell/noclothes) in user.mob_spell_list
 		var/clothcheck2 = user.mind && (locate(/obj/effect/proc_holder/spell/noclothes) in user.mind.spell_list)
 		if(clothes_req && !clothcheck && !clothcheck2) //clothes check
-			var/obj/item/clothing/robe = H.wear_suit
-			var/obj/item/clothing/hat = H.head
-			var/obj/item/clothing/shoes = H.shoes
-			if(!robe || !hat || !shoes)
+			if(!istype(H.wear_suit, /obj/item/clothing/suit/wizrobe) && !istype(H.wear_suit, /obj/item/clothing/suit/space/hardsuit/wizard))
 				return 0
-			if(!robe.magical || !hat.magical || !shoes.magical)
+			if(!istype(H.shoes, /obj/item/clothing/shoes/sandal))
+				return 0
+			if(!istype(H.head, /obj/item/clothing/head/wizard) && !istype(H.head, /obj/item/clothing/head/helmet/space/hardsuit/wizard))
 				return 0
 	else
 		if(clothes_req  || human_req)

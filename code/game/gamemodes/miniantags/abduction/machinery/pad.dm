@@ -7,12 +7,11 @@
 	var/turf/teleport_target
 
 /obj/machinery/abductor/pad/proc/Warp(mob/living/target)
-	if(!target.buckled)
-		target.forceMove(get_turf(src))
+	target.Move(src.loc)
 
 /obj/machinery/abductor/pad/proc/Send()
 	if(teleport_target == null)
-		teleport_target = GLOB.teleportlocs[pick(GLOB.teleportlocs)]
+		teleport_target = teleportlocs[pick(teleportlocs)]
 	flick("alien-pad", src)
 	for(var/mob/living/target in loc)
 		target.forceMove(teleport_target)

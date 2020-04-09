@@ -8,7 +8,6 @@
 	energy_drain = 10
 	var/dam_force = 20
 	var/obj/mecha/working/ripley/cargo_holder
-	harmful = TRUE
 
 /obj/item/mecha_parts/mecha_equipment/hydraulic_clamp/can_attach(obj/mecha/working/ripley/M)
 	if(..())
@@ -120,7 +119,7 @@
 	icon_state = "mecha_exting"
 	equip_cooldown = 5
 	energy_drain = 0
-	range = MECHA_MELEE | MECHA_RANGED
+	range = MELEE|RANGED
 
 /obj/item/mecha_parts/mecha_equipment/extinguisher/New()
 	create_reagents(1000)
@@ -191,12 +190,12 @@
 	origin_tech = "materials=4;bluespace=3;magnets=4;powerstorage=4;engineering=4"
 	equip_cooldown = 10
 	energy_drain = 250
-	range = MECHA_MELEE | MECHA_RANGED
+	range = MELEE|RANGED
 	flags_2 = NO_MAT_REDEMPTION_2
 	var/mode = 0 //0 - deconstruct, 1 - wall or floor, 2 - airlock.
 	var/canRwall = 0
 	toolspeed = 1
-	usesound = 'sound/items/deconstruct.ogg'
+	usesound = 'sound/items/Deconstruct.ogg'
 
 /obj/item/mecha_parts/mecha_equipment/rcd/New()
 	GLOB.rcd_list += src
@@ -233,7 +232,7 @@
 				occupant_message("Deconstructing [target]...")
 				if(do_after_cooldown(F))
 					chassis.spark_system.start()
-					F.ChangeTurf(F.baseturf)
+					F.ChangeTurf(/turf/space)
 					F.air_update_turf()
 					playsound(F, usesound, 50, 1)
 			else if(istype(target, /obj/machinery/door/airlock))
@@ -291,7 +290,7 @@
 	origin_tech = "materials=4;bluespace=3;magnets=4;powerstorage=4;engineering=4"
 	equip_cooldown = 10
 	energy_drain = 250
-	range = MECHA_MELEE | MECHA_RANGED
+	range = MELEE|RANGED
 
 /obj/item/mecha_parts/mecha_equipment/mimercd/can_attach(obj/mecha/combat/reticence/M)
 	if(..())

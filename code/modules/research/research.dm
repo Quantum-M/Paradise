@@ -271,13 +271,6 @@ research holder datum.
 	id = "programming"
 	max_level = 7
 
-/datum/tech/toxins //not meant to be raised by deconstruction, do not give objects toxins as an origin_tech
-	name = "Toxins Research"
-	desc = "Research into plasma based explosive devices. Upgrade through testing explosives in the toxins lab."
-	id = "toxins"
-	max_level = 7
-	rare = 2
-
 /datum/tech/syndicate
 	name = "Illegal Technologies Research"
 	desc = "The study of technologies that violate standard Nanotrasen regulations."
@@ -345,7 +338,6 @@ datum/tech/robotics
 	var/default_desc = "A disk for storing technology data for further research."
 
 /obj/item/disk/tech_disk/New()
-	..()
 	src.pixel_x = rand(-5.0, 5)
 	src.pixel_y = rand(-5.0, 5)
 
@@ -373,9 +365,8 @@ datum/tech/robotics
 	var/default_desc = "A disk for storing device design data for construction in lathes."
 
 /obj/item/disk/design_disk/New()
-	..()
-	pixel_x = rand(-5, 5)
-	pixel_y = rand(-5, 5)
+	src.pixel_x = rand(-5.0, 5)
+	src.pixel_y = rand(-5.0, 5)
 
 /obj/item/disk/design_disk/proc/load_blueprint(datum/design/D)
 	name = "[default_name] \[[D]\]"
@@ -388,13 +379,3 @@ datum/tech/robotics
 	name = default_name
 	desc = default_desc
 	blueprint = null
-
-/obj/item/disk/design_disk/golem_shell
-	name = "golem creation disk"
-	desc = "A gift from the Liberator."
-	icon_state = "datadisk1"
-
-/obj/item/disk/design_disk/golem_shell/Initialize()
-	. = ..()
-	var/datum/design/golem_shell/G = new
-	blueprint = G

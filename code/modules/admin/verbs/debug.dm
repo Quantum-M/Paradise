@@ -5,12 +5,12 @@
 	if(!check_rights(R_DEBUG))
 		return
 
-	if(GLOB.debug2)
-		GLOB.debug2 = 0
+	if(Debug2)
+		Debug2 = 0
 		message_admins("[key_name_admin(src)] toggled debugging off.")
 		log_admin("[key_name(src)] toggled debugging off.")
 	else
-		GLOB.debug2 = 1
+		Debug2 = 1
 		message_admins("[key_name_admin(src)] toggled debugging on.")
 		log_admin("[key_name(src)] toggled debugging on.")
 
@@ -68,7 +68,7 @@ But you can call procs that are of type /mob/living/carbon/human/proc/ for that 
 				target = null
 				targetselected = 0
 
-		var/procname = clean_input("Proc path, eg: /proc/fake_blood","Path:", null)
+		var/procname = input("Proc path, eg: /proc/fake_blood","Path:", null) as text|null
 		if(!procname)	return
 
 		if(targetselected && !hascall(target,procname))
@@ -95,16 +95,6 @@ But you can call procs that are of type /mob/living/carbon/human/proc/ for that 
 		to_chat(usr, "<font color='blue'>[procname] returned: [!isnull(returnval) ? returnval : "null"]</font>")
 		feedback_add_details("admin_verb","APC") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
-GLOBAL_VAR(AdminProcCaller)
-GLOBAL_PROTECT(AdminProcCaller)
-
-/proc/IsAdminAdvancedProcCall()
-#ifdef TESTING
-	return FALSE
-#else
-	return usr && usr.client && GLOB.AdminProcCaller == usr.client.ckey
-#endif
-
 /client/proc/callproc_datum(var/A as null|area|mob|obj|turf)
 	set category = "Debug"
 	set name = "Atom ProcCall"
@@ -112,7 +102,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 	if(!check_rights(R_PROCCALL))
 		return
 
-	var/procname = clean_input("Proc name, eg: fake_blood","Proc:", null)
+	var/procname = input("Proc name, eg: fake_blood","Proc:", null) as text|null
 	if(!procname)
 		return
 
@@ -125,14 +115,14 @@ GLOBAL_PROTECT(AdminProcCaller)
 		return
 
 	if(!A || !IsValidSrc(A))
-		to_chat(src, "<span class='warning'>Error: callproc_datum(): owner of proc no longer exists.</span>")
+		to_chat(usr, "<span class='warning'>Error: callproc_datum(): owner of proc no longer exists.</span>")
 		return
 	message_admins("[key_name_admin(src)] called [A]'s [procname]() with [lst.len ? "the arguments [list2params(lst)]":"no arguments"]")
 	log_admin("[key_name(src)] called [A]'s [procname]() with [lst.len ? "the arguments [list2params(lst)]":"no arguments"]")
 
 	spawn()
 		var/returnval = call(A,procname)(arglist(lst)) // Pass the lst as an argument list to the proc
-		to_chat(src, "<span class='notice'>[procname] returned: [!isnull(returnval) ? returnval : "null"]</span>")
+		to_chat(usr, "<span class='notice'>[procname] returned: [!isnull(returnval) ? returnval : "null"]</span>")
 
 	feedback_add_details("admin_verb","DPC") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
@@ -159,7 +149,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 				return null
 
 			if("text")
-				lst += clean_input("Enter new text:","Text",null)
+				lst += input("Enter new text:","Text",null) as text
 
 			if("num")
 				lst += input("Enter new number:","Num",0) as num
@@ -225,7 +215,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 	if(!check_rights(R_SPAWN))
 		return
 
-	if(!SSticker)
+	if(!ticker)
 		alert("Wait until the game starts")
 		return
 	if(istype(M, /mob/living/carbon/human))
@@ -243,7 +233,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 	if(!check_rights(R_SPAWN))
 		return
 
-	if(!SSticker)
+	if(!ticker)
 		alert("Wait until the game starts")
 		return
 
@@ -281,7 +271,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 			return 0
 	var/obj/item/paicard/card = new(T)
 	var/mob/living/silicon/pai/pai = new(card)
-	var/raw_name = clean_input("Enter your pAI name:", "pAI Name", "Personal AI", choice)
+	var/raw_name = input(choice, "Enter your pAI name:", "pAI Name", "Personal AI") as text
 	var/new_name = reject_bad_name(raw_name, 1)
 	if(new_name)
 		pai.name = new_name
@@ -291,9 +281,9 @@ GLOBAL_PROTECT(AdminProcCaller)
 	pai.real_name = pai.name
 	pai.key = choice.key
 	card.setPersonality(pai)
-	for(var/datum/paiCandidate/candidate in GLOB.paiController.pai_candidates)
+	for(var/datum/paiCandidate/candidate in paiController.pai_candidates)
 		if(candidate.key == choice.key)
-			GLOB.paiController.pai_candidates.Remove(candidate)
+			paiController.pai_candidates.Remove(candidate)
 	feedback_add_details("admin_verb","MPAI") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
 /client/proc/cmd_admin_alienize(var/mob/M in GLOB.mob_list)
@@ -303,7 +293,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 	if(!check_rights(R_SPAWN))
 		return
 
-	if(!SSticker)
+	if(!ticker)
 		alert("Wait until the game starts")
 		return
 	if(ishuman(M))
@@ -323,7 +313,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 	if(!check_rights(R_SPAWN))
 		return
 
-	if(!SSticker)
+	if(!ticker)
 		alert("Wait until the game starts")
 		return
 	if(ishuman(M))
@@ -343,7 +333,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 	if(!check_rights(R_SPAWN))
 		return
 
-	if(!SSticker)
+	if(!ticker)
 		alert("Wait until the game starts")
 		return
 	if(ishuman(M))
@@ -415,7 +405,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 	if(!check_rights(R_EVENT))
 		return
 
-	if(!SSticker)
+	if(!ticker)
 		alert("Wait until the game starts")
 		return
 	if(istype(M, /mob/living/carbon/human))
@@ -586,79 +576,109 @@ GLOBAL_PROTECT(AdminProcCaller)
 	if(!check_rights(R_EVENT))
 		return
 
-	if(!ishuman(M) && !isobserver(M))
+	if(!ishuman(M))
 		alert("Invalid mob")
 		return
 
-	var/dresscode = robust_dress_shop()
-
-	if(!dresscode)
-		return
-
-	var/delete_pocket
-	var/mob/living/carbon/human/H
-	if(isobserver(M))
-		H = M.change_mob_type(/mob/living/carbon/human, null, null, TRUE)
-	else
-		H = M
-		if(H.l_store || H.r_store || H.s_store) //saves a lot of time for admins and coders alike
-			if(alert("Should the items in their pockets be dropped? Selecting \"No\" will delete them.", "Robust quick dress shop", "Yes", "No") == "No")
-				delete_pocket = TRUE
-
-	for (var/obj/item/I in H.get_equipped_items(delete_pocket))
-		qdel(I)
-	if(dresscode != "Naked")
-		H.equipOutfit(dresscode)
-
-	H.regenerate_icons()
-
-	feedback_add_details("admin_verb", "SE") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
-	log_admin("[key_name(usr)] changed the equipment of [key_name(M)] to [dresscode].")
-	message_admins("<span class='notice'>[key_name_admin(usr)] changed the equipment of [key_name_admin(M)] to [dresscode].</span>", 1)
-
-/client/proc/robust_dress_shop()
-	var/list/outfits = list(
-		"Naked",
-		"As Job...",
-		"Custom..."
+	var/list/choices = list(
+		"strip",
+		"as job...",
+		"emergency response team member",
+		"emergency response team leader"
 	)
 
-	var/list/paths = subtypesof(/datum/outfit) - typesof(/datum/outfit/job)
-	for(var/path in paths)
-		var/datum/outfit/O = path //not much to initalize here but whatever
-		if(initial(O.can_be_admin_equipped))
-			outfits[initial(O.name)] = path
+	var/admin_outfits = subtypesof(/datum/outfit/admin)
+	for(var/type in admin_outfits)
+		var/datum/outfit/O = type
+		var/name = initial(O.name)
+		if(name != "Naked")
+			choices[initial(O.name)] = type
 
-	var/dresscode = input("Select outfit", "Robust quick dress shop") as null|anything in outfits
+	var/dostrip = 0
+	switch(alert("Strip [M] before dressing?", "Strip?", "Yes", "No", "Cancel"))
+		if("Yes")
+			dostrip = 1
+		if("Cancel")
+			return
+
+	var/dresscode = input("Select dress for [M]", "Robust quick dress shop") as null|anything in choices
 	if(isnull(dresscode))
 		return
 
-	if(outfits[dresscode])
-		dresscode = outfits[dresscode]
+	var/datum/outfit/O
+	if(!(dresscode in list("strip", "as job...", "emergency response team member", "emergency response team leader")))
+		O = choices[dresscode]
 
-	if(dresscode == "As Job...")
-		var/list/job_paths = subtypesof(/datum/outfit/job)
-		var/list/job_outfits = list()
-		for(var/path in job_paths)
-			var/datum/outfit/O = path
-			if(initial(O.can_be_admin_equipped))
-				job_outfits[initial(O.name)] = path
+	var/datum/job/jobdatum
+	if(dresscode == "as job...")
+		var/jobname = input("Select job", "Robust quick dress shop") as null|anything in get_all_jobs()
+		jobdatum = job_master.GetJob(jobname)
 
-		dresscode = input("Select job equipment", "Robust quick dress shop") as null|anything in job_outfits
-		dresscode = job_outfits[dresscode]
-		if(isnull(dresscode))
-			return
+	feedback_add_details("admin_verb", "SEQ") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
+	if(dostrip)
+		for(var/obj/item/I in M)
+			if(istype(I, /obj/item/implant))
+				continue
+			if(istype(I, /obj/item/organ))
+				continue
+			qdel(I)
 
-	if(dresscode == "Custom...")
-		var/list/custom_names = list()
-		for(var/datum/outfit/D in GLOB.custom_outfits)
-			custom_names[D.name] = D
-		var/selected_name = input("Select outfit", "Robust quick dress shop") as null|anything in custom_names
-		dresscode = custom_names[selected_name]
-		if(isnull(dresscode))
-			return
 
-	return dresscode
+	switch(dresscode)
+		if("strip")
+			//do nothing
+
+		// god is dead
+		if("as job...")
+			if(jobdatum)
+				dresscode = "[jobdatum.title]"
+				jobdatum.equip(M)
+
+		if("emergency response team member", "emergency response team leader")
+			var/datum/response_team/equip_team = null
+			switch(alert("Level", "Emergency Response Team", "Amber", "Red", "Gamma"))
+				if("Amber")
+					equip_team = new /datum/response_team/amber
+				if("Red")
+					equip_team = new /datum/response_team/red
+				if("Gamma")
+					equip_team = new /datum/response_team/gamma
+			if(!equip_team)
+				return
+			if(dresscode == "emergency response team leader")
+				equip_team.equip_officer("Commander", M)
+			else
+				var/list/ert_outfits = list("Security", "Engineer", "Medic", "Janitor", "Paranormal")
+				var/echoice = input("Loadout Type", "Emergency Response Team") as null|anything in ert_outfits
+				if(!echoice)
+					return
+				switch(echoice)
+					if("Commander")
+						equip_team.equip_officer("Commander", M)
+					if("Security")
+						equip_team.equip_officer("Security", M)
+					if("Engineer")
+						equip_team.equip_officer("Engineer", M)
+					if("Medic")
+						equip_team.equip_officer("Medic", M)
+					if("Janitor")
+						equip_team.equip_officer("Janitor", M)
+					if("Paranormal")
+						equip_team.equip_officer("Paranormal", M)
+					else
+						to_chat(src, "Invalid ERT Loadout selected")
+
+
+		else // outfit datum
+			if(O)
+				M.equipOutfit(O, FALSE)
+
+	M.regenerate_icons()
+
+	log_admin("[key_name(usr)] changed the equipment of [key_name(M)] to [dresscode].")
+	message_admins("<span class='notice'>[key_name_admin(usr)] changed the equipment of [key_name_admin(M)] to [dresscode].</span>", 1)
+	return
+
 
 /client/proc/startSinglo()
 	set category = "Debug"
@@ -798,7 +818,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 	if(!check_rights(R_SPAWN))
 		return
 
-	if(!SSticker)
+	if(!ticker)
 		alert("Wait until the game starts")
 		return
 	if(istype(M, /mob/living/carbon))
@@ -806,7 +826,7 @@ GLOBAL_PROTECT(AdminProcCaller)
 		genemutcheck(M,block,null,MUTCHK_FORCED)
 		M.update_mutations()
 		var/state="[M.dna.GetSEState(block)?"on":"off"]"
-		var/blockname=GLOB.assigned_blocks[block]
+		var/blockname=assigned_blocks[block]
 		message_admins("[key_name_admin(src)] has toggled [M.key]'s [blockname] block [state]!")
 		log_admin("[key_name(src)] has toggled [M.key]'s [blockname] block [state]!")
 	else
@@ -832,10 +852,10 @@ GLOBAL_PROTECT(AdminProcCaller)
 	set name = "View Runtimes"
 	set desc = "Open the Runtime Viewer"
 
-	if(!check_rights(R_DEBUG|R_VIEWRUNTIMES))
+	if(!check_rights(R_DEBUG))
 		return
 
-	GLOB.error_cache.showTo(usr)
+	error_cache.showTo(usr)
 
 /client/proc/jump_to_ruin()
 	set category = "Debug"
@@ -885,8 +905,8 @@ GLOBAL_PROTECT(AdminProcCaller)
 	if(!check_rights(R_DEBUG))
 		return
 
-	SSmedals.hub_enabled = !SSmedals.hub_enabled
+	global.medals_enabled = !global.medals_enabled
 
-	message_admins("<span class='adminnotice'>[key_name_admin(src)] [SSmedals.hub_enabled ? "disabled" : "enabled"] the medal hub lockout.</span>")
+	message_admins("<span class='adminnotice'>[key_name_admin(src)] [global.medals_enabled ? "disabled" : "enabled"] the medal hub lockout.</span>")
 	feedback_add_details("admin_verb","TMH") // If...
-	log_admin("[key_name(src)] [SSmedals.hub_enabled ? "disabled" : "enabled"] the medal hub lockout.")
+	log_admin("[key_name(src)] [global.medals_enabled ? "disabled" : "enabled"] the medal hub lockout.")

@@ -10,7 +10,7 @@
 	w_class = WEIGHT_CLASS_SMALL
 	armour_penetration = 100
 	attack_verb = list("bludgeoned", "whacked", "disciplined")
-	resistance_flags = FLAMMABLE
+	burn_state = FLAMMABLE
 
 /obj/item/twohanded/staff/broom
 	name = "broom"
@@ -27,7 +27,7 @@
 	if(user)
 		user.update_inv_l_hand()
 		user.update_inv_r_hand()
-		if(user.mind in SSticker.mode.wizards)
+		if(user.mind in ticker.mode.wizards)
 			user.flying = wielded ? 1 : 0
 			if(wielded)
 				to_chat(user, "<span class='notice'>You hold \the [src] between your legs.</span>")

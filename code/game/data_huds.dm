@@ -7,10 +7,10 @@
 /* DATA HUD DATUMS */
 
 /atom/proc/add_to_all_human_data_huds()
-	for(var/datum/atom_hud/data/human/hud in GLOB.huds) hud.add_to_hud(src)
+	for(var/datum/atom_hud/data/human/hud in huds) hud.add_to_hud(src)
 
 /atom/proc/remove_from_all_data_huds()
-	for(var/datum/atom_hud/data/hud in GLOB.huds) hud.remove_from_hud(src)
+	for(var/datum/atom_hud/data/hud in huds) hud.remove_from_hud(src)
 
 /datum/atom_hud/data
 
@@ -78,11 +78,10 @@
 			return 1
 	return 0
 
-//helper for getting the appropriate health status
+//helper for getting the appropriate health status UPDATED BY PUCKABOO2 TO INCLUDE NEGATIVES.
 /proc/RoundHealth(mob/living/M)
 	if(M.stat == DEAD || (M.status_flags & FAKEDEATH))
-		return "health-100-dead" //what's our health? it doesn't matter, we're dead, or faking
-
+		return "health-100" //what's our health? it doesn't matter, we're dead, or faking
 	var/maxi_health = M.maxHealth
 	if(iscarbon(M) && M.health < 0)
 		maxi_health = 100 //so crit shows up right for aliens and other high-health carbon mobs; noncarbons don't have crit.
@@ -92,7 +91,7 @@
 		if(100 to INFINITY)
 			return "health100"
 		if(95 to 100)
-			return "health95"
+			return "health95" //For telling patients to eat a warm donk pocket and go on with their shift.
 		if(90 to 95)
 			return "health90"
 		if(80 to 90)
@@ -128,13 +127,13 @@
 		if(-70 to -60)
 			return "health-60"
 		if(-80 to -70)
-			return "health-70"
+			return "health-70" //Doc?
 		if(-90 to -80)
-			return "health-80"
+			return "health-80" //Hey, doc?
 		if(-100 to -90)
-			return "health-90"
+			return "health-90" //HURRY UP, DOC!
 		else
-			return "health-100" //past this point, you're just in trouble
+			return "health-100" //doc u had 1 job
 	return "0"
 
 
@@ -142,7 +141,7 @@
 
 //called when a human changes suit sensors
 /mob/living/carbon/proc/update_suit_sensors()
-	var/datum/atom_hud/data/human/medical/basic/B = GLOB.huds[DATA_HUD_MEDICAL_BASIC]
+	var/datum/atom_hud/data/human/medical/basic/B = huds[DATA_HUD_MEDICAL_BASIC]
 	B.update_suit_sensors(src)
 
 
@@ -165,11 +164,6 @@
 	var/image/holder = hud_list[STATUS_HUD]
 	var/mob/living/simple_animal/borer/B = has_brain_worms()
 	if(stat == DEAD || (status_flags & FAKEDEATH))
-		if(timeofdeath)
-			var/tdelta = round(world.time - timeofdeath)
-			if(tdelta < (DEFIB_TIME_LIMIT * 10))
-				holder.icon_state = "huddefib"
-				return
 		holder.icon_state = "huddead"
 	else if(status_flags & XENO_HOST)
 		holder.icon_state = "hudxeno"
@@ -218,9 +212,9 @@
 /mob/living/carbon/human/proc/sec_hud_set_security_status()
 	var/image/holder = hud_list[WANTED_HUD]
 	var/perpname = get_visible_name(TRUE) //gets the name of the perp, works if they have an id or if their face is uncovered
-	if(!SSticker) return //wait till the game starts or the monkeys runtime....
+	if(!ticker) return //wait till the game starts or the monkeys runtime....
 	if(perpname)
-		var/datum/data/record/R = find_record("name", perpname, GLOB.data_core.security)
+		var/datum/data/record/R = find_record("name", perpname, data_core.security)
 		if(R)
 			switch(R.fields["criminal"])
 				if("*Execute*")
@@ -295,9 +289,8 @@
 ~~~~~~~~~~~~~~~~~~~~~*/
 /obj/mecha/proc/diag_hud_set_mechhealth()
 	var/image/holder = hud_list[DIAG_MECH_HUD]
-	var/icon/I = icon(icon, icon_state, dir)
-	holder.pixel_y = I.Height() - world.icon_size
-	holder.icon_state = "huddiag[RoundDiagBar(obj_integrity/max_integrity)]"
+	holder.icon_state = "huddiag[RoundDiagBar(health/initial(health))]"
+
 
 /obj/mecha/proc/diag_hud_set_mechcell()
 	var/image/holder = hud_list[DIAG_BATT_HUD]

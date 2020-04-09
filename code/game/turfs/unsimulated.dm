@@ -10,9 +10,6 @@
 /turf/unsimulated/rpd_act()
 	return
 
-/turf/unsimulated/acid_act(acidpwr, acid_volume, acid_id)
-	return 0
-
 /turf/unsimulated/floor/plating/vox
 	icon_state = "plating"
 	name = "plating"
@@ -40,6 +37,12 @@
 	nitrogen = 0
 	temperature = TCMB
 
-/turf/unsimulated/floor/plating/airless/New()
-	..()
-	name = "plating"
+	New()
+		..()
+		name = "plating"
+
+/turf/unsimulated/floor/plating/airless/catwalk
+	icon = 'icons/turf/catwalks.dmi'
+	icon_state = "catwalk0"
+	name = "catwalk"
+	desc = "Cats really don't like these things."

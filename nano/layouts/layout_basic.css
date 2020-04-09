@@ -5,7 +5,6 @@ body {
 #uiContent {
     clear: both;
     padding: 8px;
-    margin-top: 30px;
 }
 
 #uiLoadingNotice {
@@ -18,3 +17,5 @@ body {
     padding: 3px 4px 3px 4px;
     margin: 4px 0 4px 0;
 }
+
+

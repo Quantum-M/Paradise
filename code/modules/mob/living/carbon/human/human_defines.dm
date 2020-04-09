@@ -1,8 +1,8 @@
-GLOBAL_DATUM_INIT(default_martial_art, /datum/martial_art, new())
+var/global/default_martial_art = new/datum/martial_art
 /mob/living/carbon/human
 
-	hud_possible = list(HEALTH_HUD,STATUS_HUD,ID_HUD,WANTED_HUD,IMPMINDSHIELD_HUD,IMPCHEM_HUD,IMPTRACK_HUD,SPECIALROLE_HUD,GLAND_HUD)
-	pressure_resistance = 25
+	hud_possible = list(HEALTH_HUD,STATUS_HUD,ID_HUD,WANTED_HUD,IMPMINDSHIELD_HUD,IMPCHEM_HUD,IMPTRACK_HUD,SPECIALROLE_HUD,NATIONS_HUD,GLAND_HUD)
+
 	//Marking colour and style
 	var/list/m_colours = DEFAULT_MARKING_COLOURS //All colours set to #000000.
 	var/list/m_styles = DEFAULT_MARKING_STYLES //All markings set to None.
@@ -16,6 +16,7 @@ GLOBAL_DATUM_INIT(default_martial_art, /datum/martial_art, new())
 	var/lip_color = "white"
 
 	var/age = 30		//Player's age (pure fluff)
+	var/b_type = "A+"	//Player's bloodtype
 
 	var/underwear = "Nude"	//Which underwear the player wants
 	var/undershirt = "Nude"	//Which undershirt the player wants
@@ -41,6 +42,8 @@ GLOBAL_DATUM_INIT(default_martial_art, /datum/martial_art, new())
 
 	var/voice = ""	//Instead of new say code calling GetVoice() over and over and over, we're just going to ask this variable, which gets updated in Life()
 
+	var/speech_problem_flag = 0
+
 	var/datum/personal_crafting/handcrafting
 
 	var/datum/martial_art/martial_art = null
@@ -63,7 +66,6 @@ GLOBAL_DATUM_INIT(default_martial_art, /datum/martial_art, new())
 	var/check_mutations=0 // Check mutations on next life tick
 
 	var/heartbeat = 0
-	var/receiving_cpr = FALSE
 
 	var/fire_dmi = 'icons/mob/OnFire.dmi'
 	var/fire_sprite = "Standing"

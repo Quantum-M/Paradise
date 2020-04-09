@@ -28,12 +28,12 @@
 	switch(damage_type)
 		if(BRUTE)
 			if(damage_amount)
-				playsound(loc, 'sound/effects/attackblob.ogg', 100, TRUE)
+				playsound(loc, 'sound/effects/attackblob.ogg', 100, 1)
 			else
-				playsound(src, 'sound/weapons/tap.ogg', 50, TRUE)
+				playsound(src, 'sound/weapons/tap.ogg', 50, 1)
 		if(BURN)
 			if(damage_amount)
-				playsound(loc, 'sound/items/welder.ogg', 100, TRUE)
+				playsound(loc, 'sound/items/welder.ogg', 100, 1)
 
 /*
  * Resin
@@ -56,9 +56,8 @@
 	..()
 
 /obj/structure/alien/resin/Destroy()
-	var/turf/T = get_turf(src)
-	. = ..()
-	T.air_update_turf(TRUE)
+	air_update_turf(1)
+	return ..()
 
 /obj/structure/alien/resin/Move()
 	var/turf/T = loc
@@ -113,7 +112,6 @@
 	anchored = TRUE
 	density = FALSE
 	layer = TURF_LAYER
-	plane = FLOOR_PLANE
 	icon_state = "weeds"
 	max_integrity = 15
 	var/obj/structure/alien/weeds/node/linked_node = null
@@ -159,7 +157,6 @@
 		new /obj/structure/alien/weeds(T, linked_node)
 
 /obj/structure/alien/weeds/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
-	..()
 	if(exposed_temperature > 300)
 		take_damage(5, BURN, 0, 0)
 
@@ -235,22 +232,14 @@
 	var/status = GROWING	//can be GROWING, GROWN or BURST; all mutually exclusive
 	layer = MOB_LAYER
 
-/obj/structure/alien/egg/grown
-	status = GROWN
-	icon_state = "egg"
-
-/obj/structure/alien/egg/burst
-	status = BURST
-	icon_state = "egg_hatched"
 
 /obj/structure/alien/egg/New()
 	new /obj/item/clothing/mask/facehugger(src)
 	..()
+	spawn(rand(MIN_GROWTH_TIME, MAX_GROWTH_TIME))
+		Grow()
 	if(status == BURST)
 		obj_integrity = integrity_failure
-	else if(status != GROWN)
-		spawn(rand(MIN_GROWTH_TIME, MAX_GROWTH_TIME))
-		Grow()
 
 /obj/structure/alien/egg/attack_alien(mob/living/carbon/alien/user)
 	return attack_hand(user)
@@ -301,12 +290,10 @@
 							break
 
 /obj/structure/alien/egg/obj_break(damage_flag)
-	if(!(flags & NODECONSTRUCT))
-		if(status != BURST)
-			Burst(kill = TRUE)
+	if(status != BURST)
+		Burst(kill = TRUE)
 
 /obj/structure/alien/egg/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
-	..()
 	if(exposed_temperature > 500)
 		take_damage(5, BURN, 0, 0)
 

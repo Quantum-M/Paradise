@@ -1,16 +1,16 @@
 //HONKsquad
 
-#define HONKSQUAD_POSSIBLE 6 //if more Commandos are needed in the future
-GLOBAL_VAR_INIT(sent_honksquad, 0)
+var/const/honksquad_possible = 6 //if more Commandos are needed in the future
+var/global/sent_honksquad = 0
 
 /client/proc/honksquad()
-	if(!SSticker)
+	if(!ticker)
 		to_chat(usr, "<font color='red'>The game hasn't started yet!</font>")
 		return
 	if(world.time < 6000)
 		to_chat(usr, "<font color='red'>There are [(6000-world.time)/10] seconds remaining before it may be called.</font>")
 		return
-	if(GLOB.sent_honksquad == 1)
+	if(sent_honksquad == 1)
 		to_chat(usr, "<font color='red'>Clown Planet has already dispatched a HONKsquad.</font>")
 		return
 	if(alert("Do you want to send in the HONKsquad? Once enabled, this is irreversible.",,"Yes","No")!="Yes")
@@ -24,14 +24,14 @@ GLOBAL_VAR_INIT(sent_honksquad, 0)
 			if(alert("Error, no mission set. Do you want to exit the setup process?",,"Yes","No")=="Yes")
 				return
 
-	if(GLOB.sent_honksquad)
+	if(sent_honksquad)
 		to_chat(usr, "Looks like someone beat you to it. HONK.")
 		return
 
-	GLOB.sent_honksquad = 1
+	sent_honksquad = 1
 
 
-	var/honksquad_number = HONKSQUAD_POSSIBLE //for selecting a leader
+	var/honksquad_number = honksquad_possible //for selecting a leader
 	var/honk_leader_selected = 0 //when the leader is chosen. The last person spawned.
 
 
@@ -42,7 +42,7 @@ GLOBAL_VAR_INIT(sent_honksquad, 0)
 		if(!G.client.holder && !G.client.is_afk())	//Whoever called/has the proc won't be added to the list.
 			if(!(G.mind && G.mind.current && G.mind.current.stat != DEAD))
 				candidates += G.key
-	for(var/i=HONKSQUAD_POSSIBLE,(i>0&&candidates.len),i--)//Decrease with every commando selected.
+	for(var/i=honksquad_possible,(i>0&&candidates.len),i--)//Decrease with every commando selected.
 		var/candidate = input("Pick characters to spawn as the HONKsquad. This will go on until there either no more ghosts to pick from or the slots are full.", "Active Players") as null|anything in candidates	//It will auto-pick a person when there is only one candidate.
 		candidates -= candidate		//Subtract from candidates.
 		commandos += candidate//Add their ghost to commandos.
@@ -93,9 +93,8 @@ GLOBAL_VAR_INIT(sent_honksquad, 0)
 	new_honksquad.mind_initialize()
 	new_honksquad.mind.assigned_role = SPECIAL_ROLE_HONKSQUAD
 	new_honksquad.mind.special_role = SPECIAL_ROLE_HONKSQUAD
-	new_honksquad.mind.offstation_role = TRUE
 	new_honksquad.add_language("Clownish")
-	SSticker.mode.traitors |= new_honksquad.mind//Adds them to current traitor list. Which is really the extra antagonist list.
+	ticker.mode.traitors |= new_honksquad.mind//Adds them to current traitor list. Which is really the extra antagonist list.
 	new_honksquad.equip_honksquad(honk_leader_selected)
 	return new_honksquad
 
@@ -107,8 +106,8 @@ GLOBAL_VAR_INIT(sent_honksquad, 0)
 	equip_to_slot_or_del(new /obj/item/storage/backpack/clown(src), slot_back)
 	equip_to_slot_or_del(new /obj/item/storage/box/survival(src), slot_in_backpack)
 	if(src.gender == FEMALE)
-		equip_to_slot_or_del(new /obj/item/clothing/mask/gas/clown_hat/sexy(src), slot_wear_mask)
-		equip_to_slot_or_del(new /obj/item/clothing/under/rank/clown/sexy(src), slot_w_uniform)
+		equip_to_slot_or_del(new /obj/item/clothing/mask/gas/sexyclown(src), slot_wear_mask)
+		equip_to_slot_or_del(new /obj/item/clothing/under/sexyclown(src), slot_w_uniform)
 	else
 		equip_to_slot_or_del(new /obj/item/clothing/under/rank/clown(src), slot_w_uniform)
 		equip_to_slot_or_del(new /obj/item/clothing/mask/gas/clown_hat(src), slot_wear_mask)
@@ -120,7 +119,6 @@ GLOBAL_VAR_INIT(sent_honksquad, 0)
 	equip_to_slot_or_del(new /obj/item/stamp/clown(src), slot_in_backpack)
 	equip_to_slot_or_del(new /obj/item/toy/crayon/rainbow(src), slot_in_backpack)
 	equip_to_slot_or_del(new /obj/item/reagent_containers/spray/waterflower(src), slot_in_backpack)
-	equip_to_slot_or_del(new /obj/item/reagent_containers/food/pill/patch/jestosterone(src), slot_r_store)
 	if(prob(50))
 		equip_to_slot_or_del(new /obj/item/gun/energy/clown(src), slot_in_backpack)
 	else
@@ -132,7 +130,7 @@ GLOBAL_VAR_INIT(sent_honksquad, 0)
 	var/obj/item/card/id/W = new(src)
 	W.name = "[real_name]'s ID Card"
 	W.icon_state = "centcom_old"
-	W.access = list(ACCESS_CLOWN)//They get full station access.
+	W.access = list(access_clown)//They get full station access.
 	W.assignment = "HONKsquad"
 	W.registered_name = real_name
 	equip_to_slot_or_del(W, slot_wear_id)

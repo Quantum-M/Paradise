@@ -4,8 +4,6 @@
 	icon_state = "flood00"
 	anchored = FALSE
 	density = TRUE
-	max_integrity = 100
-	integrity_failure = 80
 	light_power = 20
 	var/on = FALSE
 	var/obj/item/stock_parts/cell/high/cell = null
@@ -14,8 +12,6 @@
 	var/open = FALSE
 	var/brightness_on = 14
 
-/obj/machinery/floodlight/get_cell()
-	return cell
 
 /obj/machinery/floodlight/Initialize()
 	. = ..()
@@ -106,8 +102,6 @@
 				"<span class='notice'> You have loosened \the [src]'s casters.</span>", \
 				"You hear ratchet.")
 			anchored = FALSE
-		updateicon()
-		return
 	if(istype(W, /obj/item/screwdriver))
 		if(!open)
 			if(unlocked)
@@ -116,8 +110,7 @@
 			else
 				unlocked = TRUE
 				to_chat(user, "You unscrew the battery panel.")
-		updateicon()
-		return
+
 	if(istype(W, /obj/item/crowbar))
 		if(unlocked)
 			if(open)
@@ -128,8 +121,7 @@
 				if(unlocked)
 					open = TRUE
 					to_chat(user, "You remove the battery panel.")
-		updateicon()
-		return
+
 	if(istype(W, /obj/item/stock_parts/cell))
 		if(open)
 			if(cell)
@@ -139,10 +131,4 @@
 				W.loc = src
 				cell = W
 				to_chat(user, "You insert the power cell.")
-		updateicon()
-		return
-	return ..()
-
-/obj/machinery/floodlight/extinguish_light()
-	on = 0
-	set_light(0)
+	updateicon()

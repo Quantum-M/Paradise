@@ -7,81 +7,70 @@
 	icon = 'icons/obj/food/pizza.dmi'
 	slices_num = 6
 	filling_color = "#BAA14C"
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 1)
 
 /obj/item/reagent_containers/food/snacks/sliceable/pizza/margherita
-	name = "margherita pizza"
+	name = "Margherita"
 	desc = "The golden standard of pizzas."
 	icon_state = "pizzamargherita"
 	slice_path = /obj/item/reagent_containers/food/snacks/margheritaslice
 	list_reagents = list("nutriment" = 30, "tomatojuice" = 6, "vitamin" = 5)
 
 /obj/item/reagent_containers/food/snacks/margheritaslice
-	name = "margherita slice"
+	name = "Margherita slice"
 	desc = "A slice of the classic pizza."
 	icon = 'icons/obj/food/pizza.dmi'
 	icon_state = "pizzamargheritaslice"
 	filling_color = "#BAA14C"
 	list_reagents = list("nutriment" = 5)
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 1)
 
 /obj/item/reagent_containers/food/snacks/sliceable/pizza/meatpizza
-	name = "meat pizza"
+	name = "Meatpizza"
 	desc = "A pizza with meat topping."
 	icon_state = "meatpizza"
 	slice_path = /obj/item/reagent_containers/food/snacks/meatpizzaslice
 	list_reagents = list("protein" = 30, "tomatojuice" = 6, "vitamin" = 8)
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 1, "meat" = 1)
 
 /obj/item/reagent_containers/food/snacks/meatpizzaslice
-	name = "meat pizza slice"
+	name = "Meatpizza slice"
 	desc = "A slice of a meaty pizza."
 	icon = 'icons/obj/food/pizza.dmi'
 	icon_state = "meatpizzaslice"
 	filling_color = "#BAA14C"
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 1, "meat" = 1)
 
 /obj/item/reagent_containers/food/snacks/sliceable/pizza/mushroompizza
-	name = "mushroom pizza"
+	name = "Mushroompizza"
 	desc = "Very special pizza."
 	icon_state = "mushroompizza"
 	slice_path = /obj/item/reagent_containers/food/snacks/mushroompizzaslice
 	list_reagents = list("plantmatter" = 30, "vitamin" = 5)
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 1, "mushroom" = 1)
-
 
 /obj/item/reagent_containers/food/snacks/mushroompizzaslice
-	name = "mushroom pizza slice"
+	name = "Mushroompizza slice"
 	desc = "Maybe it is the last slice of pizza in your life."
 	icon = 'icons/obj/food/pizza.dmi'
 	icon_state = "mushroompizzaslice"
 	filling_color = "#BAA14C"
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 1, "mushroom" = 1)
 
 /obj/item/reagent_containers/food/snacks/sliceable/pizza/vegetablepizza
-	name = "vegetable pizza"
-	desc = "No Tomato Sapiens were harmed during the making of this pizza."
+	name = "Vegetable pizza"
+	desc = "No one of Tomato Sapiens were harmed during making this pizza."
 	icon_state = "vegetablepizza"
 	slice_path = /obj/item/reagent_containers/food/snacks/vegetablepizzaslice
 	list_reagents = list("plantmatter" = 25, "tomatojuice" = 6, "oculine" = 12, "vitamin" = 5)
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 1, "carrot" = 1, "vegetables" = 1)
-
 
 /obj/item/reagent_containers/food/snacks/vegetablepizzaslice
-	name = "vegetable pizza slice"
+	name = "Vegetable pizza slice"
 	desc = "A slice of the most green pizza of all pizzas not containing green ingredients."
 	icon = 'icons/obj/food/pizza.dmi'
 	icon_state = "vegetablepizzaslice"
 	filling_color = "#BAA14C"
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 1, "carrot" = 1, "vegetables" = 1)
 
 /obj/item/reagent_containers/food/snacks/sliceable/pizza/hawaiianpizza
-	name = "Hawaiian pizza"
+	name = "Hawaiian Pizza"
 	desc = "Love it or hate it, this pizza divides opinions. Complete with juicy pineapple."
 	icon_state = "hawaiianpizza" //NEEDED
 	slice_path = /obj/item/reagent_containers/food/snacks/hawaiianpizzaslice
 	list_reagents = list("protein" = 15, "tomatojuice" = 6, "plantmatter" = 20, "pineapplejuice" = 6, "vitamin" = 5)
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 1, "pineapple" = 1)
 
 /obj/item/reagent_containers/food/snacks/hawaiianpizzaslice
 	name = "Hawaiian pizza slice"
@@ -89,24 +78,21 @@
 	icon = 'icons/obj/food/pizza.dmi'
 	icon_state = "hawaiianpizzaslice"
 	filling_color = "#e5b437"
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 1, "pineapple" = 1)
 
 /obj/item/reagent_containers/food/snacks/sliceable/pizza/macpizza
-	name = "mac n cheese pizza"
+	name = "Macaroni cheese pizza"
 	desc = "Gastronomists have yet to classify this dish as 'pizza'."
 	icon_state = "macpizza"
 	slice_path = /obj/item/reagent_containers/food/snacks/macpizzaslice
 	list_reagents = list("nutriment" = 40, "vitamin" = 5) //More nutriment because carbs, but it's not any more vitaminicious
 	filling_color = "#ffe45d"
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 2, "pasta" = 1)
 
 /obj/item/reagent_containers/food/snacks/macpizzaslice
-	name = "mac n cheese pizza slice"
+	name = "Macaroni cheese pizza slice"
 	desc = "A delicious slice of pizza topped with macaroni cheese... wait, what the hell? Who would do this?!"
 	icon = 'icons/obj/food/pizza.dmi'
 	icon_state = "macpizzaslice"
 	filling_color = "#ffe45d"
-	tastes = list("crust" = 1, "tomato" = 1, "cheese" = 2, "pasta" = 1)
 
 
 //////////////////////
@@ -238,7 +224,7 @@
 	if(istype(I, /obj/item/pen/))
 		if(open)
 			return
-		var/t = clean_input("Enter what you want to add to the tag:", "Write", null)
+		var/t = input("Enter what you want to add to the tag:", "Write", null, null) as text
 		var/obj/item/pizzabox/boxtotagto = src
 		if(boxes.len > 0)
 			boxtotagto = boxes[boxes.len]
@@ -248,26 +234,21 @@
 	..()
 
 /obj/item/pizzabox/margherita/New()
-	..()
 	pizza = new /obj/item/reagent_containers/food/snacks/sliceable/pizza/margherita(src)
-	boxtag = "margherita deluxe"
+	boxtag = "Margherita Deluxe"
 
 /obj/item/pizzabox/vegetable/New()
-	..()
 	pizza = new /obj/item/reagent_containers/food/snacks/sliceable/pizza/vegetablepizza(src)
-	boxtag = "gourmet vegatable"
+	boxtag = "Gourmet Vegatable"
 
 /obj/item/pizzabox/mushroom/New()
-	..()
 	pizza = new /obj/item/reagent_containers/food/snacks/sliceable/pizza/mushroompizza(src)
-	boxtag = "mushroom special"
+	boxtag = "Mushroom Special"
 
 /obj/item/pizzabox/meat/New()
-	..()
 	pizza = new /obj/item/reagent_containers/food/snacks/sliceable/pizza/meatpizza(src)
-	boxtag = "meatlover's supreme"
+	boxtag = "Meatlover's Supreme"
 
 /obj/item/pizzabox/hawaiian/New()
-	..()
 	pizza = new /obj/item/reagent_containers/food/snacks/sliceable/pizza/hawaiianpizza(src)
-	boxtag = "Hawaiian feast"
+	boxtag = "Hawaiian Feast"

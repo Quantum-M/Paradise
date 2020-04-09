@@ -5,7 +5,7 @@
 	icon_state = "folder"
 	w_class = WEIGHT_CLASS_SMALL
 	pressure_resistance = 2
-	resistance_flags = FLAMMABLE
+	burn_state = FLAMMABLE
 
 /obj/item/folder/blue
 	desc = "A blue folder."
@@ -27,7 +27,7 @@
 	overlays.Cut()
 	if(contents.len)
 		overlays += "folder_paper"
-	..()
+	return
 
 /obj/item/folder/attackby(obj/item/W as obj, mob/user as mob, params)
 	if(istype(W, /obj/item/paper) || istype(W, /obj/item/photo) || istype(W, /obj/item/paper_bundle) || istype(W, /obj/item/documents))
@@ -36,15 +36,14 @@
 		to_chat(user, "<span class='notice'>You put the [W] into \the [src].</span>")
 		update_icon()
 	else if(istype(W, /obj/item/pen))
-		var/n_name = clean_input("What would you like to label the folder?", "Folder Labelling", null)
+		var/n_name = input(usr, "What would you like to label the folder?", "Folder Labelling", null) as text|null
 		if(!n_name)
 			return
 		n_name = sanitize(copytext(n_name, 1, MAX_NAME_LEN))
 
 		if((loc == usr || Adjacent(usr)) && usr.stat == 0)
 			name = "folder[(n_name ? text("- '[n_name]'") : null)]"
-	else
-		return ..()
+	return
 
 /obj/item/folder/attack_self(mob/user as mob)
 	var/dat = "<title>[name]</title>"
@@ -130,10 +129,4 @@
 	..()
 	new /obj/item/documents/syndicate/yellow(src)
 	update_icon()
-
-/obj/item/folder/syndicate/mining/New()
-	. = ..()
-	new /obj/item/documents/syndicate/mining(src)
-	update_icon()
-
 

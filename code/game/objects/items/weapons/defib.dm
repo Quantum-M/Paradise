@@ -11,7 +11,7 @@
 	w_class = WEIGHT_CLASS_BULKY
 	origin_tech = "biotech=4"
 	actions_types = list(/datum/action/item_action/toggle_paddles)
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 50, "acid" = 50)
+	species_fit = list("Vox")
 	sprite_sheets = list(
 		"Vox" = 'icons/mob/species/vox/back.dmi'
 		)
@@ -20,11 +20,8 @@
 	var/safety = 1 //if you can zap people with the defibs on harm mode
 	var/powered = 0 //if there's a cell in the defib with enough power for a revive, blocks paddles from reviving otherwise
 	var/obj/item/twohanded/shockpaddles/paddles
-	var/obj/item/stock_parts/cell/high/cell = null
+	var/obj/item/stock_parts/cell/high/bcell = null
 	var/combat = 0 //can we revive through space suits?
-
-/obj/item/defibrillator/get_cell()
-	return cell
 
 /obj/item/defibrillator/New() //starts without a cell for rnd
 	..()
@@ -35,7 +32,7 @@
 /obj/item/defibrillator/loaded/New() //starts with hicap
 	..()
 	paddles = make_paddles()
-	cell = new(src)
+	bcell = new(src)
 	update_icon()
 	return
 
@@ -44,13 +41,9 @@
 	update_overlays()
 	update_charge()
 
-/obj/item/defibrillator/examine(mob/user)
-	. = ..()
-	. += "<span class='notice'>Ctrl-click to remove the paddles from the defibrillator.</span>"
-
 /obj/item/defibrillator/proc/update_power()
-	if(cell)
-		if(cell.charge < paddles.revivecost)
+	if(bcell)
+		if(bcell.charge < paddles.revivecost)
 			powered = 0
 		else
 			powered = 1
@@ -63,21 +56,21 @@
 		overlays += "[icon_state]-paddles"
 	if(powered)
 		overlays += "[icon_state]-powered"
-	if(!cell)
+	if(!bcell)
 		overlays += "[icon_state]-nocell"
 	if(!safety)
 		overlays += "[icon_state]-emagged"
 
 /obj/item/defibrillator/proc/update_charge()
 	if(powered) //so it doesn't show charge if it's unpowered
-		if(cell)
-			var/ratio = cell.charge / cell.maxcharge
+		if(bcell)
+			var/ratio = bcell.charge / bcell.maxcharge
 			ratio = Ceiling(ratio*4) * 25
 			overlays += "[icon_state]-charge[ratio]"
 
 /obj/item/defibrillator/CheckParts(list/parts_list)
 	..()
-	cell = locate(/obj/item/stock_parts/cell) in contents
+	bcell = locate(/obj/item/stock_parts/cell) in contents
 	update_icon()
 
 /obj/item/defibrillator/ui_action_click()
@@ -90,7 +83,7 @@
 /obj/item/defibrillator/attackby(obj/item/W, mob/user, params)
 	if(istype(W, /obj/item/stock_parts/cell))
 		var/obj/item/stock_parts/cell/C = W
-		if(cell)
+		if(bcell)
 			to_chat(user, "<span class='notice'>[src] already has a cell.</span>")
 		else
 			if(C.maxcharge < paddles.revivecost)
@@ -98,14 +91,14 @@
 				return
 			user.drop_item()
 			W.loc = src
-			cell = W
+			bcell = W
 			to_chat(user, "<span class='notice'>You install a cell in [src].</span>")
 
 	if(istype(W, /obj/item/screwdriver))
-		if(cell)
-			cell.update_icon()
-			cell.loc = get_turf(src.loc)
-			cell = null
+		if(bcell)
+			bcell.update_icon()
+			bcell.loc = get_turf(src.loc)
+			bcell = null
 			to_chat(user, "<span class='notice'>You remove the cell from the [src].</span>")
 
 	update_icon()
@@ -120,16 +113,16 @@
 		to_chat(user, "<span class='notice'>You silently enable [src]'s safety protocols with the card.")
 
 /obj/item/defibrillator/emp_act(severity)
-	if(cell)
+	if(bcell)
 		deductcharge(1000 / severity)
 	if(safety)
 		safety = 0
 		src.visible_message("<span class='notice'>[src] beeps: Safety protocols disabled!</span>")
-		playsound(get_turf(src), 'sound/machines/defib_saftyoff.ogg', 50, 0)
+		playsound(get_turf(src), 'sound/machines/defib_saftyOff.ogg', 50, 0)
 	else
 		safety = 1
 		src.visible_message("<span class='notice'>[src] beeps: Safety protocols enabled!</span>")
-		playsound(get_turf(src), 'sound/machines/defib_saftyon.ogg', 50, 0)
+		playsound(get_turf(src), 'sound/machines/defib_saftyOn.ogg', 50, 0)
 	update_icon()
 	..()
 
@@ -182,15 +175,15 @@
 		var/M = get(paddles, /mob)
 		remove_paddles(M)
 	QDEL_NULL(paddles)
-	QDEL_NULL(cell)
+	QDEL_NULL(bcell)
 	return ..()
 
 /obj/item/defibrillator/proc/deductcharge(var/chrgdeductamt)
-	if(cell)
-		if(cell.charge < (paddles.revivecost+chrgdeductamt))
+	if(bcell)
+		if(bcell.charge < (paddles.revivecost+chrgdeductamt))
 			powered = 0
 			update_icon()
-		if(cell.use(chrgdeductamt))
+		if(bcell.use(chrgdeductamt))
 			update_icon()
 			return 1
 		else
@@ -199,8 +192,8 @@
 
 /obj/item/defibrillator/proc/cooldowncheck(var/mob/user)
 	spawn(50)
-		if(cell)
-			if(cell.charge >= paddles.revivecost)
+		if(bcell)
+			if(bcell.charge >= paddles.revivecost)
 				user.visible_message("<span class='notice'>[src] beeps: Unit ready.</span>")
 				playsound(get_turf(src), 'sound/machines/defib_ready.ogg', 50, 0)
 			else
@@ -226,7 +219,7 @@
 /obj/item/defibrillator/compact/loaded/New()
 	..()
 	paddles = make_paddles()
-	cell = new(src)
+	bcell = new(src)
 	update_icon()
 	return
 
@@ -239,7 +232,7 @@
 /obj/item/defibrillator/compact/combat/loaded/New()
 	..()
 	paddles = make_paddles()
-	cell = new /obj/item/stock_parts/cell/infinite(src)
+	bcell = new /obj/item/stock_parts/cell/infinite(src)
 	update_icon()
 	return
 
@@ -260,7 +253,6 @@
 	force = 0
 	throwforce = 6
 	w_class = WEIGHT_CLASS_BULKY
-	resistance_flags = INDESTRUCTIBLE
 	toolspeed = 1
 
 	var/revivecost = 1000
@@ -287,7 +279,7 @@
 	user.visible_message("<span class='danger'>[user] is putting the live paddles on [user.p_their()] chest! It looks like [user.p_theyre()] trying to commit suicide.</span>")
 	defib.deductcharge(revivecost)
 	playsound(get_turf(src), 'sound/machines/defib_zap.ogg', 50, 1, -1)
-	return OXYLOSS
+	return (OXYLOSS)
 
 /obj/item/twohanded/shockpaddles/dropped(mob/user as mob)
 	if(user)
@@ -302,10 +294,8 @@
 	return unwield(user)
 
 /obj/item/twohanded/shockpaddles/on_mob_move(dir, mob/user)
-	if(defib)
-		var/turf/t = get_turf(defib)
-		if(!t.Adjacent(user))
-			defib.remove_paddles(user)
+	if(defib && !(defib.Adjacent(user)))
+		defib.remove_paddles(user)
 
 /obj/item/twohanded/shockpaddles/proc/check_defib_exists(mainunit, var/mob/living/carbon/human/M, var/obj/O)
 	if(!mainunit || !istype(mainunit, /obj/item/defibrillator))	//To avoid weird issues from admin spawns
@@ -317,7 +307,7 @@
 
 /obj/item/twohanded/shockpaddles/attack(mob/M, mob/user)
 	var/tobehealed
-	var/threshold = -HEALTH_THRESHOLD_DEAD
+	var/threshold = -config.health_threshold_dead
 	var/mob/living/carbon/human/H = M
 
 	if(busy)
@@ -346,7 +336,6 @@
 			H.emote("gasp")
 			if(!H.undergoing_cardiac_arrest() && (prob(10) || defib.combat)) // Your heart explodes.
 				H.set_heartattack(TRUE)
-			H.shock_internal_organs(100)
 			add_attack_logs(user, M, "Stunned with [src]")
 			defib.deductcharge(revivecost)
 			cooldown = 1
@@ -368,8 +357,8 @@
 
 				QDEL_NULL(ghost)
 			var/tplus = world.time - H.timeofdeath
-			var/tlimit = DEFIB_TIME_LIMIT * 10 //past this much time the patient is unrecoverable (in deciseconds)
-			var/tloss = DEFIB_TIME_LOSS * 10 //brain damage starts setting in on the patient after some time left rotting
+			var/tlimit = 3000 //past this much time the patient is unrecoverable (in deciseconds)
+			var/tloss = 600 //brain damage starts setting in on the patient after some time left rotting
 			var/total_burn	= 0
 			var/total_brute	= 0
 			if(do_after(user, 20 * toolspeed, target = M)) //placed on chest and short delay to shock for dramatic effect, revive time is 5sec total
@@ -397,7 +386,6 @@
 							update_icon()
 							return
 						H.set_heartattack(FALSE)
-						H.shock_internal_organs(100)
 						user.visible_message("<span class='boldnotice'>[defib] pings: Cardiac arrhythmia corrected.</span>")
 						M.visible_message("<span class='warning'>[M]'s body convulses a bit.")
 						playsound(get_turf(src), 'sound/machines/defib_zap.ogg', 50, 1, -1)
@@ -417,7 +405,7 @@
 					for(var/obj/item/organ/external/O in H.bodyparts)
 						total_brute	+= O.brute_dam
 						total_burn	+= O.burn_dam
-					if(total_burn <= 180 && total_brute <= 180 && !H.suiciding && !ghost && tplus < tlimit && !(NOCLONE in H.mutations) && (H.mind && H.mind.is_revivable()) && (H.get_int_organ(/obj/item/organ/internal/heart) || H.get_int_organ(/obj/item/organ/internal/brain/slime)))
+					if(total_burn <= 180 && total_brute <= 180 && !H.suiciding && !ghost && tplus < tlimit && !(NOCLONE in H.mutations) && (H.get_int_organ(/obj/item/organ/internal/heart) || H.get_int_organ(/obj/item/organ/internal/brain/slime)))
 						tobehealed = min(health + threshold, 0) // It's HILARIOUS without this min statement, let me tell you
 						tobehealed -= 5 //They get 5 of each type of damage healed so excessive combined damage will not immediately kill them after they get revived
 						H.adjustOxyLoss(tobehealed)
@@ -432,9 +420,6 @@
 						H.emote("gasp")
 						if(tplus > tloss)
 							H.setBrainLoss( max(0, min(99, ((tlimit - tplus) / tlimit * 100))))
-						H.shock_internal_organs(100)
-						H.med_hud_set_health()
-						H.med_hud_set_status()
 						defib.deductcharge(revivecost)
 						add_attack_logs(user, M, "Revived with [src]")
 					else
@@ -476,7 +461,7 @@
 
 /obj/item/borg_defib/attack(mob/M, mob/user)
 	var/tobehealed
-	var/threshold = -HEALTH_THRESHOLD_DEAD
+	var/threshold = -config.health_threshold_dead
 	var/mob/living/carbon/human/H = M
 
 	if(busy)
@@ -495,7 +480,6 @@
 			H.Weaken(5)
 			if(!H.undergoing_cardiac_arrest() && prob(10)) // Your heart explodes.
 				H.set_heartattack(TRUE)
-			H.shock_internal_organs(100)
 			playsound(get_turf(src), 'sound/machines/defib_zap.ogg', 50, 1, -1)
 			H.emote("gasp")
 			add_attack_logs(user, M, "Stunned with [src]")
@@ -528,7 +512,7 @@
 			var/total_burn	= 0
 			var/total_brute	= 0
 			if(do_after(user, 20 * toolspeed, target = M)) //placed on chest and short delay to shock for dramatic effect, revive time is 5sec total
-				if(H.stat == DEAD)
+				if(H.stat == 2)
 					var/health = H.health
 					M.visible_message("<span class='warning'>[M]'s body convulses a bit.")
 					playsound(get_turf(src), "bodyfall", 50, 1)
@@ -536,7 +520,7 @@
 					for(var/obj/item/organ/external/O in H.bodyparts)
 						total_brute	+= O.brute_dam
 						total_burn	+= O.burn_dam
-					if(total_burn <= 180 && total_brute <= 180 && !H.suiciding && !ghost && tplus < tlimit && !(NOCLONE in H.mutations) && (H.mind && H.mind.is_revivable()))
+					if(total_burn <= 180 && total_brute <= 180 && !H.suiciding && !ghost && tplus < tlimit && !(NOCLONE in H.mutations))
 						tobehealed = min(health + threshold, 0) // It's HILARIOUS without this min statement, let me tell you
 						tobehealed -= 5 //They get 5 of each type of damage healed so excessive combined damage will not immediately kill them after they get revived
 						H.adjustOxyLoss(tobehealed)
@@ -551,7 +535,6 @@
 						H.emote("gasp")
 						if(tplus > tloss)
 							H.setBrainLoss( max(0, min(99, ((tlimit - tplus) / tlimit * 100))))
-						H.shock_internal_organs(100)
 						if(isrobot(user))
 							var/mob/living/silicon/robot/R = user
 							R.cell.use(revivecost)

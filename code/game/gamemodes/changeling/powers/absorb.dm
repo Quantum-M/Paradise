@@ -1,13 +1,12 @@
-/datum/action/changeling/absorbDNA
+/obj/effect/proc_holder/changeling/absorbDNA
 	name = "Absorb DNA"
-	desc = "Absorb the DNA of our victim. Requires us to strangle them."
-	button_icon_state = "absorb_dna"
+	desc = "Absorb the DNA of our victim."
 	chemical_cost = 0
 	dna_cost = 0
 	req_human = 1
 	max_genetic_damage = 100
 
-/datum/action/changeling/absorbDNA/can_sting(mob/living/carbon/user)
+/obj/effect/proc_holder/changeling/absorbDNA/can_sting(var/mob/living/carbon/user)
 	if(!..())
 		return
 
@@ -27,7 +26,7 @@
 	var/mob/living/carbon/target = G.affecting
 	return changeling.can_absorb_dna(user,target)
 
-/datum/action/changeling/absorbDNA/sting_action(var/mob/user)
+/obj/effect/proc_holder/changeling/absorbDNA/sting_action(var/mob/user)
 	var/datum/changeling/changeling = user.mind.changeling
 	var/obj/item/grab/G = user.get_active_hand()
 	var/mob/living/carbon/human/target = G.affecting
@@ -58,7 +57,7 @@
 		changeling.absorb_dna(target, user)
 
 	if(user.nutrition < NUTRITION_LEVEL_WELL_FED)
-		user.set_nutrition(min((user.nutrition + target.nutrition), NUTRITION_LEVEL_WELL_FED))
+		user.nutrition = min((user.nutrition + target.nutrition), NUTRITION_LEVEL_WELL_FED)
 
 	if(target.mind)//if the victim has got a mind
 

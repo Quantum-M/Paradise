@@ -54,7 +54,7 @@
 
 /obj/machinery/computer/general_air_control/atmos_automation/proc/selectValidChildFor(datum/automation/parent, mob/user, list/valid_returntypes)
 	var/list/choices=list()
-	for(var/childtype in GLOB.automation_types)
+	for(var/childtype in automation_types)
 		var/datum/automation/A = new childtype(src)
 		if(A.returntype == null)
 			continue
@@ -217,7 +217,7 @@
 				testing("AAC: Null cData in root JS array.")
 				continue
 			var/Atype=text2path(cData["type"])
-			if(!(Atype in GLOB.automation_types))
+			if(!(Atype in automation_types))
 				testing("AAC: Unrecognized Atype [Atype].")
 				continue
 			var/datum/automation/A = new Atype(src)
@@ -228,7 +228,7 @@
 	var/injector_tag="inc_in"
 	var/output_tag="inc_out"
 	var/sensor_tag="inc_sensor"
-	frequency=AIRLOCK_FREQ
+	frequency=1449
 	var/temperature=1000
 
 /obj/machinery/computer/general_air_control/atmos_automation/burnchamber/New()
@@ -310,7 +310,7 @@
 	var/o2_injector_tag="air_o2_in"
 	var/output_tag="air_out"
 	var/sensor_tag="air_sensor"
-	frequency=ATMOS_DISTRO_FREQ
+	frequency=1443
 	var/temperature=1000
 
 /obj/machinery/computer/general_air_control/atmos_automation/air_mixing/New()

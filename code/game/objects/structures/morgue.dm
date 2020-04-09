@@ -16,7 +16,6 @@
 	icon = 'icons/obj/stationobjs.dmi'
 	icon_state = "morgue1"
 	density = 1
-	max_integrity = 400
 	dir = EAST
 	var/obj/structure/m_tray/connected = null
 	var/list/status_descriptors = list(
@@ -28,7 +27,7 @@
 	"The tray contains a body that might be responsive."
 	)
 	anchored = 1.0
-	var/open_sound = 'sound/items/deconstruct.ogg'
+	var/open_sound = 'sound/items/Deconstruct.ogg'
 
 /obj/structure/morgue/Initialize()
 	. = ..()
@@ -133,9 +132,8 @@
 		else
 			name = "Morgue"
 			overlays.Cut()
-		add_fingerprint(user)
-		return
-	return ..()
+	add_fingerprint(user)
+	return
 
 /obj/structure/morgue/relaymove(mob/user as mob)
 	if(user.stat)
@@ -186,7 +184,6 @@
 	var/obj/structure/morgue/connected = null
 	anchored = 1.0
 	pass_flags = LETPASSTHROW
-	max_integrity = 350
 
 
 /obj/structure/m_tray/attack_hand(mob/user as mob)
@@ -251,7 +248,7 @@
 	var/cremating = 0
 	var/id = 1
 	var/locked = 0
-	var/open_sound = 'sound/items/deconstruct.ogg'
+	var/open_sound = 'sound/items/Deconstruct.ogg'
 
 /obj/structure/crematorium/proc/update()
 	if(connected)
@@ -326,9 +323,8 @@
 			name = text("Crematorium- '[]'", t)
 		else
 			name = "Crematorium"
-		add_fingerprint(user)
-		return
-	return ..()
+	add_fingerprint(user)
+	return
 
 /obj/structure/crematorium/relaymove(mob/user as mob)
 	if(user.stat || locked)
@@ -459,7 +455,7 @@
 	icon = 'icons/obj/power.dmi'
 	icon_state = "crema_switch"
 	anchored = 1.0
-	req_access = list(ACCESS_CREMATORIUM)
+	req_access = list(access_crematorium)
 	var/on = 0
 	var/area/area = null
 	var/otherarea = null
@@ -489,3 +485,13 @@
 			morgue = get(C.loc, /obj/structure/morgue)
 			if(morgue)
 				morgue.update()
+
+/hook/mob_login/proc/update_morgue(var/client/client, var/mob/mob)
+	//Update morgues on login
+	mob.update_morgue()
+	return 1
+
+/hook/mob_logout/proc/update_morgue(var/client/client, var/mob/mob)
+	//Update morgues on logout
+	mob.update_morgue()
+	return 1

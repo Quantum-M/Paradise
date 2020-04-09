@@ -1,4 +1,3 @@
-//Stetchkin//
 /obj/item/gun/projectile/automatic/pistol
 	name = "stechkin pistol"
 	desc = "A small, easily concealable 10mm handgun. Has a threaded barrel for suppressors."
@@ -6,9 +5,6 @@
 	w_class = WEIGHT_CLASS_SMALL
 	origin_tech = "combat=3;materials=2;syndicate=4"
 	mag_type = /obj/item/ammo_box/magazine/m10mm
-	fire_sound = 'sound/weapons/gunshots/gunshot_pistol.ogg'
-	magin_sound = 'sound/weapons/gun_interactions/pistol_magin.ogg'
-	magout_sound = 'sound/weapons/gun_interactions/pistol_magout.ogg'
 	can_suppress = 1
 	burst_size = 1
 	fire_delay = 0
@@ -22,7 +18,6 @@
 	icon_state = "[initial(icon_state)][chambered ? "" : "-e"][suppressed ? "-suppressed" : ""]"
 	return
 
-//M1911//
 /obj/item/gun/projectile/automatic/pistol/m1911
 	name = "\improper M1911"
 	desc = "A classic .45 handgun with a small magazine capacity."
@@ -31,7 +26,6 @@
 	mag_type = /obj/item/ammo_box/magazine/m45
 	can_suppress = 0
 
-//Enforcer//
 /obj/item/gun/projectile/automatic/pistol/enforcer
 	name = "Enforcer"
 	desc = "A pistol of modern design."
@@ -78,16 +72,12 @@
 	magazine = new/obj/item/ammo_box/magazine/enforcer/lethal
 	..()
 
-//Desert Eagle//
 /obj/item/gun/projectile/automatic/pistol/deagle
 	name = "desert eagle"
 	desc = "A robust .50 AE handgun."
 	icon_state = "deagle"
 	force = 14.0
 	mag_type = /obj/item/ammo_box/magazine/m50
-	fire_sound = 'sound/weapons/gunshots/gunshot_pistolH.ogg'
-	magin_sound = 'sound/weapons/gun_interactions/hpistol_magin.ogg'
-	magout_sound = 'sound/weapons/gun_interactions/hpistol_magout.ogg'
 	can_suppress = 0
 
 /obj/item/gun/projectile/automatic/pistol/deagle/update_icon()
@@ -104,7 +94,6 @@
 	icon_state = "deaglecamo"
 	item_state = "deagleg"
 
-//APS Pistol//
 /obj/item/gun/projectile/automatic/pistol/APS
 	name = "stechkin APS pistol"
 	desc = "The original russian version of a widely used Syndicate sidearm. Uses 9mm ammo."

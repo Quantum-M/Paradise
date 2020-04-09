@@ -2,7 +2,6 @@
 // Cargo orders part for high price
 // Requires high amount of power
 // Requires high level stock parts
-
 /datum/station_goal/bluespace_cannon
 	name = "Bluespace Artillery"
 
@@ -16,7 +15,7 @@
 
 /datum/station_goal/bluespace_cannon/on_report()
 	//Unlock BSA parts
-	var/datum/supply_packs/misc/station_goal/bsa/P = SSshuttle.supply_packs["[/datum/supply_packs/misc/station_goal/bsa]"]
+	var/datum/supply_packs/misc/bsa/P = SSshuttle.supply_packs["[/datum/supply_packs/misc/bsa]"]
 	P.special_enabled = TRUE
 
 /datum/station_goal/bluespace_cannon/check_completion()
@@ -105,11 +104,11 @@
 	var/x_max
 	switch(cannon_dir)
 		if(EAST)
-			x_min = x - BSA_SIZE_BACK
-			x_max = x + BSA_SIZE_FRONT
+			x_min = x - 4 //replace with defines later
+			x_max = x + 6
 		if(WEST)
-			x_min = x + BSA_SIZE_BACK
-			x_max = x - BSA_SIZE_FRONT
+			x_min = x + 4
+			x_max = x - 6
 
 	for(var/turf/T in block(locate(x_min,y-1,z),locate(x_max,y+1,z)))
 		if(T.density || isspaceturf(T))
@@ -313,7 +312,7 @@
 		ui.open()
 		ui.set_auto_update(1)
 
-/obj/machinery/computer/bsa_control/ui_data(mob/user, ui_key = "main", datum/topic_state/state = GLOB.default_state)
+/obj/machinery/computer/bsa_control/ui_data(mob/user, ui_key = "main", datum/topic_state/state = default_state)
 	var/list/data = list()
 	data["connected"] = cannon
 	data["notice"] = notice
@@ -352,12 +351,12 @@
 
 /obj/machinery/computer/bsa_control/proc/calibrate(mob/user)
 	var/list/gps_locators = list()
-	for(var/obj/item/gps/G in GLOB.GPS_list) //nulls on the list somehow
+	for(var/obj/item/gps/G in GPS_list) //nulls on the list somehow
 		gps_locators[G.gpstag] = G
 
 	var/list/options = gps_locators
 	if(area_aim)
-		options += target_all_areas ? GLOB.ghostteleportlocs : GLOB.teleportlocs
+		options += target_all_areas ? ghostteleportlocs : teleportlocs
 	var/V = input(user,"Select target", "Select target",null) in options|null
 	target = options[V]
 

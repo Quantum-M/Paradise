@@ -53,7 +53,6 @@ SUBSYSTEM_DEF(throwing)
 	var/dist_y
 	var/dx
 	var/dy
-	var/force = MOVE_FORCE_DEFAULT
 	var/pure_diagonal
 	var/diagonal_error
 	var/datum/callback/callback
@@ -142,7 +141,7 @@ SUBSYSTEM_DEF(throwing)
 /datum/thrownthing/proc/hitcheck()
 	for(var/thing in get_turf(thrownthing))
 		var/atom/movable/AM = thing
-		if(AM == thrownthing || AM == thrower)
+		if(AM == thrownthing)
 			continue
 		if(AM.density && !(AM.pass_flags & LETPASSTHROW) && !(AM.flags & ON_BORDER))
 			finalize(hit = TRUE, target = AM)

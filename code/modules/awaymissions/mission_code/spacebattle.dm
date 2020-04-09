@@ -3,9 +3,8 @@
 /area/awaymission/spacebattle
 	name = "\improper Space Battle"
 	icon_state = "away"
-	requires_power = FALSE
-	report_alerts = FALSE
-	dynamic_lighting = DYNAMIC_LIGHTING_DISABLED
+	requires_power = 0
+	report_alerts = 0
 
 /area/awaymission/spacebattle/cruiser
 	name = "\improper Nanotrasen Cruiser"

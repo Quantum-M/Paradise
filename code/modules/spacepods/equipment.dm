@@ -1,7 +1,4 @@
 /obj/item/spacepod_equipment/weaponry/proc/fire_weapons()
-	if(HAS_TRAIT(usr, TRAIT_PACIFISM) && harmful)
-		to_chat(usr, "<span class='warning'>You don't want to harm other living beings!</span>")
-		return
 	if(my_atom.next_firetime > world.time)
 		to_chat(usr, "<span class='warning'>Your weapons are recharging.</span>")
 		return
@@ -86,7 +83,6 @@
 	var/shots_per = 1
 	var/fire_sound
 	var/fire_delay = 15
-	var/harmful = TRUE
 
 /obj/item/spacepod_equipment/weaponry/taser
 	name = "disabler system"
@@ -94,8 +90,7 @@
 	icon_state = "weapon_taser"
 	projectile_type = /obj/item/projectile/beam/disabler
 	shot_cost = 400
-	fire_sound = 'sound/weapons/taser.ogg'
-	harmful = FALSE
+	fire_sound = 'sound/weapons/Taser.ogg'
 
 /obj/item/spacepod_equipment/weaponry/burst_taser
 	name = "burst taser system"
@@ -104,9 +99,8 @@
 	projectile_type = /obj/item/projectile/beam/disabler
 	shot_cost = 1200
 	shots_per = 3
-	fire_sound = 'sound/weapons/taser.ogg'
+	fire_sound = 'sound/weapons/Taser.ogg'
 	fire_delay = 30
-	harmful = FALSE
 
 /obj/item/spacepod_equipment/weaponry/laser
 	name = "laser system"
@@ -114,7 +108,7 @@
 	icon_state = "weapon_laser"
 	projectile_type = /obj/item/projectile/beam
 	shot_cost = 600
-	fire_sound = 'sound/weapons/laser.ogg'
+	fire_sound = 'sound/weapons/Laser.ogg'
 
 // MINING LASERS
 /obj/item/spacepod_equipment/weaponry/mining_laser_basic
@@ -125,7 +119,7 @@
 	projectile_type = /obj/item/projectile/kinetic/pod
 	shot_cost = 300
 	fire_delay = 14
-	fire_sound = 'sound/weapons/kenetic_accel.ogg'
+	fire_sound = 'sound/weapons/Kenetic_accel.ogg'
 
 /obj/item/spacepod_equipment/weaponry/mining_laser
 	name = "mining laser system"
@@ -135,7 +129,17 @@
 	projectile_type = /obj/item/projectile/kinetic/pod/regular
 	shot_cost = 250
 	fire_delay = 10
-	fire_sound = 'sound/weapons/kenetic_accel.ogg'
+	fire_sound = 'sound/weapons/Kenetic_accel.ogg'
+
+/obj/item/spacepod_equipment/weaponry/mining_laser_hyper
+	name = "enhanced mining laser system"
+	desc = "An enhanced mining laser system for space pods, fires bursts of energy that cut through rock."
+	icon = 'icons/goonstation/pods/ship.dmi'
+	icon_state = "pod_w_laser"
+	projectile_type = /obj/item/projectile/kinetic/pod/enhanced
+	shot_cost = 200
+	fire_delay = 8
+	fire_sound = 'sound/weapons/Kenetic_accel.ogg'
 
 /*
 ///////////////////////////////////////
@@ -156,16 +160,16 @@
 	icon_state = "pod_locator"
 	enabled = 0
 
-/obj/item/spacepod_equipment/misc/tracker/screwdriver_act(mob/user, obj/item/I)
-	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume))
-		return
-	if(enabled)
-		enabled = 0
-		user.show_message("<span class='notice'>You disable \the [src]'s power.")
-		return
-	enabled = 1
-	user.show_message("<span class='notice'>You enable \the [src]'s power.</span>")
+/obj/item/spacepod_equipment/misc/tracker/attackby(obj/item/I as obj, mob/user as mob, params)
+	if(isscrewdriver(I))
+		if(enabled)
+			enabled = 0
+			user.show_message("<span class='notice'>You disable \the [src]'s power.")
+			return
+		enabled = 1
+		user.show_message("<span class='notice'>You enable \the [src]'s power.</span>")
+	else
+		..()
 
 /*
 ///////////////////////////////////////
@@ -278,4 +282,4 @@
 		else
 			to_chat(user, "<span class='warning'>This key is already ground!</span>")
 	else
-		return ..()
+		..()

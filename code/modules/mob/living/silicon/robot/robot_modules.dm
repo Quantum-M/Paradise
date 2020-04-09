@@ -28,8 +28,7 @@
 
 
 /obj/item/robot_module/New()
-	..()
-	add_default_robot_items()
+	modules += new /obj/item/flash/cyborg(src)
 	emag = new /obj/item/toy/sword(src)
 	emag.name = "Placeholder Emag Item"
 
@@ -37,10 +36,6 @@
 	QDEL_LIST(modules)
 	QDEL_NULL(emag)
 	return ..()
-
-// By default, all robots will get the items in this proc, unless you override it for your specific module. See: ../robot_module/drone
-/obj/item/robot_module/proc/add_default_robot_items()
-	modules += new /obj/item/flash/cyborg(src)
 
 /obj/item/robot_module/proc/fix_modules()
 	for(var/obj/item/I in modules)
@@ -83,7 +78,6 @@
 	R.add_language("Sol Common", 1)
 	R.add_language("Tradeband", 1)
 	R.add_language("Gutter", 0)
-	R.add_language("Neo-Russkiya", 0)
 	R.add_language("Sinta'unathi", 0)
 	R.add_language("Siik'tajr", 0)
 	R.add_language("Canilunzt", 0)
@@ -111,7 +105,7 @@
 	R.module_actions.Cut()
 
 // Return true in an overridden subtype to prevent normal removal handling
-/obj/item/robot_module/proc/handle_custom_removal(component_id, mob/living/user, obj/item/W)
+/obj/item/robot_module/proc/handle_custom_removal(component_id, mob/living/user, obj/item/W, params)
 	return FALSE
 
 /obj/item/robot_module/proc/handle_death(gibbed)
@@ -149,7 +143,6 @@
 	modules += new /obj/item/robotanalyzer(src)
 	modules += new /obj/item/reagent_scanner/adv(src)
 	modules += new /obj/item/borg_defib(src)
-	modules += new /obj/item/handheld_defibrillator(src)
 	modules += new /obj/item/roller_holder(src)
 	modules += new /obj/item/reagent_containers/borghypo(src)
 	modules += new /obj/item/reagent_containers/glass/beaker/large(src)
@@ -160,15 +153,15 @@
 	modules += new /obj/item/stack/medical/ointment/advanced(src)
 	modules += new /obj/item/stack/medical/splint(src)
 	modules += new /obj/item/stack/nanopaste(src)
-	modules += new /obj/item/scalpel/laser/laser1(src)
+	modules += new /obj/item/scalpel(src)
 	modules += new /obj/item/hemostat(src)
 	modules += new /obj/item/retractor(src)
+	modules += new /obj/item/cautery(src)
 	modules += new /obj/item/bonegel(src)
 	modules += new /obj/item/FixOVein(src)
 	modules += new /obj/item/bonesetter(src)
 	modules += new /obj/item/circular_saw(src)
 	modules += new /obj/item/surgicaldrill(src)
-	modules += new /obj/item/gripper/medical(src)
 
 	emag = new /obj/item/reagent_containers/spray(src)
 
@@ -257,7 +250,7 @@
 	modules += new /obj/item/soap/nanotrasen(src)
 	modules += new /obj/item/storage/bag/trash/cyborg(src)
 	modules += new /obj/item/mop/advanced/cyborg(src)
-	modules += new /obj/item/lightreplacer/cyborg(src)
+	modules += new /obj/item/lightreplacer(src)
 	modules += new /obj/item/holosign_creator(src)
 	emag = new /obj/item/reagent_containers/spray(src)
 
@@ -337,7 +330,6 @@
 	R.add_language("Chittin", 1)
 	R.add_language("Bubblish", 1)
 	R.add_language("Clownish",1)
-	R.add_language("Neo-Russkiya", 1)
 
 
 /obj/item/robot_module/miner
@@ -363,10 +355,10 @@
 
 	fix_modules()
 
-/obj/item/robot_module/miner/handle_custom_removal(component_id, mob/living/user, obj/item/W)
+/obj/item/robot_module/miner/handle_custom_removal(component_id, mob/living/user, obj/item/W, params)
     if(component_id == "KA modkits")
         for(var/obj/item/gun/energy/kinetic_accelerator/cyborg/D in src)
-            D.attackby(W, user)
+            D.attackby(W, user, params)
         return TRUE
     return ..()
 
@@ -416,9 +408,7 @@
 	..()
 	modules += new /obj/item/healthanalyzer/advanced(src)
 	modules += new /obj/item/reagent_scanner/adv(src)
-	modules += new /obj/item/bodyanalyzer/borg/syndicate(src)
 	modules += new /obj/item/borg_defib(src)
-	modules += new /obj/item/handheld_defibrillator(src)
 	modules += new /obj/item/roller_holder(src)
 	modules += new /obj/item/reagent_containers/borghypo/syndicate(src)
 	modules += new /obj/item/extinguisher/mini(src)
@@ -426,60 +416,19 @@
 	modules += new /obj/item/stack/medical/ointment/advanced(src)
 	modules += new /obj/item/stack/medical/splint(src)
 	modules += new /obj/item/stack/nanopaste(src)
-	modules += new /obj/item/scalpel/laser/laser1(src)
+	modules += new /obj/item/scalpel(src)
 	modules += new /obj/item/hemostat(src)
 	modules += new /obj/item/retractor(src)
+	modules += new /obj/item/cautery(src)
 	modules += new /obj/item/bonegel(src)
 	modules += new /obj/item/FixOVein(src)
 	modules += new /obj/item/bonesetter(src)
 	modules += new /obj/item/surgicaldrill(src)
-	modules += new /obj/item/gripper/medical(src)
-	modules += new /obj/item/gun/medbeam(src)
 	modules += new /obj/item/melee/energy/sword/cyborg/saw(src) //Energy saw -- primary weapon
 	modules += new /obj/item/card/emag(src)
 	modules += new /obj/item/crowbar/cyborg(src)
 	modules += new /obj/item/pinpointer/operative(src)
 	emag = null
-
-	fix_modules()
-
-/obj/item/robot_module/syndicate_saboteur
-	name = "engineering robot module" //to disguise in examine
-	module_type = "Malf"
-
-	stacktypes = list(
-		/obj/item/stack/sheet/metal/cyborg = 50,
-		/obj/item/stack/sheet/glass/cyborg = 50,
-		/obj/item/stack/sheet/rglass/cyborg = 50,
-		/obj/item/stack/cable_coil/cyborg = 50,
-		/obj/item/stack/rods/cyborg = 60,
-		/obj/item/stack/tile/plasteel = 20
-		)
-
-/obj/item/robot_module/syndicate_saboteur/New()
-	..()
-	modules += new /obj/item/rcd/borg/syndicate(src)
-	modules += new /obj/item/rpd(src)
-	modules += new /obj/item/extinguisher(src)
-	modules += new /obj/item/weldingtool/largetank/cyborg(src)
-	modules += new /obj/item/screwdriver/cyborg(src)
-	modules += new /obj/item/wrench/cyborg(src)
-	modules += new /obj/item/crowbar/cyborg(src)
-	modules += new /obj/item/wirecutters/cyborg(src)
-	modules += new /obj/item/multitool/cyborg(src)
-	modules += new /obj/item/t_scanner(src)
-	modules += new /obj/item/analyzer(src)
-	modules += new /obj/item/gripper(src)
-	modules += new /obj/item/melee/energy/sword/cyborg(src)
-	modules += new /obj/item/card/emag(src)
-	modules += new /obj/item/borg_chameleon(src)
-	modules += new /obj/item/pinpointer/operative(src)
-	emag = null
-
-	for(var/T in stacktypes)
-		var/obj/item/stack/sheet/W = new T(src)
-		W.amount = stacktypes[T]
-		modules += W
 
 	fix_modules()
 
@@ -502,6 +451,22 @@
 
 	fix_modules()
 
+/obj/item/robot_module/nations
+	name = "nations robot module"
+	module_type = "Malf"
+
+/obj/item/robot_module/nations/New()
+	..()
+	modules += new /obj/item/restraints/handcuffs/cable/zipties/cyborg(src)
+	modules += new /obj/item/gun/energy/gun/cyborg(src)
+	modules += new /obj/item/pickaxe/drill/jackhammer(src)
+	modules += new /obj/item/borg/combat/shield(src)
+	modules += new /obj/item/borg/combat/mobility(src)
+	modules += new /obj/item/wrench/cyborg(src)
+	emag = new /obj/item/gun/energy/lasercannon/cyborg(src)
+
+	fix_modules()
+
 /obj/item/robot_module/alien/hunter
 	name = "alien hunter module"
 	module_type = "Standard"
@@ -510,7 +475,6 @@
 	)
 
 /obj/item/robot_module/alien/hunter/New()
-	..()
 	modules += new /obj/item/melee/energy/alien/claws(src)
 	modules += new /obj/item/flash/cyborg/alien(src)
 	var/obj/item/reagent_containers/spray/alien/stun/S = new /obj/item/reagent_containers/spray/alien/stun(src)
@@ -544,14 +508,13 @@
 		)
 
 /obj/item/robot_module/drone/New()
-	..()
 	modules += new /obj/item/weldingtool/largetank/cyborg(src)
 	modules += new /obj/item/screwdriver/cyborg(src)
 	modules += new /obj/item/wrench/cyborg(src)
 	modules += new /obj/item/crowbar/cyborg(src)
 	modules += new /obj/item/wirecutters/cyborg(src)
 	modules += new /obj/item/multitool/cyborg(src)
-	modules += new /obj/item/lightreplacer/cyborg(src)
+	modules += new /obj/item/lightreplacer(src)
 	modules += new /obj/item/gripper(src)
 	modules += new /obj/item/matter_decompiler(src)
 	modules += new /obj/item/reagent_containers/spray/cleaner/drone(src)
@@ -566,12 +529,13 @@
 
 	fix_modules()
 
-/obj/item/robot_module/drone/add_default_robot_items()
-	return
-
 /obj/item/robot_module/drone/respawn_consumable(mob/living/silicon/robot/R)
 	var/obj/item/reagent_containers/spray/cleaner/C = locate() in modules
 	C.reagents.add_reagent("cleaner", 3)
+
+	var/obj/item/lightreplacer/LR = locate() in modules
+	LR.Charge(R)
+
 	..()
 
 

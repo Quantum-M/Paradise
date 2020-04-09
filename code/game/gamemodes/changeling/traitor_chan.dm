@@ -28,7 +28,6 @@
 		changelings += changeling
 		modePlayer += changelings
 		changeling.restricted_roles = restricted_jobs
-		changeling.special_role = SPECIAL_ROLE_CHANGELING
 		return ..()
 	else
 		return 0
@@ -39,6 +38,5 @@
 		changeling.special_role = SPECIAL_ROLE_CHANGELING
 		forge_changeling_objectives(changeling)
 		greet_changeling(changeling)
-		update_change_icons_added(changeling)
 	..()
 	return

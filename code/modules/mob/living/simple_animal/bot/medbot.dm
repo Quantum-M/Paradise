@@ -65,9 +65,6 @@
 /mob/living/simple_animal/bot/medbot/fish
 	skin = "fish"
 
-/mob/living/simple_animal/bot/medbot/machine
-	skin = "machine"
-
 /mob/living/simple_animal/bot/medbot/mysterious
 	name = "\improper Mysterious Medibot"
 	desc = "International Medibot of mystery."
@@ -123,7 +120,7 @@
 	prev_access = access_card.access
 	qdel(J)
 
-	var/datum/atom_hud/medsensor = GLOB.huds[DATA_HUD_MEDICAL_ADVANCED]
+	var/datum/atom_hud/medsensor = huds[DATA_HUD_MEDICAL_ADVANCED]
 	medsensor.add_hud_to(src)
 	permanent_huds |= medsensor
 
@@ -530,7 +527,7 @@
 				if(inject_beaker)
 					if(use_beaker && reagent_glass && reagent_glass.reagents.total_volume)
 						var/fraction = min(injection_amount/reagent_glass.reagents.total_volume, 1)
-						reagent_glass.reagents.reaction(patient, REAGENT_INGEST, fraction)
+						reagent_glass.reagents.reaction(patient, INGEST, fraction)
 						reagent_glass.reagents.trans_to(patient, injection_amount) //Inject from beaker instead.
 				else
 					patient.reagents.add_reagent(reagent_id,injection_amount)
@@ -581,8 +578,6 @@
 				T.syndicate_aligned = syndicate_aligned //This is a special case since Syndicate medibots and the mysterious medibot look the same; we also dont' want crew building Syndicate medibots if the mysterious medibot blows up.
 			if("fish")
 				new /obj/item/storage/firstaid/aquatic_kit(Tsec)
-			if("machine")
-				new /obj/item/storage/firstaid/machine/empty(Tsec)
 			else
 				new /obj/item/storage/firstaid(Tsec)
 
@@ -591,7 +586,7 @@
 		new /obj/item/healthanalyzer(Tsec)
 
 		if(prob(50))
-			drop_part(robot_arm, Tsec)
+			new /obj/item/robot_parts/l_arm(Tsec)
 
 	if(reagent_glass)
 		reagent_glass.forceMove(Tsec)
@@ -615,7 +610,7 @@
 		declare_cooldown = 0
 
 /obj/machinery/bot_core/medbot
-	req_one_access = list(ACCESS_MEDICAL, ACCESS_ROBOTICS)
+	req_one_access = list(access_medical, access_robotics)
 
 /obj/machinery/bot_core/medbot/syndicate
-	req_one_access = list(ACCESS_SYNDICATE)
+	req_one_access = list(access_syndicate)

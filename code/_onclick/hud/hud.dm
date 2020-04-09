@@ -24,11 +24,8 @@
 	var/obj/screen/alien_plasma_display
 	var/obj/screen/nightvisionicon
 	var/obj/screen/action_intent
-	var/obj/screen/zone_select
 	var/obj/screen/move_intent
 	var/obj/screen/module_store_icon
-
-	var/obj/screen/devil/soul_counter/devilsouldisplay
 
 	var/list/static_inventory = list()		//the screen objects which are static
 	var/list/toggleable_inventory = list()	//the screen objects which can be hidden
@@ -39,22 +36,14 @@
 	var/obj/screen/movable/action_button/hide_toggle/hide_actions_toggle
 	var/action_buttons_hidden = 0
 
-	var/list/obj/screen/plane_master/plane_masters = list() // see "appearance_flags" in the ref, assoc list of "[plane]" = object
-
 /mob/proc/create_mob_hud()
 	if(client && !hud_used)
 		hud_used = new /datum/hud(src)
-		update_sight()
 
 /datum/hud/New(mob/owner)
 	mymob = owner
 	hide_actions_toggle = new
 	hide_actions_toggle.InitialiseIcon(mymob)
-
-	for(var/mytype in subtypesof(/obj/screen/plane_master))
-		var/obj/screen/plane_master/instance = new mytype()
-		plane_masters["[instance.plane]"] = instance
-		instance.backdrop(mymob)
 
 /datum/hud/Destroy()
 	if(mymob.hud_used == src)
@@ -68,7 +57,6 @@
 
 	inv_slots.Cut()
 	action_intent = null
-	zone_select = null
 	move_intent = null
 
 	QDEL_LIST(toggleable_inventory)
@@ -82,6 +70,7 @@
 	mymob.healths = null
 	mymob.healthdoll = null
 	mymob.pullin = null
+	mymob.zone_sel = null
 
 	//clear the rest of our reload_fullscreen
 	lingchemdisplay = null
@@ -90,19 +79,15 @@
 	alien_plasma_display = null
 	vampire_blood_display = null
 	nightvisionicon = null
-	devilsouldisplay = null
-
-	QDEL_LIST_ASSOC_VAL(plane_masters)
 
 	mymob = null
 	return ..()
 
 /datum/hud/proc/show_hud(version = 0)
 	if(!ismob(mymob))
-		return FALSE
-
+		return 0
 	if(!mymob.client)
-		return FALSE
+		return 0
 
 	mymob.client.screen = list()
 
@@ -170,36 +155,23 @@
 				mymob.client.screen -= infodisplay
 
 	hud_version = display_hud_version
-	persistent_inventory_update()
+	persistant_inventory_update()
 	mymob.update_action_buttons(1)
 	reorganize_alerts()
 	reload_fullscreen()
-	update_parallax_pref(mymob)
-	plane_masters_update()
-
-/datum/hud/proc/plane_masters_update()
-	// Plane masters are always shown to OUR mob, never to observers
-	for(var/thing in plane_masters)
-		var/obj/screen/plane_master/PM = plane_masters[thing]
-		PM.backdrop(mymob)
-		mymob.client.screen += PM
 
 /datum/hud/human/show_hud(version = 0)
-	. = ..()
-	if(!.)
-		return
+	..()
 	hidden_inventory_update()
 
 /datum/hud/robot/show_hud(version = 0)
-	. = ..()
-	if(!.)
-		return
+	..()
 	update_robot_modules_display()
 
 /datum/hud/proc/hidden_inventory_update()
 	return
 
-/datum/hud/proc/persistent_inventory_update()
+/datum/hud/proc/persistant_inventory_update()
 	return
 
 //Triggered when F12 is pressed (Unless someone changed something in the DMF)
@@ -212,6 +184,3 @@
 		to_chat(usr, "<span class ='info'>Switched HUD mode. Press F12 to toggle.</span>")
 	else
 		to_chat(usr, "<span class ='warning'>This mob type does not use a HUD.</span>")
-
-/datum/hud/proc/update_locked_slots()
-	return

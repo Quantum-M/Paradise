@@ -48,10 +48,7 @@
 
 /mob/proc/restrained(ignore_grab)
 	// All are created free
-	return FALSE
-
-/mob/proc/get_restraining_item()
-	return null
+	return 0
 
 // Procs that update other things about the mob
 
@@ -62,9 +59,6 @@
 		animate(pixel_y = pixel_y - 5, time = 10, loop = 1, easing = SINE_EASING)
 
 /mob/proc/update_stat()
-	return
-
-/mob/proc/update_health_hud()
 	return
 
 /mob/proc/update_canmove()

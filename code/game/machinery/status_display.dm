@@ -30,7 +30,7 @@
 	var/index1			// display index for scrolling messages or 0 if non-scrolling
 	var/index2
 
-	var/frequency = DISPLAY_FREQ		// radio frequency
+	var/frequency = 1435		// radio frequency
 
 	var/friendc = 0      // track if Friend Computer mode
 	var/ignore_friendc = 0
@@ -50,15 +50,15 @@
 	var/const/STATUS_DISPLAY_CUSTOM = 99
 
 /obj/machinery/status_display/Destroy()
-	if(SSradio)
-		SSradio.remove_object(src,frequency)
+	if(radio_controller)
+		radio_controller.remove_object(src,frequency)
 	return ..()
 
 // register for radio system
 /obj/machinery/status_display/Initialize()
 	..()
-	if(SSradio)
-		SSradio.add_object(src, frequency)
+	if(radio_controller)
+		radio_controller.add_object(src, frequency)
 
 // timed process
 /obj/machinery/status_display/process()
@@ -77,9 +77,6 @@
 		return
 	set_picture("ai_bsod")
 	..(severity)
-
-/obj/machinery/status_display/get_spooked()
-	spookymode = TRUE
 
 // set what is displayed
 /obj/machinery/status_display/proc/update()
@@ -136,9 +133,9 @@
 	return 0
 
 /obj/machinery/status_display/examine(mob/user)
-	. = ..()
+	. = ..(user)
 	if(mode != STATUS_DISPLAY_BLANK && mode != STATUS_DISPLAY_ALERT)
-		. += "The display says:<br>\t[sanitize(message1)]<br>\t[sanitize(message2)]"
+		to_chat(user, "The display says:<br>\t[sanitize(message1)]<br>\t[sanitize(message2)]")
 
 /obj/machinery/status_display/proc/set_message(m1, m2)
 	if(m1)
@@ -229,9 +226,6 @@
 		return
 	set_picture("ai_bsod")
 	..(severity)
-
-/obj/machinery/ai_status_display/get_spooked()
-	spookymode = TRUE
 
 /obj/machinery/ai_status_display/proc/update()
 	if(mode==0) //Blank

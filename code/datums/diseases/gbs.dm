@@ -34,7 +34,7 @@
 		if(5)
 			to_chat(affected_mob, "<span class='danger'>Your body feels as if it's trying to rip itself open...</span>")
 			if(prob(50))
-				affected_mob.delayed_gib()
+				affected_mob.gib()
 		else
 			return
 

@@ -31,9 +31,9 @@ Possible to do for anyone motivated enough:
 #define RANGE_BASED 0
 #define AREA_BASED 1
 
-#define HOLOPAD_MODE RANGE_BASED
+var/const/HOLOPAD_MODE = RANGE_BASED
 
-GLOBAL_LIST_EMPTY(holopads)
+var/list/holopads = list()
 
 /obj/machinery/hologram/holopad
 	name = "holopad"
@@ -44,9 +44,7 @@ GLOBAL_LIST_EMPTY(holopads)
 	idle_power_usage = 5
 	active_power_usage = 100
 	layer = TURF_LAYER+0.1 //Preventing mice and drones from sneaking under them.
-	plane = FLOOR_PLANE
-	max_integrity = 300
-	armor = list(melee = 50, bullet = 20, laser = 20, energy = 20, bomb = 0, bio = 0, rad = 0, fire = 50, acid = 0)
+	armor = list(melee = 50, bullet = 20, laser = 20, energy = 20, bomb = 0, bio = 0, rad = 0)
 	var/list/masters = list()//List of living mobs that use the holopad
 	var/list/holorays = list()//Holoray-mob link.
 	var/last_request = 0 //to prevent request spam. ~Carn
@@ -61,7 +59,7 @@ GLOBAL_LIST_EMPTY(holopads)
 
 /obj/machinery/hologram/holopad/New()
 	..()
-	GLOB.holopads += src
+	holopads += src
 	component_parts = list()
 	component_parts += new /obj/item/circuitboard/holopad(null)
 	component_parts += new /obj/item/stock_parts/capacitor(null)
@@ -77,7 +75,7 @@ GLOBAL_LIST_EMPTY(holopads)
 
 	for(var/I in masters)
 		clear_holo(I)
-	GLOB.holopads -= src
+	holopads -= src
 	return ..()
 
 /obj/machinery/hologram/holopad/power_change()
@@ -88,11 +86,6 @@ GLOBAL_LIST_EMPTY(holopads)
 		if(outgoing_call)
 			outgoing_call.ConnectionFailure(src)
 
-/obj/machinery/hologram/holopad/obj_break()
-	. = ..()
-	if(outgoing_call)
-		outgoing_call.ConnectionFailure(src)
-
 /obj/machinery/hologram/holopad/RefreshParts()
 	var/holograph_range = 4
 	for(var/obj/item/stock_parts/capacitor/B in component_parts)
@@ -100,22 +93,20 @@ GLOBAL_LIST_EMPTY(holopads)
 	holo_range = holograph_range
 
 /obj/machinery/hologram/holopad/attackby(obj/item/I, mob/user, params)
+	if(default_deconstruction_screwdriver(user, "holopad_open", "holopad0", I))
+		return
+
 	if(exchange_parts(user, I))
 		return
-	return ..()
 
-/obj/machinery/hologram/holopad/screwdriver_act(mob/user, obj/item/I)
-	. = TRUE
-	default_deconstruction_screwdriver(user, "holopad_open", "holopad0", I)
+	if(default_unfasten_wrench(user, I))
+		return
 
+	if(default_deconstruction_crowbar(I))
+		return
+	else
+		return ..()
 
-/obj/machinery/hologram/holopad/wrench_act(mob/user, obj/item/I)
-	. = TRUE
-	default_unfasten_wrench(user, I)
-
-/obj/machinery/hologram/holopad/crowbar_act(mob/user, obj/item/I)
-	. = TRUE
-	default_deconstruction_crowbar(user, I)
 
 /obj/machinery/hologram/holopad/attack_hand(mob/living/carbon/human/user)
 	if(..())
@@ -192,7 +183,7 @@ GLOBAL_LIST_EMPTY(holopads)
 			temp = "You requested an AI's presence.<br>"
 			temp += "<a href='?src=[UID()];mainmenu=1'>Main Menu</a>"
 			var/area/area = get_area(src)
-			for(var/mob/living/silicon/ai/AI in GLOB.ai_list)
+			for(var/mob/living/silicon/ai/AI in ai_list)
 				if(!AI.client)
 					continue
 				to_chat(AI, "<span class='info'>Your presence is requested at <a href='?src=\ref[AI];jumptoholopad=[UID()]'>\the [area]</a>.</span>")
@@ -210,14 +201,13 @@ GLOBAL_LIST_EMPTY(holopads)
 		temp += "<a href='?src=[UID()];mainmenu=1'>Main Menu</a>"
 		if(usr.loc == loc)
 			var/list/callnames = list()
-			for(var/I in GLOB.holopads)
+			for(var/I in holopads)
 				var/area/A = get_area(I)
 				if(A)
 					LAZYADD(callnames[A], I)
 			callnames -= get_area(src)
-			var/list/sorted_callnames = sortAtom(callnames)
 			dialling_input = TRUE
-			var/result = input(usr, "Choose an area to call", "Holocall") as null|anything in sorted_callnames
+			var/result = input(usr, "Choose an area to call", "Holocall") as null|anything in callnames
 			dialling_input = FALSE
 			if(QDELETED(usr) || !result || outgoing_call)
 				return
@@ -297,7 +287,7 @@ GLOBAL_LIST_EMPTY(holopads)
 /obj/machinery/hologram/holopad/proc/transfer_to_nearby_pad(turf/T, mob/holo_owner)
 	if(!isAI(holo_owner))
 		return
-	for(var/pad in GLOB.holopads)
+	for(var/pad in holopads)
 		var/obj/machinery/hologram/holopad/another = pad
 		if(another == src)
 			continue
@@ -383,19 +373,19 @@ GLOBAL_LIST_EMPTY(holopads)
 
 /*This is the proc for special two-way communication between AI and holopad/people talking near holopad.
 For the other part of the code, check silicon say.dm. Particularly robot talk.*/
-/obj/machinery/hologram/holopad/hear_talk(atom/movable/speaker, list/message_pieces, verb)
+/obj/machinery/hologram/holopad/hear_talk(atom/movable/speaker, message, verb, datum/language/message_language)
 	if(speaker && masters.len)//Master is mostly a safety in case lag hits or something. Radio_freq so AIs dont hear holopad stuff through radios.
 		for(var/mob/living/silicon/ai/master in masters)
 			if(masters[master] && speaker != master)
-				master.relay_speech(speaker, message_pieces, verb)
+				master.relay_speech(speaker, message, verb, message_language)
 
 	for(var/I in holo_calls)
 		var/datum/holocall/HC = I
 		if(HC.connected_holopad == src && speaker != HC.hologram)
-			HC.user.hear_say(message_pieces, verb, speaker = speaker)
+			HC.user.hear_say(message, verb, message_language, speaker = speaker)
 
 	if(outgoing_call && speaker == outgoing_call.user)
-		outgoing_call.hologram.atom_say(multilingual_to_message(message_pieces))
+		outgoing_call.hologram.atom_say(message)
 
 
 
@@ -487,9 +477,8 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 
 /obj/effect/overlay/holo_pad_hologram/examine(mob/user)
 	if(Impersonation)
-		. = Impersonation.examine(user)
-	else
-		. = ..()
+		return Impersonation.examine(user)
+	return ..()
 
 
 /obj/effect/overlay/holoray

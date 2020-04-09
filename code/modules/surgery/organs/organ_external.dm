@@ -47,7 +47,7 @@
 	var/damage_msg = "<span class='warning'>You feel an intense pain</span>"
 	var/broken_description
 
-	var/open = 0  // If the body part has an open incision from surgery
+	var/open = 0
 	var/sabotaged = 0 //If a prosthetic limb is emagged, it will detonate when it fails.
 	var/encased       // Needs to be opened with a saw to access the organs.
 
@@ -129,6 +129,7 @@
 			if(!parent.children)
 				parent.children = list()
 			parent.children.Add(src)
+			parent.check_fracture()
 
 /obj/item/organ/external/attempt_become_organ(obj/item/organ/external/parent,mob/living/carbon/human/H)
 	if(parent_organ != parent.limb_name)
@@ -223,7 +224,7 @@
 				droplimb(1) //Clean loss, just drop the limb and be done
 
 	// See if bones need to break
-	check_fracture(brute)
+	check_fracture()
 	var/mob/living/carbon/owner_old = owner //Need to update health, but need a reference in case the below check cuts off a limb.
 	//If limb took enough damage, try to cut or tear it off
 	if(owner && loc == owner)
@@ -261,7 +262,6 @@ This function completely restores a damaged organ to perfect condition.
 */
 /obj/item/organ/external/rejuvenate()
 	damage_state = "00"
-	surgeryize()
 	if(is_robotic())	//Robotic organs stay robotic.
 		status = ORGAN_ROBOT
 	else
@@ -285,7 +285,7 @@ This function completely restores a damaged organ to perfect condition.
 		owner.updatehealth("limb rejuvenate")
 	update_icon()
 	if(!owner)
-		START_PROCESSING(SSobj, src)
+		processing_objects |= src
 
 /****************************************************
 			   PROCESSING & UPDATING
@@ -331,7 +331,7 @@ Note that amputating the affected organ does in fact remove the infection from t
 */
 /obj/item/organ/external/proc/update_germs()
 
-	if(is_robotic() || (NO_GERMS in owner.dna.species.species_traits)) //Robotic limbs shouldn't be infected, nor should nonexistant limbs.
+	if(is_robotic() || (IS_PLANT in owner.dna.species.species_traits)) //Robotic limbs shouldn't be infected, nor should nonexistant limbs.
 		germ_level = 0
 		return
 
@@ -398,13 +398,12 @@ Note that amputating the affected organ does in fact remove the infection from t
 		owner.adjustToxLoss(1)
 
 //Updates brute_damn and burn_damn from wound damages. Updates BLEEDING status.
-/obj/item/organ/external/proc/check_fracture(var/damage_inflicted)
+/obj/item/organ/external/proc/check_fracture()
 	if(config.bones_can_break && brute_dam > min_broken_damage && !is_robotic())
-		if(prob(damage_inflicted))
-			fracture()
+		fracture()
 
 /obj/item/organ/external/proc/check_for_internal_bleeding(damage)
-	if(owner && NO_BLOOD in owner.dna.species.species_traits)
+	if(NO_BLOOD in owner.dna.species.species_traits)
 		return
 	var/local_damage = brute_dam + damage
 	if(damage > 15 && local_damage > 30 && prob(damage) && !is_robotic())
@@ -515,7 +514,7 @@ Note that amputating the affected organ does in fact remove the infection from t
 			if(!clean)
 				// Throw limb around.
 				if(src && istype(loc,/turf))
-					dropped_part.throw_at(get_edge_target_turf(src,pick(GLOB.alldirs)),rand(1,3),30)
+					dropped_part.throw_at(get_edge_target_turf(src,pick(alldirs)),rand(1,3),30)
 				dir = 2
 			brute_dam = 0
 			burn_dam = 0  //Reset the damage on the limb; the damage should have transferred to the parent; we don't want extra damage being re-applied when then limb is re-attached
@@ -625,17 +624,12 @@ Note that amputating the affected organ does in fact remove the infection from t
 
 /obj/item/organ/external/proc/mend_fracture()
 	if(is_robotic())
-		return FALSE	//ORGAN_BROKEN doesn't have the same meaning for robot limbs
-
-	if(!(status & ORGAN_BROKEN))
-		return FALSE
+		return 0	//ORGAN_BROKEN doesn't have the same meaning for robot limbs
+	if(brute_dam > min_broken_damage)
+		return 0	//will just immediately fracture again
 
 	status &= ~ORGAN_BROKEN
-	status &= ~ORGAN_SPLINTED
-	perma_injury = 0
-	if(owner)
-		owner.handle_splints()
-	return TRUE
+	return 1
 
 /obj/item/organ/external/robotize(company, make_tough = 0, convert_all = 1)
 	..()
@@ -663,7 +657,7 @@ Note that amputating the affected organ does in fact remove the infection from t
 
 /obj/item/organ/external/proc/set_company(var/company)
 	model = company
-	var/datum/robolimb/R = GLOB.all_robolimbs[company]
+	var/datum/robolimb/R = all_robolimbs[company]
 	if(R)
 		force_icon = R.icon
 		name = "[R.company] [initial(name)]"

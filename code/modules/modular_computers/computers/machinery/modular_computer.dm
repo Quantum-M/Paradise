@@ -1,5 +1,5 @@
 // Global var to track modular computers
-GLOBAL_LIST_EMPTY(global_modular_computers)
+var/list/global_modular_computers = list()
 
 // Modular Computer - device that runs various programs and operates with hardware
 // DO NOT SPAWN THIS TYPE. Use /laptop/ or /console/ instead.
@@ -28,13 +28,16 @@ GLOBAL_LIST_EMPTY(global_modular_computers)
 	var/base_active_power_usage = 100					// Power usage when the computer is open (screen is active) and can be interacted with. Remember hardware can use power too.
 	var/base_idle_power_usage = 10						// Power usage when the computer is idle and screen is off (currently only applies to laptops)
 
+	integrity_failure = 150
+	max_integrity = 300
+
 	var/obj/item/modular_computer/processor/cpu = null				// CPU that handles most logic while this type only handles power and other specific things.
 
 /obj/machinery/modular_computer/New()
 	..()
 	cpu = new(src)
 	cpu.physical = src
-	GLOB.global_modular_computers.Add(src)
+	global_modular_computers.Add(src)
 
 /obj/machinery/modular_computer/Destroy()
 	QDEL_NULL(cpu)

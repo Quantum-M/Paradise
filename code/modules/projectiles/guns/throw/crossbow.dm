@@ -22,9 +22,6 @@
 	var/obj/item/stock_parts/cell/cell = null    // Used for firing superheated rods.
 	var/list/possible_tensions = list(XBOW_TENSION_20, XBOW_TENSION_40, XBOW_TENSION_60, XBOW_TENSION_80, XBOW_TENSION_FULL)
 
-/obj/item/gun/throw/crossbow/get_cell()
-	return cell
-
 /obj/item/gun/throw/crossbow/emp_act(severity)
 	if(cell && severity)
 		emp_act(severity)
@@ -39,11 +36,11 @@
 		icon_state = "[initial(icon_state)]-drawn"
 
 /obj/item/gun/throw/crossbow/examine(mob/user)
-	. = ..()
+	..()
 	if(cell)
-		. += "<span class='notice'>\A [cell] is mounted onto [src]. Battery cell charge: [cell.charge]/[cell.maxcharge]"
+		to_chat(user, "<span class='notice'>\A [cell] is mounted onto [src]. Battery cell charge: [cell.charge]/[cell.maxcharge]")
 	else
-		. += "<span class='notice'>It has an empty mount for a battery cell.</span>"
+		to_chat(user, "<span class='notice'>It has an empty mount for a battery cell.</span>")
 
 /obj/item/gun/throw/crossbow/modify_projectile(obj/item/I, on_chamber = 0)
 	if(cell && on_chamber && istype(I, /obj/item/arrow/rod))
@@ -166,7 +163,7 @@
 	name = "makeshift bolt"
 	desc = "A sharpened metal rod that can be fired out of a crossbow."
 	icon_state = "metal-rod"
-	throwforce = 10
+	throwforce = 8
 	var/superheated = 0
 
 /obj/item/arrow/rod/removed()

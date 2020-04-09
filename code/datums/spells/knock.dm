@@ -11,7 +11,7 @@
 	cooldown_min = 20 //20 deciseconds reduction per rank
 
 	action_icon_state = "knock"
-	sound = 'sound/magic/knock.ogg'
+	sound = 'sound/magic/Knock.ogg'
 
 /obj/effect/proc_holder/spell/aoe_turf/knock/cast(list/targets, mob/user = usr)
 	for(var/turf/T in targets)
@@ -51,7 +51,7 @@
 			if(is_station_level(A.z))
 				A.req_access = list()
 				A.req_one_access = list()
-		GLOB.command_announcement.Announce("We have removed all access requirements on your station's airlocks. You can thank us later!", "Greetings!", 'sound/misc/notice2.ogg', , , "Space Wizard Federation Message")
+		command_announcement.Announce("We have removed all access requirements on your station's airlocks. You can thank us later!", "Greetings!", 'sound/misc/notice2.ogg', , , "Space Wizard Federation Message")
 	else
 		..()
 	return

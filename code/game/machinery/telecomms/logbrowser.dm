@@ -16,7 +16,7 @@
 
 	var/universal_translate = 0 // set to 1 if it can translate nonhuman speech
 
-	req_access = list(ACCESS_TCOMSAT)
+	req_access = list(access_tcomsat)
 	circuit = /obj/item/circuitboard/comm_server
 
 	attack_hand(mob/user as mob)
@@ -208,9 +208,8 @@
 					A.icon_state = "4"
 					A.anchored = 1
 					qdel(src)
-			updateUsrDialog()
-			return
-		return ..()
+		src.updateUsrDialog()
+		return
 
 	emag_act(user as mob)
 		if(!emagged)

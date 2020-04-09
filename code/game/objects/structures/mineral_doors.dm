@@ -7,8 +7,7 @@
 
 	icon = 'icons/obj/doors/mineral_doors.dmi'
 	icon_state = "metal"
-	max_integrity = 200
-	armor = list("melee" = 10, "bullet" = 0, "laser" = 0, "energy" = 100, "bomb" = 10, "bio" = 100, "rad" = 100, "fire" = 50, "acid" = 50)
+	armor = list(melee = 10, bullet = 0, laser = 0, energy = 100, bomb = 10, bio = 100, rad = 100)
 	var/initial_state
 	var/state = 0 //closed, 1 == open
 	var/isSwitchingStates = 0
@@ -36,7 +35,7 @@
 
 /obj/structure/mineral_door/Move()
 	var/turf/T = loc
-	. = ..()
+	..()
 	move_update_air(T)
 
 /obj/structure/mineral_door/Bumped(atom/user)
@@ -51,6 +50,9 @@
 		return TryToSwitchState(user)
 
 /obj/structure/mineral_door/attack_hand(mob/user)
+	return TryToSwitchState(user)
+
+/obj/structure/mineral_door/attack_animal(mob/user)
 	return TryToSwitchState(user)
 
 /obj/structure/mineral_door/attack_ghost(mob/user)
@@ -131,13 +133,29 @@
 	if(istype(W, /obj/item/pickaxe))
 		var/obj/item/pickaxe/digTool = W
 		to_chat(user, "<span class='notice'>You start digging \the [src].</span>")
-		if(do_after(user, 40 * digTool.toolspeed * hardness, target = src) && src)
+		if(do_after(user, digTool.digspeed * hardness, target = src) && src)
 			to_chat(user, "<span class='notice'>You finished digging.</span>")
 			deconstruct(TRUE)
 	else if(user.a_intent != INTENT_HARM)
 		attack_hand(user)
 	else
-		return ..()
+		attacked_by(W, user)
+
+/obj/structure/mineral_door/attacked_by(obj/item/I, mob/user)
+	if(I.damtype != STAMINA)
+		user.changeNext_move(CLICK_CD_MELEE)
+		user.do_attack_animation(src)
+		visible_message("<span class='notice'>[user] hits \the [src] with \the [I].</span>")
+		if(damageSound)
+			playsound(loc, damageSound, 100, 1)
+		else
+			playsound(loc, I.hitsound, 100, 1)
+		hardness -= I.force / 100
+		CheckHardness()
+
+/obj/structure/mineral_door/proc/CheckHardness()
+	if(hardness <= 0)
+		deconstruct(FALSE)
 
 /obj/structure/mineral_door/deconstruct(disassembled = TRUE)
 	var/turf/T = get_turf(src)
@@ -148,14 +166,28 @@
 			new sheetType(T, max(sheetAmount - 2, 1))
 	qdel(src)
 
+/obj/structure/mineral_door/ex_act(severity = 1)
+	switch(severity)
+		if(1)
+			deconstruct(FALSE)
+		if(2)
+			if(prob(20))
+				deconstruct(FALSE)
+			else
+				hardness--
+				CheckHardness()
+		if(3)
+			hardness -= 0.1
+			CheckHardness()
+
 /obj/structure/mineral_door/iron
-	max_integrity = 300
+	hardness = 3
 
 /obj/structure/mineral_door/silver
 	name = "silver door"
 	icon_state = "silver"
 	sheetType = /obj/item/stack/sheet/mineral/silver
-	max_integrity = 300
+	hardness = 3
 
 /obj/structure/mineral_door/gold
 	name = "gold door"
@@ -166,14 +198,14 @@
 	name = "uranium door"
 	icon_state = "uranium"
 	sheetType = /obj/item/stack/sheet/mineral/uranium
-	max_integrity = 300
+	hardness = 3
 	light_range = 2
 
 /obj/structure/mineral_door/sandstone
 	name = "sandstone door"
 	icon_state = "sandstone"
 	sheetType = /obj/item/stack/sheet/mineral/sandstone
-	max_integrity = 100
+	hardness = 0.5
 
 /obj/structure/mineral_door/transparent
 	opacity = 0
@@ -197,19 +229,18 @@
 		return ..()
 
 /obj/structure/mineral_door/transparent/plasma/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
-	..()
 	if(exposed_temperature > 300)
 		TemperatureAct(exposed_temperature)
 
 /obj/structure/mineral_door/transparent/plasma/proc/TemperatureAct(temperature)
-	atmos_spawn_air(LINDA_SPAWN_HEAT | LINDA_SPAWN_TOXINS, 500)
+	atmos_spawn_air(SPAWN_HEAT | SPAWN_TOXINS, 500)
 	deconstruct(FALSE)
 
 /obj/structure/mineral_door/transparent/diamond
 	name = "diamond door"
 	icon_state = "diamond"
 	sheetType = /obj/item/stack/sheet/mineral/diamond
-	max_integrity = 1000
+	hardness = 10
 
 /obj/structure/mineral_door/wood
 	name = "wood door"
@@ -218,8 +249,8 @@
 	closeSound = 'sound/effects/doorcreaky.ogg'
 	sheetType = /obj/item/stack/sheet/wood
 	hardness = 1
-	resistance_flags = FLAMMABLE
-	max_integrity = 200
+	burn_state = FLAMMABLE
+	burntime = 30
 
 /obj/structure/mineral_door/resin
 	name = "resin door"

@@ -11,10 +11,7 @@ Pipelines + Other Objects -> Pipe network
 GLOBAL_DATUM_INIT(pipe_icon_manager, /datum/pipe_icon_manager, new())
 /obj/machinery/atmospherics
 	anchored = 1
-	layer = GAS_PIPE_HIDDEN_LAYER  //under wires
-	resistance_flags = FIRE_PROOF
-	max_integrity = 200
-	plane = FLOOR_PLANE
+	layer = 2.4 //under wires with their 2.44
 	idle_power_usage = 0
 	active_power_usage = 0
 	power_channel = ENVIRON
@@ -33,8 +30,8 @@ GLOBAL_DATUM_INIT(pipe_icon_manager, /datum/pipe_icon_manager, new())
 	var/image/pipe_image
 
 /obj/machinery/atmospherics/New()
-	if (!armor)
-		armor = list("melee" = 25, "bullet" = 10, "laser" = 10, "energy" = 100, "bomb" = 0, "bio" = 100, "rad" = 100, "fire" = 100, "acid" = 70)
+	if(!armor)
+		armor = list(melee = 25, bullet = 10, laser = 10, energy = 100, bomb = 0, bio = 100, rad = 100)
 	..()
 
 	if(!pipe_color)
@@ -64,14 +61,10 @@ GLOBAL_DATUM_INIT(pipe_icon_manager, /datum/pipe_icon_manager, new())
 
 // Icons/overlays/underlays
 /obj/machinery/atmospherics/update_icon()
-	var/turf/T = get_turf(loc)
-	if(!T || level == 2 || !T.intact)
-		plane = GAME_PLANE
-	else
-		plane = FLOOR_PLANE
+	return null
 
 /obj/machinery/atmospherics/proc/update_pipe_image()
-	pipe_image = image(src, loc, layer = ABOVE_HUD_LAYER, dir = dir) //the 20 puts it above Byond's darkness (not its opacity view)
+	pipe_image = image(src, loc, layer = 20, dir = dir) //the 20 puts it above Byond's darkness (not its opacity view)
 	pipe_image.plane = HUD_PLANE
 
 /obj/machinery/atmospherics/proc/check_icon_cache(var/safety = 0)
@@ -199,23 +192,23 @@ GLOBAL_DATUM_INIT(pipe_icon_manager, /datum/pipe_icon_manager, new())
 
 //Called when an atmospherics object is unwrenched while having a large pressure difference
 //with it's locs air contents.
-/obj/machinery/atmospherics/proc/unsafe_pressure_release(mob/user, pressures)
+/obj/machinery/atmospherics/proc/unsafe_pressure_release(var/mob/user,var/pressures)
 	if(!user)
 		return
 
 	if(!pressures)
 		var/datum/gas_mixture/int_air = return_air()
 		var/datum/gas_mixture/env_air = loc.return_air()
-		pressures = int_air.return_pressure() - env_air.return_pressure()
+		pressures = int_air.return_pressure()-env_air.return_pressure()
 
-	var/fuck_you_dir = get_dir(src, user)
-	var/turf/general_direction = get_edge_target_turf(user, fuck_you_dir)
+	var/fuck_you_dir = get_dir(src,user)
+	var/turf/general_direction = get_edge_target_turf(user,fuck_you_dir)
 	user.visible_message("<span class='danger'>[user] is sent flying by pressure!</span>","<span class='userdanger'>The pressure sends you flying!</span>")
 	//Values based on 2*ONE_ATMOS (the unsafe pressure), resulting in 20 range and 4 speed
-	user.throw_at(general_direction, pressures/10, pressures/50)
+	user.throw_at(general_direction,pressures/10,pressures/50)
 
 /obj/machinery/atmospherics/deconstruct(disassembled = TRUE)
-	if(!(flags & NODECONSTRUCT))
+	if(can_deconstruct)
 		if(can_unwrench)
 			if(stored)
 				stored.forceMove(get_turf(src))
@@ -233,12 +226,6 @@ GLOBAL_DATUM_INIT(pipe_icon_manager, /datum/pipe_icon_manager, new())
 	var/turf/T = loc
 	level = T.intact ? 2 : 1
 	add_fingerprint(usr)
-	if(!SSair.initialized) //If there's no atmos subsystem, we can't really initialize pipenets
-		SSair.machinery_to_construct.Add(src)
-		return
-	initialize_atmos_network()
-
-/obj/machinery/atmospherics/proc/initialize_atmos_network()
 	atmos_init()
 	var/list/nodes = pipeline_expansion()
 	for(var/obj/machinery/atmospherics/A in nodes)
@@ -256,16 +243,15 @@ GLOBAL_DATUM_INIT(pipe_icon_manager, /datum/pipe_icon_manager, new())
 // Ventcrawling
 #define VENT_SOUND_DELAY 30
 /obj/machinery/atmospherics/relaymove(mob/living/user, direction)
-	direction &= initialize_directions
-	if(!direction || !(direction in GLOB.cardinal)) //cant go this way.
+	if(!(direction & initialize_directions)) //can't go in a way we aren't connecting to
 		return
 
-	if(user in buckled_mobs)// fixes buckle ventcrawl edgecase fuck bug
+	if(buckled_mob == user)
 		return
 
 	var/obj/machinery/atmospherics/target_move = findConnecting(direction)
 	if(target_move)
-		if(is_type_in_list(target_move, GLOB.ventcrawl_machinery) && target_move.can_crawl_through())
+		if(is_type_in_list(target_move, ventcrawl_machinery) && target_move.can_crawl_through())
 			user.remove_ventcrawl()
 			user.forceMove(target_move.loc) //handles entering and so on
 			user.visible_message("You hear something squeezing through the ducts.", "You climb out the ventilation system.")
@@ -278,7 +264,7 @@ GLOBAL_DATUM_INIT(pipe_icon_manager, /datum/pipe_icon_manager, new())
 				user.last_played_vent = world.time
 				playsound(src, 'sound/machines/ventcrawl.ogg', 50, 1, -3)
 	else
-		if((direction & initialize_directions) || is_type_in_list(src, GLOB.ventcrawl_machinery)) //if we move in a way the pipe can connect, but doesn't - or we're in a vent
+		if((direction & initialize_directions) || is_type_in_list(src, ventcrawl_machinery)) //if we move in a way the pipe can connect, but doesn't - or we're in a vent
 			user.remove_ventcrawl()
 			user.forceMove(src.loc)
 			user.visible_message("You hear something squeezing through the pipes.", "You climb out the ventilation system.")
@@ -287,7 +273,7 @@ GLOBAL_DATUM_INIT(pipe_icon_manager, /datum/pipe_icon_manager, new())
 		user.canmove = 1
 
 /obj/machinery/atmospherics/AltClick(var/mob/living/L)
-	if(is_type_in_list(src, GLOB.ventcrawl_machinery))
+	if(is_type_in_list(src, ventcrawl_machinery))
 		L.handle_ventcrawl(src)
 		return
 	..()
@@ -338,8 +324,6 @@ GLOBAL_DATUM_INIT(pipe_icon_manager, /datum/pipe_icon_manager, new())
 /obj/machinery/atmospherics/singularity_pull(S, current_size)
 	if(current_size >= STAGE_FIVE)
 		deconstruct(FALSE)
-	return ..()
 
 /obj/machinery/atmospherics/update_remote_sight(mob/user)
 	user.sight |= (SEE_TURFS|BLIND)
-	. = ..()

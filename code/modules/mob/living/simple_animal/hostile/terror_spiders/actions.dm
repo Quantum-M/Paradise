@@ -7,7 +7,7 @@
 
 /datum/action/innate/terrorspider/web/Activate()
 	var/mob/living/simple_animal/hostile/poison/terror_spider/user = owner
-	user.Web()
+	user.Web(0)
 
 /datum/action/innate/terrorspider/wrap
 	name = "Wrap"
@@ -30,6 +30,16 @@
 	var/mob/living/simple_animal/hostile/poison/terror_spider/green/user = owner
 	user.DoLayGreenEggs()
 
+// ---------- PRINCE ACTIONS
+
+/datum/action/innate/terrorspider/thickweb
+	name = "Thick Web"
+	icon_icon = 'icons/effects/effects.dmi'
+	button_icon_state = "stickyweb2"
+
+/datum/action/innate/terrorspider/thickweb/Activate()
+	var/mob/living/simple_animal/hostile/poison/terror_spider/user = owner
+	user.Web(1)
 
 // ---------- BOSS ACTIONS
 
@@ -41,28 +51,6 @@
 /datum/action/innate/terrorspider/ventsmash/Activate()
 	var/mob/living/simple_animal/hostile/poison/terror_spider/user = owner
 	user.DoVentSmash()
-
-// ---------- PRINCESS ACTIONS
-
-/datum/action/innate/terrorspider/evolvequeen
-	name = "Evolve Queen"
-	icon_icon = 'icons/mob/terrorspider.dmi'
-	button_icon_state = "terror_queen"
-
-/datum/action/innate/terrorspider/evolvequeen/Activate()
-	var/mob/living/simple_animal/hostile/poison/terror_spider/princess/user = owner
-	if(!istype(user))
-		to_chat(user, "<span class='warning'>ERROR: attempt to use evolve queen ability on a non-princess</span>")
-		return
-	var/feedings_left = user.feedings_to_evolve - user.fed
-	if(feedings_left > 0)
-		to_chat(user, "<span class='warning'>You must wrap [feedings_left] more humanoid prey before you can do this!</span>")
-		return
-	for(var/mob/living/simple_animal/hostile/poison/terror_spider/queen/Q in GLOB.ts_spiderlist)
-		if(Q.spider_awaymission == user.spider_awaymission)
-			to_chat(user, "<span class='warning'>The presence of another Queen in the area is preventing you from maturing.")
-			return
-	user.evolve_to_queen()
 
 // ---------- QUEEN ACTIONS
 
@@ -115,9 +103,7 @@
 
 // ---------- WEB
 
-/mob/living/simple_animal/hostile/poison/terror_spider/proc/Web()
-	if(!web_type)
-		return
+/mob/living/simple_animal/hostile/poison/terror_spider/proc/Web(var/thick = 0)
 	var/turf/mylocation = loc
 	visible_message("<span class='notice'>[src] begins to secrete a sticky substance.</span>")
 	if(do_after(src, delay_web, target = loc))
@@ -130,8 +116,15 @@
 			if(T)
 				to_chat(src, "<span class='danger'>There is already a web here.</span>")
 			else
-				var/obj/structure/spider/terrorweb/W = new web_type(loc)
+				var/obj/structure/spider/terrorweb/W = new /obj/structure/spider/terrorweb(loc)
 				W.creator_ckey = ckey
+				if(thick)
+					W.opacity = 1
+					W.name = "thick terror web"
+					W.health = W.health * 2
+				if(web_infects)
+					W.infectious = 1
+					W.name = "sharp terror web"
 
 /obj/structure/spider/terrorweb
 	name = "terror web"
@@ -139,14 +132,21 @@
 	icon = 'icons/effects/effects.dmi'
 	anchored = 1 // prevents people dragging it
 	density = 0 // prevents it blocking all movement
-	max_integrity = 20 // two welders, or one laser shot (15 for the normal spider webs)
+	health = 20 // two welders, or one laser shot (15 for the normal spider webs)
 	icon_state = "stickyweb1"
 	var/creator_ckey = null
+	var/infectious = 0
 
 /obj/structure/spider/terrorweb/New()
 	..()
 	if(prob(50))
 		icon_state = "stickyweb2"
+
+/obj/structure/spider/terrorweb/proc/DeCloakNearby()
+	for(var/mob/living/simple_animal/hostile/poison/terror_spider/gray/G in view(6,src))
+		if(!G.ckey && G.stat != DEAD)
+			G.GrayDeCloak()
+			G.Aggro()
 
 /obj/structure/spider/terrorweb/CanPass(atom/movable/mover, turf/target)
 	if(istype(mover, /mob/living/simple_animal/hostile/poison/terror_spider))
@@ -161,9 +161,14 @@
 			to_chat(mover, "<span class='danger'>You get stuck in [src] for a moment.</span>")
 			M.Stun(4) // 8 seconds.
 			M.Weaken(4) // 8 seconds.
+			DeCloakNearby()
 			if(iscarbon(mover))
 				var/mob/living/carbon/C = mover
-				web_special_ability(C)
+				if(!IsTSInfected(C) && infectious)
+					var/inject_target = pick("chest","head")
+					if(C.can_inject(null, 0, inject_target, 0))
+						to_chat(C, "<span class='danger'>[src] slices into you!</span>")
+						new /obj/item/organ/internal/body_egg/terror_eggs(C)
 				spawn(70)
 					if(C.loc == loc)
 						qdel(src)
@@ -180,9 +185,6 @@
 		// Webs don't care about disablers, tasers, etc. Or toxin damage. They're organic, but not alive.
 		return
 	..()
-
-/obj/structure/spider/terrorweb/proc/web_special_ability(mob/living/carbon/C)
-	return
 
 // ---------- WRAP
 

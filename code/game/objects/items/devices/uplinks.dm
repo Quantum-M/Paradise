@@ -6,7 +6,7 @@ A list of items and costs is stored under the datum of every game mode, alongsid
 
 */
 
-GLOBAL_LIST_EMPTY(world_uplinks)
+var/list/world_uplinks = list()
 
 /obj/item/uplink
 	var/welcome 			// Welcoming menu message
@@ -23,22 +23,21 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 	var/used_TC = 0
 
 	var/job = null
-	var/temp_category
-	var/uplink_type = "traitor"
+	var/show_descriptions = 0
 
 /obj/item/uplink/nano_host()
 	return loc
 
 /obj/item/uplink/New()
 	..()
-	welcome = SSticker.mode.uplink_welcome
-	uses = SSticker.mode.uplink_uses
+	welcome = ticker.mode.uplink_welcome
+	uses = ticker.mode.uplink_uses
 	uplink_items = get_uplink_items()
 
-	GLOB.world_uplinks += src
+	world_uplinks += src
 
 /obj/item/uplink/Destroy()
-	GLOB.world_uplinks -= src
+	world_uplinks -= src
 	return ..()
 
 /obj/item/uplink/proc/generate_items(mob/user as mob)
@@ -71,10 +70,7 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 			if(I.job && I.job.len)
 				if(!(I.job.Find(job)))
 					continue
-			dat += "<A href='byond://?src=[UID()];buy_item=[I.reference];cost=[I.cost]'>[I.name]</A> ([I.cost])"
-			if(I.hijack_only)
-				dat += " (HIJACK ONLY)"
-			dat += " <BR>"
+			dat += "<A href='byond://?src=[UID()];buy_item=[I.reference];cost=[I.cost]'>[I.name]</A> ([I.cost])<BR>"
 			category_items++
 
 	dat += "<A href='byond://?src=[UID()];buy_item=random'>Random Item (??)</A><br>"
@@ -97,7 +93,7 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 			if(I.job && I.job.len)
 				if(!(I.job.Find(job)))
 					continue
-			nano[nano.len]["items"] += list(list("Name" = sanitize(I.name), "Description" = sanitize(I.description()),"Cost" = I.cost, "hijack_only" = I.hijack_only, "obj_path" = I.reference))
+			nano[nano.len]["items"] += list(list("Name" = sanitize(I.name), "Description" = sanitize(I.description()),"Cost" = I.cost, "obj_path" = I.reference))
 			reference[I.reference] = I
 
 	var/datum/nano_item_lists/result = new
@@ -113,7 +109,7 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 	var/list/random_items = new
 	for(var/IR in ItemsReference)
 		var/datum/uplink_item/UI = ItemsReference[IR]
-		if(UI.cost <= uses && UI.limited_stock != 0)
+		if(UI.cost <= uses)
 			random_items += UI
 	return pick(random_items)
 
@@ -136,12 +132,7 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 /obj/item/uplink/proc/buy(var/datum/uplink_item/UI, var/reference)
 	if(!UI)
 		return
-	if(UI.limited_stock == 0)
-		to_chat(usr, "<span class='warning'>You have redeemed this discount already.</span>")
-		return
 	UI.buy(src,usr)
-	if(UI.limited_stock > 0) // only decrement it if it's actually limited
-		UI.limited_stock--
 	SSnanoui.update_uis(src)
 
 	/* var/list/L = UI.spawn_item(get_turf(usr),src)
@@ -216,7 +207,7 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 /*
 	NANO UI FOR UPLINK WOOP WOOP
 */
-/obj/item/uplink/hidden/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = GLOB.inventory_state)
+/obj/item/uplink/hidden/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = inventory_state)
 	var/title = "Remote Uplink"
 	// update the ui if it exists, returns null if no ui is passed/found
 	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, force_open)
@@ -227,16 +218,16 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 		// open the new ui window
 		ui.open()
 
-/obj/item/uplink/hidden/ui_data(mob/user, ui_key = "main", datum/topic_state/state = GLOB.inventory_state)
+/obj/item/uplink/hidden/ui_data(mob/user, ui_key = "main", datum/topic_state/state = inventory_state)
 	var/data[0]
 
 	data["welcome"] = welcome
 	data["crystals"] = uses
 	data["menu"] = nanoui_menu
+	data["descriptions"] = show_descriptions
 	if(!nanoui_items)
 		generate_items(user)
 	data["nano_items"] = nanoui_items
-	data["category_choice"] = temp_category
 	data += nanoui_data
 
 	return data
@@ -264,11 +255,17 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 			hidden_crystals = 0
 			ui.close()
 			return 1
+		if(href_list["return"])
+			nanoui_menu = round(nanoui_menu/10)
+			update_nano_data()
 		if(href_list["menu"])
 			nanoui_menu = text2num(href_list["menu"])
 			update_nano_data(href_list["id"])
-		if(href_list["category"])
-			temp_category = href_list["category"]
+		if(href_list["menu"])
+			nanoui_menu = text2num(href_list["menu"])
+			update_nano_data(href_list["id"])
+		if(href_list["descriptions"])
+			show_descriptions = !show_descriptions
 			update_nano_data()
 
 	SSnanoui.update_uis(src)
@@ -277,14 +274,14 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 /obj/item/uplink/hidden/proc/update_nano_data(var/id)
 	if(nanoui_menu == 1)
 		var/permanentData[0]
-		for(var/datum/data/record/L in sortRecord(GLOB.data_core.general))
+		for(var/datum/data/record/L in sortRecord(data_core.general))
 			permanentData[++permanentData.len] = list(Name = sanitize(L.fields["name"]),"id" = L.fields["id"])
 		nanoui_data["exploit_records"] = permanentData
 
 	if(nanoui_menu == 11)
 		nanoui_data["exploit_exists"] = 0
 
-		for(var/datum/data/record/L in GLOB.data_core.general)
+		for(var/datum/data/record/L in data_core.general)
 			if(L.fields["id"] == id)
 				nanoui_data["exploit"] = list()  // Setting this to equal L.fields passes it's variables that are lists as reference instead of value.
 				nanoui_data["exploit"]["name"] =  html_encode(L.fields["name"])
@@ -316,7 +313,6 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 // implant uplink (not the implant tool) and a preset headset uplink.
 
 /obj/item/radio/uplink/New()
-	..()
 	hidden_uplink = new(src)
 	icon_state = "radio"
 
@@ -324,23 +320,7 @@ GLOBAL_LIST_EMPTY(world_uplinks)
 	if(hidden_uplink)
 		hidden_uplink.trigger(user)
 
-/obj/item/radio/uplink/nuclear/New()
-	..()
-	if(hidden_uplink)
-		hidden_uplink.uplink_type = "nuclear"
-	GLOB.nuclear_uplink_list += src
-
-/obj/item/radio/uplink/nuclear/Destroy()
-	GLOB.nuclear_uplink_list -= src
-	return ..()
-
-/obj/item/radio/uplink/sst/New()
-	..()
-	if(hidden_uplink)
-		hidden_uplink.uplink_type = "sst"
-
 /obj/item/multitool/uplink/New()
-	..()
 	hidden_uplink = new(src)
 
 /obj/item/multitool/uplink/attack_self(mob/user as mob)

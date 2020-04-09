@@ -37,15 +37,7 @@
   *
   * @return nothing
   */
-/datum/proc/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/nano_ui/master_ui = null, var/datum/topic_state/state = GLOB.default_state)
-	return
-
-/**
-  * The UI-close proc is called when the UI is closed.
-  *
-  * @param user /mob The mob who was interacting with this UI.
-  */
-/datum/proc/on_ui_close(mob/user)
+/datum/proc/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/nano_ui/master_ui = null, var/datum/topic_state/state = default_state)
 	return
 
 /**
@@ -57,7 +49,7 @@
  *
  * @return list()
  */
-/datum/proc/ui_data(mob/user, ui_key = "main", datum/topic_state/state = GLOB.default_state)
+/datum/proc/ui_data(mob/user, ui_key = "main", datum/topic_state/state = default_state)
 	return list()
 
 // Used by the Nano UI Manager (/datum/nanomanager) to track UIs opened by this mob

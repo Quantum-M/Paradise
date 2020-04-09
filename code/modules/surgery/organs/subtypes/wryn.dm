@@ -8,4 +8,4 @@
 	slot = "hivenode"
 
 /obj/item/organ/internal/eyes/wryn
-	see_in_dark = 3
+	dark_view = 3

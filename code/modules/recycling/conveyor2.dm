@@ -16,7 +16,6 @@ GLOBAL_LIST_INIT(conveyor_switches, list())
 	desc = "It's a conveyor belt, commonly used to transport large numbers of items elsewhere quite quickly."
 	layer = CONVEYOR_LAYER 		// so they appear under stuff but not below stuff like vents
 	anchored = TRUE
-	move_force = MOVE_FORCE_DEFAULT
 	var/operating = FALSE	//NB: this can be TRUE while the belt doesn't go
 	var/forwards			// The direction the conveyor sends you in
 	var/backwards			// hopefully self-explanatory
@@ -50,8 +49,20 @@ GLOBAL_LIST_INIT(conveyor_switches, list())
 
 // attack with item, place item on conveyor
 /obj/machinery/conveyor/attackby(obj/item/I, mob/user)
-	if(stat & BROKEN)
+	if(iscrowbar(I))
+		if(!(stat & BROKEN))
+			var/obj/item/conveyor_construct/C = new(loc)
+			C.id = id
+			transfer_fingerprints_to(C)
+		playsound(loc, I.usesound, 50, 1)
+		to_chat(user,"<span class='notice'>You remove the conveyor belt.</span>")
+		qdel(src)
+	else if(stat & BROKEN)
 		return ..()
+	else if(iswrench(I))
+		set_rotation(user)
+		update_move_direction()
+		playsound(loc, I.usesound, 50, 1)
 	else if(istype(I, /obj/item/conveyor_switch_construct))
 		var/obj/item/conveyor_switch_construct/S = I
 		if(S.id == id)
@@ -66,25 +77,6 @@ GLOBAL_LIST_INIT(conveyor_switches, list())
 			I.forceMove(loc)
 	else
 		return ..()
-
-
-/obj/machinery/conveyor/crowbar_act(mob/user, obj/item/I)
-	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume))
-		return
-	if(!(stat & BROKEN))
-		var/obj/item/conveyor_construct/C = new(loc)
-		C.id = id
-		transfer_fingerprints_to(C)
-	to_chat(user,"<span class='notice'>You remove [src].</span>")
-	qdel(src)
-
-/obj/machinery/conveyor/wrench_act(mob/user, obj/item/I)
-	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume))
-		return
-	set_rotation(user)
-	update_move_direction()
 
 // attack with hand, move pulled object onto conveyor
 /obj/machinery/conveyor/attack_hand(mob/user as mob)
@@ -185,17 +177,14 @@ GLOBAL_LIST_INIT(conveyor_switches, list())
 	else if(still_stuff_to_move && !speed_process)
 		makeSpeedProcess()
 
-/obj/machinery/conveyor/Crossed(atom/movable/AM, oldloc)
+/obj/machinery/conveyor/Crossed(atom/movable/AM)
 	if(!speed_process && !AM.anchored)
 		makeSpeedProcess()
 	..()
 
 /obj/machinery/conveyor/proc/move_thing(atom/movable/AM)
-	if(move_force < (AM.move_resist))
-		return FALSE
 	if(!AM.anchored && AM.loc == loc)
 		step(AM, forwards)
-
 
 /obj/machinery/conveyor/proc/can_conveyor_run()
 	if(stat & BROKEN)
@@ -312,21 +301,28 @@ GLOBAL_LIST_INIT(conveyor_switches, list())
 		S.update_icon()
 		CHECK_TICK
 
-/obj/machinery/conveyor_switch/crowbar_act(mob/user, obj/item/I)
-	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume))
-		return
-	var/obj/item/conveyor_switch_construct/C = new(loc, id)
-	transfer_fingerprints_to(C)
-	to_chat(user,"<span class='notice'>You detach [src].</span>")
-	qdel(src)
+/obj/machinery/conveyor_switch/attackby(obj/item/I, mob/user)
+	if(iscrowbar(I))
+		var/obj/item/conveyor_switch_construct/C = new(loc, id)
+		transfer_fingerprints_to(C)
+		to_chat(user,"<span class='notice'>You detach the conveyor switch.</span>")
+		qdel(src)
+	else if(ismultitool(I))
+		update_multitool_menu(user)
+	else
+		return ..()
 
-/obj/machinery/conveyor_switch/multitool_act(mob/user, obj/item/I)
-	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume))
-		return
-	one_way = !one_way
-	to_chat(user, "<span class='notice'>[src] will now go [one_way ? "forwards only" : "both forwards and backwards"].</span>")
+/obj/machinery/conveyor_switch/multitool_topic(var/mob/user,var/list/href_list,var/obj/O)
+	..()
+	if("toggle_logic" in href_list)
+		one_way = !one_way
+		update_multitool_menu(user)
+
+/obj/machinery/conveyor_switch/multitool_menu(var/mob/user, var/obj/item/multitool/P)
+	return {"
+ 	<ul>
+ 	<li><b>One direction only:</b> <a href='?src=[UID()];toggle_logic=1'>[one_way ? "On" : "Off"]</a></li>
+ 	</ul>"}
 
 /obj/machinery/conveyor_switch/power_change()
 	..()

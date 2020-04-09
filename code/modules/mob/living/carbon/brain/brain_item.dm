@@ -1,6 +1,7 @@
 /obj/item/organ/internal/brain
 	name = "brain"
-	max_damage = 120
+	health = 400 //They need to live awhile longer than other organs.
+	max_damage = 200
 	icon_state = "brain2"
 	force = 1.0
 	w_class = WEIGHT_CLASS_SMALL
@@ -47,13 +48,14 @@
 		H.mind.transfer_to(brainmob)
 
 	to_chat(brainmob, "<span class='notice'>You feel slightly disoriented. That's normal when you're just a [initial(src.name)].</span>")
+	callHook("debrain", list(brainmob))
 
 /obj/item/organ/internal/brain/examine(mob/user) // -- TLE
-	. = ..()
+	..(user)
 	if(brainmob && brainmob.client)//if thar be a brain inside... the brain.
-		. += "You can feel the small spark of life still left in this one."
+		to_chat(user, "You can feel the small spark of life still left in this one.")
 	else
-		. += "This one seems particularly lifeless. Perhaps it will regain some of its luster later.."
+		to_chat(user, "This one seems particularly lifeless. Perhaps it will regain some of its luster later..")
 
 /obj/item/organ/internal/brain/remove(var/mob/living/user,special = 0)
 	if(dna)
@@ -97,19 +99,6 @@
 	else
 		log_debug("Multibrain shenanigans at ([target.x],[target.y],[target.z]), mob '[target]'")
 	..(target, special = special)
-
-/obj/item/organ/internal/brain/receive_damage(amount, silent = 0) //brains are special; if they receive damage by other means, we really just want the damage to be passed ot the owner and back onto the brain.
-	if(owner)
-		owner.adjustBrainLoss(amount)
-
-/obj/item/organ/internal/brain/necrotize(update_sprite = TRUE) //Brain also has special handling for when it necrotizes
-	damage = max_damage
-	status |= ORGAN_DEAD
-	STOP_PROCESSING(SSobj, src)
-	if(dead_icon && !is_robotic())
-		icon_state = dead_icon
-	if(owner && vital)
-		owner.setBrainLoss(120)
 
 /obj/item/organ/internal/brain/prepare_eat()
 	return // Too important to eat.

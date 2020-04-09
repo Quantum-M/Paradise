@@ -1,6 +1,4 @@
 /mob/living/silicon/robot/gib()
-	if(!death(TRUE) && stat != DEAD)
-		return FALSE
 	//robots don't die when gibbed. instead they drop their MMI'd brain
 	var/atom/movable/overlay/animation = null
 	notransform = 1
@@ -20,37 +18,37 @@
 
 	GLOB.living_mob_list -= src
 	GLOB.dead_mob_list -= src
-	QDEL_IN(animation, 15)
-	QDEL_IN(src, 15)
-	return TRUE
+	spawn(15)
+		if(animation)	qdel(animation)
+		if(src)			qdel(src)
 
 /mob/living/silicon/robot/dust()
-	if(!death(TRUE) && stat != DEAD)
-		return FALSE
+	death(1)
+	var/atom/movable/overlay/animation = null
 	notransform = 1
 	canmove = 0
 	icon = null
 	invisibility = 101
-	if(mmi)
-		qdel(mmi)	//Delete the MMI first so that it won't go popping out.
-	GLOB.dead_mob_list -= src
-	QDEL_IN(src, 15)
-	return TRUE
 
-/mob/living/silicon/robot/dust_animation()
-	var/atom/movable/overlay/animation = null
 	animation = new(loc)
 	animation.icon_state = "blank"
 	animation.icon = 'icons/mob/mob.dmi'
 	animation.master = src
+
 	flick("dust-r", animation)
 	new /obj/effect/decal/remains/robot(loc)
-	QDEL_IN(animation, 15)
+	if(mmi)		qdel(mmi)	//Delete the MMI first so that it won't go popping out.
+
+	GLOB.dead_mob_list -= src
+	spawn(15)
+		if(animation)	qdel(animation)
+		if(src)			qdel(src)
+
 
 /mob/living/silicon/robot/death(gibbed)
 	if(can_die())
-		if(!gibbed && deathgasp_on_death)
-			emote("deathgasp", force = TRUE)
+		if(!gibbed)
+			emote("deathgasp")
 
 		if(module)
 			module.handle_death(gibbed)

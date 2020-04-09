@@ -2,9 +2,7 @@
 	icon = 'icons/atmos/injector.dmi'
 	icon_state = "map_injector"
 	use_power = IDLE_POWER_USE
-	layer = GAS_SCRUBBER_LAYER
-
-	resistance_flags = FIRE_PROOF | UNACIDABLE | ACID_PROOF //really helpful in building gas chambers for xenomorphs
+	layer = 3
 
 	can_unwrench = 1
 
@@ -34,14 +32,12 @@
 		id_tag = id
 
 /obj/machinery/atmospherics/unary/outlet_injector/Destroy()
-	if(SSradio)
-		SSradio.remove_object(src, frequency)
+	if(radio_controller)
+		radio_controller.remove_object(src, frequency)
 	radio_connection = null
 	return ..()
 
 /obj/machinery/atmospherics/unary/outlet_injector/update_icon()
-	..()
-
 	if(!powered())
 		icon_state = "off"
 	else
@@ -99,10 +95,10 @@
 	flick("inject", src)
 
 /obj/machinery/atmospherics/unary/outlet_injector/proc/set_frequency(new_frequency)
-	SSradio.remove_object(src, frequency)
+	radio_controller.remove_object(src, frequency)
 	frequency = new_frequency
 	if(frequency)
-		radio_connection = SSradio.add_object(src, frequency)
+		radio_connection = radio_controller.add_object(src, frequency)
 
 /obj/machinery/atmospherics/unary/outlet_injector/proc/broadcast_status()
 	if(!radio_connection)
@@ -171,7 +167,7 @@
 /obj/machinery/atmospherics/unary/outlet_injector/multitool_menu(var/mob/user,var/obj/item/multitool/P)
 	return {"
 	<ul>
-		<li><b>Frequency:</b> <a href="?src=[UID()];set_freq=-1">[format_frequency(frequency)] GHz</a> (<a href="?src=[UID()];set_freq=[ATMOS_VENTSCRUB]">Reset</a>)</li>
+		<li><b>Frequency:</b> <a href="?src=[UID()];set_freq=-1">[format_frequency(frequency)] GHz</a> (<a href="?src=[UID()];set_freq=[1439]">Reset</a>)</li>
 		<li>[format_tag("ID Tag","id_tag","set_id")]</a></li>
 	</ul>
 "}

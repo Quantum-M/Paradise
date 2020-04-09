@@ -11,7 +11,6 @@
 /obj/screen/movable
 	var/snap2grid = FALSE
 	var/moved = FALSE
-	var/locked = TRUE
 	var/x_off = -16
 	var/y_off = -16
 
@@ -21,10 +20,8 @@
 /obj/screen/movable/snap
 	snap2grid = TRUE
 
-/obj/screen/movable/MouseDrop(over_object, src_location, over_location, src_control, over_control, params)
-	if(locked) //no! I am locked! begone!
-		return
 
+/obj/screen/movable/MouseDrop(over_object, src_location, over_location, src_control, over_control, params)
 	var/list/PM = params2list(params)
 
 	//No screen-loc information? abort.
@@ -50,6 +47,7 @@
 
 	moved = screen_loc
 
+
 //Debug procs
 /client/proc/test_movable_UI()
 	set category = "Debug"
@@ -68,6 +66,7 @@
 	M.screen_loc = screen_l
 
 	screen += M
+
 
 /client/proc/test_snap_UI()
 	set category = "Debug"

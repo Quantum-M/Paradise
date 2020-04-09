@@ -13,11 +13,11 @@
 
 	if(candidates.len >= 2)
 		//Oh god why we can't have static functions
-		var/number =  SSticker.mode.abductor_teams + 1
+		var/number =  ticker.mode.abductor_teams + 1
 
 		var/datum/game_mode/abduction/temp
-		if(SSticker.mode.config_tag == "abduction")
-			temp = SSticker.mode
+		if(ticker.mode.config_tag == "abduction")
+			temp = ticker.mode
 		else
 			temp = new
 
@@ -42,10 +42,10 @@
 		temp.make_abductor_team(number,preset_scientist=scientist_mind,preset_agent=agent_mind)
 		temp.post_setup_team(number)
 
-		SSticker.mode.abductor_teams++
+		ticker.mode.abductor_teams++
 
-		if(SSticker.mode.config_tag != "abduction")
-			SSticker.mode.abductors |= temp.abductors
+		if(ticker.mode.config_tag != "abduction")
+			ticker.mode.abductors |= temp.abductors
 		processing = 1 //So it will get gc'd
 		return 1
 	else

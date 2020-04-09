@@ -5,20 +5,19 @@
 	icon_state = "pdapainter"
 	density = 1
 	anchored = 1
-	max_integrity = 200
 	var/obj/item/pda/storedpda = null
 	var/list/colorlist = list()
 
 
 /obj/machinery/pdapainter/update_icon()
-	cut_overlays()
+	overlays.Cut()
 
 	if(stat & BROKEN)
 		icon_state = "[initial(icon_state)]-broken"
 		return
 
 	if(storedpda)
-		add_overlay("[initial(icon_state)]-closed")
+		overlays += "[initial(icon_state)]-closed"
 
 	if(powered())
 		icon_state = initial(icon_state)
@@ -44,21 +43,6 @@
 	QDEL_NULL(storedpda)
 	return ..()
 
-/obj/machinery/pdapainter/on_deconstruction()
-	if(storedpda)
-		storedpda.forceMove(loc)
-		storedpda = null
-
-/obj/machinery/pdapainter/ex_act(severity)
-	if(storedpda)
-		storedpda.ex_act(severity)
-	..()
-
-/obj/machinery/pdapainter/handle_atom_del(atom/A)
-	if(A == storedpda)
-		storedpda = null
-		update_icon()
-
 /obj/machinery/pdapainter/attackby(obj/item/I, mob/user, params)
 	if(default_unfasten_wrench(user, I))
 		power_change()
@@ -78,17 +62,6 @@
 	else
 		return ..()
 
-/obj/machinery/pdapainter/welder_act(mob/user, obj/item/I)
-	. = TRUE
-	if(!I.tool_use_check(user, 0))
-		return
-	default_welder_repair(user, I)
-
-/obj/machinery/pdapainter/deconstruct(disassembled = TRUE)
-	if(!(flags & NODECONSTRUCT))
-		if(!(stat & BROKEN))
-			stat |= BROKEN
-			update_icon()
 
 /obj/machinery/pdapainter/attack_hand(mob/user as mob)
 	if(..())

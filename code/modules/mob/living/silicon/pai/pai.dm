@@ -79,7 +79,6 @@
 	var/obj/item/integrated_radio/signal/sradio // AI's signaller
 
 	var/translator_on = 0 // keeps track of the translator module
-	var/flashlight_on = FALSE //keeps track of the flashlight module
 
 	var/current_pda_messaging = null
 	var/custom_sprite = 0
@@ -124,11 +123,6 @@
 	securityActive2 = null
 	return ..()
 
-/mob/living/silicon/pai/can_unbuckle()
-	return FALSE
-
-/mob/living/silicon/pai/can_buckle()
-	return FALSE
 
 /mob/living/silicon/pai/movement_delay()
 	. = ..()
@@ -232,8 +226,14 @@
 // See software.dm for Topic()
 
 /mob/living/silicon/pai/attack_animal(mob/living/simple_animal/M)
-	. = ..()
-	if(.)
+	if((M.a_intent == INTENT_HELP && M.ckey) || M.melee_damage_upper == 0)
+		M.custom_emote(1, "[M.friendly] [src].")
+	else
+		M.do_attack_animation(src)
+		if(M.attack_sound)
+			playsound(loc, M.attack_sound, 50, 1, 1)
+		for(var/mob/O in viewers(src, null))
+			O.show_message("<span class='danger'>[M]</span> [M.attacktext] [src]!", 1)
 		var/damage = rand(M.melee_damage_lower, M.melee_damage_upper)
 		add_attack_logs(M, src, "Animal attacked for [damage] damage")
 		adjustBruteLoss(damage)
@@ -318,7 +318,7 @@
 	set category = "pAI Commands"
 	set name = "Unfold Chassis"
 
-	if(stat || sleeping || paralysis || IsWeakened())
+	if(stat || sleeping || paralysis || weakened)
 		return
 
 	if(loc != card)
@@ -353,7 +353,7 @@
 	set category = "pAI Commands"
 	set name = "Collapse Chassis"
 
-	if(stat || sleeping || paralysis || IsWeakened())
+	if(stat || sleeping || paralysis || weakened)
 		return
 
 	if(loc == card)
@@ -470,9 +470,6 @@
 			close_up()
 	return
 
-/mob/living/silicon/pai/welder_act()
-	return
-
 /mob/living/silicon/pai/attack_hand(mob/user as mob)
 	if(stat == DEAD)
 		return
@@ -520,15 +517,20 @@
 /mob/living/silicon/pai/Bumped()
 	return
 
-/mob/living/silicon/pai/start_pulling(atom/movable/AM, state, force = move_force, supress_message = FALSE)
-	return FALSE
+/mob/living/silicon/pai/start_pulling(var/atom/movable/AM)
+	if(stat || sleeping || paralysis || weakened)
+		return
+	if(istype(AM,/obj/item))
+		to_chat(src, "<span class='warning'>You are far too small to pull anything!</span>")
+	return
 
 /mob/living/silicon/pai/update_canmove(delay_action_updates = 0)
 	. = ..()
 	density = 0 //this is reset every canmove update otherwise
 
 /mob/living/silicon/pai/examine(mob/user)
-	. = ..()
+	to_chat(user, "<span class='info'>*---------*</span>")
+	..(user)
 
 	var/msg = "<span class='info'>"
 
@@ -541,12 +543,12 @@
 	if(print_flavor_text()) msg += "\n[print_flavor_text()]"
 
 	if(pose)
-		if( findtext(pose,".",length(pose)) == 0 && findtext(pose,"!",length(pose)) == 0 && findtext(pose,"?",length(pose)) == 0 )
+		if( findtext(pose,".",lentext(pose)) == 0 && findtext(pose,"!",lentext(pose)) == 0 && findtext(pose,"?",lentext(pose)) == 0 )
 			pose = addtext(pose,".") //Makes sure all emotes end with a period.
 		msg += "\nIt is [pose]"
 	msg += "\n*---------*</span>"
 
-	. += msg
+	to_chat(user, msg)
 
 /mob/living/silicon/pai/bullet_act(var/obj/item/projectile/Proj)
 	..(Proj)
@@ -609,8 +611,3 @@
 	else //something went very wrong.
 		CRASH("pAI without card")
 	loc = card
-
-/mob/living/silicon/pai/extinguish_light()
-	flashlight_on = FALSE
-	set_light(0)
-	card.set_light(0)

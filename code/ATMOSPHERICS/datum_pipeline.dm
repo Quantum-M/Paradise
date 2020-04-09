@@ -22,13 +22,13 @@
 		A.nullifyPipenet(src)
 	return ..()
 
-/datum/pipeline/process()//This use to be called called from the pipe networks
+/datum/pipeline/proc/process()//This use to be called called from the pipe networks
 	if(update)
 		update = 0
 		reconcile_air()
 	return
 
-GLOBAL_VAR_INIT(pipenetwarnings, 10)
+var/pipenetwarnings = 10
 
 /datum/pipeline/proc/build_pipeline(obj/machinery/atmospherics/base)
 	var/volume = 0

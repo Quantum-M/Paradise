@@ -16,7 +16,7 @@
 	icon_state = "film"
 	item_state = "electropack"
 	w_class = WEIGHT_CLASS_TINY
-	resistance_flags = FLAMMABLE
+	burn_state = FLAMMABLE
 
 
 /********
@@ -28,8 +28,8 @@
 	icon_state = "photo"
 	item_state = "paper"
 	w_class = WEIGHT_CLASS_SMALL
-	resistance_flags = FLAMMABLE
-	max_integrity = 50
+	burn_state = FLAMMABLE
+	burntime = 5
 	var/blueprints = 0 // Does this have the blueprints?
 	var/icon/img	//Big photo image
 	var/scribble	//Scribble on the back.
@@ -74,29 +74,19 @@
 				to_chat(user, "<span class='warning'>You must hold \the [P] steady to burn \the [src].</span>")
 
 /obj/item/photo/examine(mob/user)
-	. = ..()
-	if(in_range(user, src) || isobserver(user))
+	if(..(user, 1) || isobserver(user))
 		show(user)
 	else
-		. += "<span class='notice'>It is too far away.</span>"
+		to_chat(user, "<span class='notice'>It is too far away.</span>")
 
 /obj/item/photo/proc/show(mob/user as mob)
-	var/icon/img_shown = new/icon(img)
-	var/colormatrix = user.get_screen_colour()
-	// Apply colorblindness effects, if any.
-	if(islist(colormatrix))
-		img_shown.MapColors(
-			colormatrix[1], colormatrix[2], colormatrix[3],
-			colormatrix[4], colormatrix[5], colormatrix[6],
-			colormatrix[7], colormatrix[8], colormatrix[9],
-		)
-	usr << browse_rsc(img_shown, "tmp_photo.png")
+	usr << browse_rsc(img, "tmp_photo.png")
 	usr << browse("<html><head><title>[name]</title></head>" \
 		+ "<body style='overflow:hidden;margin:0;text-align:center'>" \
 		+ "<img src='tmp_photo.png' width='[64*photo_size]' style='-ms-interpolation-mode:nearest-neighbor' />" \
 		+ "[scribble ? "<br>Written on the back:<br><i>[scribble]</i>" : ""]"\
-		+ "</body></html>", "window=Photo[UID()];size=[64*photo_size]x[scribble ? 400 : 64*photo_size]")
-	onclose(usr, "Photo[UID()]")
+		+ "</body></html>", "window=book;size=[64*photo_size]x[scribble ? 400 : 64*photo_size]")
+	onclose(usr, "[name]")
 	return
 
 /obj/item/photo/verb/rename()
@@ -121,7 +111,7 @@
 	icon_state = "album"
 	item_state = "briefcase"
 	can_hold = list(/obj/item/photo)
-	resistance_flags = FLAMMABLE
+	burn_state = FLAMMABLE
 
 /obj/item/storage/photo_album/MouseDrop(obj/over_object as obj)
 
@@ -179,7 +169,7 @@
 		qdel(C)
 
 
-GLOBAL_LIST_INIT(SpookyGhosts, list("ghost","shade","shade2","ghost-narsie","horror","shadow","ghostian2"))
+var/list/SpookyGhosts = list("ghost","shade","shade2","ghost-narsie","horror","shadow","ghostian2")
 
 /obj/item/camera/spooky
 	name = "camera obscura"
@@ -240,7 +230,7 @@ GLOBAL_LIST_INIT(SpookyGhosts, list("ghost","shade","shade2","ghost-narsie","hor
 					if(O.following)
 						continue
 					if(user.mind && !(user.mind.assigned_role == "Chaplain"))
-						atoms.Add(image('icons/mob/mob.dmi', O.loc, pick(GLOB.SpookyGhosts), 4, SOUTH))
+						atoms.Add(image('icons/mob/mob.dmi', O.loc, pick(SpookyGhosts), 4, SOUTH))
 					else
 						atoms.Add(image('icons/mob/mob.dmi', O.loc, "ghost", 4, SOUTH))
 				else//its not a ghost
@@ -335,10 +325,9 @@ GLOBAL_LIST_INIT(SpookyGhosts, list("ghost","shade","shade2","ghost-narsie","hor
 	to_chat(user, "<span class='notice'>[pictures_left] photos left.</span>")
 	icon_state = icon_off
 	on = 0
-	if(istype(src,/obj/item/camera/spooky))
-		if(user.mind && user.mind.assigned_role == "Chaplain" && see_ghosts)
-			if(prob(24))
-				handle_haunt(user)
+	if(user.mind && !(user.mind.assigned_role == "Chaplain"))
+		if(prob(24))
+			handle_haunt(user)
 	spawn(64)
 		icon_state = icon_on
 		on = 1
@@ -544,17 +533,15 @@ GLOBAL_LIST_INIT(SpookyGhosts, list("ghost","shade","shade2","ghost-narsie","hor
 		src.icon_state = icon_on
 		camera = new /obj/machinery/camera(src)
 		camera.network = list("news")
-		GLOB.cameranet.removeCamera(camera)
+		cameranet.removeCamera(camera)
 		camera.c_tag = user.name
 	to_chat(user, "You switch the camera [on ? "on" : "off"].")
 
 /obj/item/videocam/examine(mob/user)
-	. = ..()
-	if(in_range(user, src))
-		. += "This video camera can send live feeds to the entertainment network. It's [camera ? "" : "in"]active."
+	if(..(user, 1))
+		to_chat(user, "This video camera can send live feeds to the entertainment network. It's [camera ? "" : "in"]active.")
 
-/obj/item/videocam/hear_talk(mob/M as mob, list/message_pieces)
-	var/msg = multilingual_to_message(message_pieces)
+/obj/item/videocam/hear_talk(mob/M as mob, msg)
 	if(camera && on)
 		if(get_dist(src, M) <= canhear_range)
 			talk_into(M, msg)
@@ -572,7 +559,7 @@ GLOBAL_LIST_INIT(SpookyGhosts, list("ghost","shade","shade2","ghost-narsie","hor
 ///hauntings, like hallucinations but more spooky
 
 /obj/item/camera/proc/handle_haunt(mob/user as mob)
-			var/list/creepyasssounds = list('sound/effects/ghost.ogg', 'sound/effects/ghost2.ogg', 'sound/effects/heartbeat.ogg', 'sound/effects/screech.ogg',\
+			var/list/creepyasssounds = list('sound/effects/ghost.ogg', 'sound/effects/ghost2.ogg', 'sound/effects/Heart Beat.ogg', 'sound/effects/screech.ogg',\
 						'sound/hallucinations/behind_you1.ogg', 'sound/hallucinations/behind_you2.ogg', 'sound/hallucinations/far_noise.ogg', 'sound/hallucinations/growl1.ogg', 'sound/hallucinations/growl2.ogg',\
 						'sound/hallucinations/growl3.ogg', 'sound/hallucinations/im_here1.ogg', 'sound/hallucinations/im_here2.ogg', 'sound/hallucinations/i_see_you1.ogg', 'sound/hallucinations/i_see_you2.ogg',\
 						'sound/hallucinations/look_up1.ogg', 'sound/hallucinations/look_up2.ogg', 'sound/hallucinations/over_here1.ogg', 'sound/hallucinations/over_here2.ogg', 'sound/hallucinations/over_here3.ogg',\

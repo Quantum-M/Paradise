@@ -3,8 +3,6 @@
 	initialize_directions = SOUTH|NORTH
 	use_power = IDLE_POWER_USE
 
-	layer = GAS_PUMP_LAYER
-
 	var/datum/gas_mixture/air1
 	var/datum/gas_mixture/air2
 

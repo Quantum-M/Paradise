@@ -28,9 +28,8 @@
 	max_combined_w_class = 14
 
 /obj/item/storage/secure/examine(mob/user)
-	. = ..()
-	if(in_range(user, src))
-		. += "The service panel is [open ? "open" : "closed"]."
+	if(..(user, 1))
+		to_chat(user, text("The service panel is [open ? "open" : "closed"]."))
 
 /obj/item/storage/secure/attackby(obj/item/W as obj, mob/user as mob, params)
 	if(locked)
@@ -83,22 +82,13 @@
 			to_chat(user, "You short out the lock on [src].")
 		return
 
-/obj/item/storage/secure/AltClick(mob/user)
-	if(!try_to_open())
-		return FALSE
-	return ..()
 
 /obj/item/storage/secure/MouseDrop(over_object, src_location, over_location)
-	if(!try_to_open())
-		return FALSE
-	return ..()
-
-/obj/item/storage/secure/proc/try_to_open()
 	if(locked)
 		add_fingerprint(usr)
 		to_chat(usr, "<span class='warning'>It's locked!</span>")
-		return FALSE
-	return TRUE
+		return 0
+	..()
 
 /obj/item/storage/secure/attack_self(mob/user as mob)
 	user.set_machine(src)
@@ -168,7 +158,7 @@
 		to_chat(usr, "<span class='notice'>[src] is locked!</span>")
 	return 0
 
-/obj/item/storage/secure/hear_talk(mob/living/M as mob, list/message_pieces)
+/obj/item/storage/secure/hear_talk(mob/living/M as mob, msg)
 	return
 
 /obj/item/storage/secure/hear_message(mob/living/M as mob, msg)
@@ -223,6 +213,14 @@
 	..()
 	for(var/i = 0, i < storage_slots - 2, i++)
 		handle_item_insertion(new /obj/item/stack/spacecash/c1000, 1)
+
+/obj/item/storage/secure/briefcase/reaper/New()
+	..()
+	handle_item_insertion(new /obj/item/gun/energy/kinetic_accelerator/crossbow, 1)
+	handle_item_insertion(new /obj/item/gun/projectile/revolver/mateba, 1)
+	handle_item_insertion(new /obj/item/ammo_box/a357, 1)
+	handle_item_insertion(new /obj/item/grenade/plastic/c4, 1)
+
 
 // -----------------------------
 //        Secure Safe

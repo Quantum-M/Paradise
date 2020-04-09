@@ -24,18 +24,6 @@
 	idle_power_usage = 2
 	active_power_usage = 500
 
-/obj/machinery/gibber/suicide_act(mob/user)
-	if(occupant || locked)
-		return FALSE
-	user.visible_message("<span class='danger'>[user] climbs into [src] and turns it on!</b></span>")
-	user.Stun(10)
-	user.forceMove(src)
-	occupant = user
-	update_icon()
-	feedinTopanim()
-	addtimer(CALLBACK(src, .proc/startgibbing, user), 33)
-	return OBLITERATION
-
 /obj/machinery/gibber/Destroy()
 	if(contents.len)
 		for(var/atom/movable/A in contents)
@@ -87,7 +75,8 @@
 		to_chat(user, "<span class='warning'>Wait for [occupant.name] to finish being loaded!</span>")
 		return
 
-	startgibbing(user)
+	else
+		startgibbing(user)
 
 /obj/machinery/gibber/attackby(obj/item/P, mob/user, params)
 	if(istype(P, /obj/item/grab))
@@ -108,9 +97,7 @@
 	if(default_unfasten_wrench(user, P))
 		return
 
-	if(default_deconstruction_crowbar(user, P))
-		return
-	return ..()
+	default_deconstruction_crowbar(P)
 
 /obj/machinery/gibber/MouseDrop_T(mob/target, mob/user)
 	if(user.incapacitated() || !ishuman(user))
@@ -126,7 +113,7 @@
 
 	move_into_gibber(user,target)
 
-/obj/machinery/gibber/proc/move_into_gibber(mob/user, mob/living/victim)
+/obj/machinery/gibber/proc/move_into_gibber(var/mob/user,var/mob/living/victim)
 	if(occupant)
 		to_chat(user, "<span class='danger'>The [src] is full, empty it first!</span>")
 		return
@@ -159,7 +146,7 @@
 	set name = "Empty Gibber"
 	set src in oview(1)
 
-	if(usr.incapacitated())
+	if(usr.stat != CONSCIOUS)
 		return
 
 	go_out()
@@ -228,7 +215,7 @@
 	qdel(holder2) //get rid of holder object
 	locked = 0 //unlock
 
-/obj/machinery/gibber/proc/startgibbing(mob/user, UserOverride=0)
+/obj/machinery/gibber/proc/startgibbing(var/mob/user, var/UserOverride=0)
 	if(!istype(user) && !UserOverride)
 		log_debug("Some shit just went down with the gibber at X[x], Y[y], Z[z] with an invalid user. (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)")
 		return
@@ -262,11 +249,11 @@
 	for(var/i=1 to slab_count)
 		var/obj/item/reagent_containers/food/snacks/meat/new_meat = new slab_type(src)
 		new_meat.name = "[slab_name] [new_meat.name]"
-		new_meat.reagents.add_reagent("nutriment", slab_nutrition)
+		new_meat.reagents.add_reagent("nutriment",slab_nutrition)
 
 
 		if(occupant.reagents)
-			occupant.reagents.trans_to(new_meat, round(occupant.reagents.total_volume/slab_count, 1))
+			occupant.reagents.trans_to(new_meat, round(occupant.reagents.total_volume/slab_count,1))
 
 	if(ishuman(occupant))
 		var/mob/living/carbon/human/H = occupant
@@ -285,7 +272,6 @@
 
 	else //this looks ugly but it's better than a copy-pasted startgibbing proc override
 		occupant.create_attack_log("Was gibbed by <b>an autogibber (\the [src])</b>")
-		add_attack_logs(src, occupant, "gibbed")
 
 	occupant.emote("scream")
 	playsound(get_turf(src), 'sound/goonstation/effects/gib.ogg', 50, 1)
@@ -293,10 +279,11 @@
 	occupant.death(1)
 	occupant.ghostize()
 
-	QDEL_NULL(occupant)
+	qdel(occupant)
 
 	spawn(gibtime)
 		playsound(get_turf(src), 'sound/effects/splat.ogg', 50, 1)
+		operating = 0
 
 		if(stealthmode)
 			for(var/atom/movable/AM in contents)
@@ -305,12 +292,12 @@
 		else
 			for(var/obj/item/thing in contents) //Meat is spawned inside the gibber and thrown out afterwards.
 				thing.loc = get_turf(thing) // Drop it onto the turf for throwing.
-				thing.throw_at(get_edge_target_turf(src, gib_throw_dir), rand(1, 5), 15) // Being pelted with bits of meat and bone would hurt.
+				thing.throw_at(get_edge_target_turf(src,gib_throw_dir),rand(1,5),15) // Being pelted with bits of meat and bone would hurt.
 				sleep(1)
 
 			for(var/obj/effect/gibs in contents) //throw out the gibs too
 				gibs.loc = get_turf(gibs) //drop onto turf for throwing
-				gibs.throw_at(get_edge_target_turf(src, gib_throw_dir), rand(1, 5), 15)
+				gibs.throw_at(get_edge_target_turf(src,gib_throw_dir),rand(1,5),15)
 				sleep(1)
 
 		pixel_x = initial(pixel_x) //return to it's spot after shaking
@@ -371,7 +358,7 @@
 			break
 	victim_targets.Cut()
 
-/obj/machinery/gibber/autogibber/proc/force_move_into_gibber(mob/living/carbon/human/victim)
+/obj/machinery/gibber/autogibber/proc/force_move_into_gibber(var/mob/living/carbon/human/victim)
 	if(!istype(victim))	return 0
 	visible_message("<span class='danger'>\The [victim.name] gets sucked into \the [src]!</span>")
 
@@ -398,7 +385,7 @@
 			qdel(O) //they are already dead by now
 		H.unEquip(O)
 		O.loc = loc
-		O.throw_at(get_edge_target_turf(src, gib_throw_dir), rand(1, 5), 15)
+		O.throw_at(get_edge_target_turf(src,gib_throw_dir),rand(1,5),15)
 		sleep(1)
 
 	for(var/obj/item/clothing/C in H)
@@ -406,7 +393,7 @@
 			qdel(C)
 		H.unEquip(C)
 		C.loc = loc
-		C.throw_at(get_edge_target_turf(src, gib_throw_dir), rand(1, 5), 15)
+		C.throw_at(get_edge_target_turf(src,gib_throw_dir),rand(1,5),15)
 		sleep(1)
 
 	visible_message("<span class='warning'>\The [src] spits out \the [H.name]'s possessions!")
@@ -418,7 +405,7 @@
 			qdel(O)
 		else if(istype(O))
 			O.loc = loc
-			O.throw_at(get_edge_target_turf(src, gib_throw_dir), rand(1, 5), 15)
+			O.throw_at(get_edge_target_turf(src,gib_throw_dir),rand(1,5),15)
 			spats++
 			sleep(1)
 	if(spats)

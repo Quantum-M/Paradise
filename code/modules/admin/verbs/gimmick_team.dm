@@ -7,7 +7,7 @@
 	set desc = "Spawns a group of players in the specified outfit."
 	if(!check_rights(R_EVENT))
 		return
-	if(!SSticker)
+	if(!ticker)
 		alert("The game hasn't started yet!")
 		return
 	if(alert("Do you want to spawn a Gimmick Team at YOUR CURRENT LOCATION?",,"Yes","No")=="No")
@@ -72,7 +72,6 @@
 		H.mind_initialize()
 		H.mind.assigned_role = "Event Character"
 		H.mind.special_role = "Event Character"
-		H.mind.offstation_role = TRUE
 
 		H.key = thisplayer.key
 
@@ -82,7 +81,7 @@
 		H.mind.store_memory("<B>[themission]</B><BR><BR>")
 
 		if(is_syndicate)
-			SSticker.mode.traitors |= H.mind //Adds them to extra antag list
+			ticker.mode.traitors |= H.mind //Adds them to extra antag list
 
 		players_spawned++
 		if(players_spawned >= teamsize)

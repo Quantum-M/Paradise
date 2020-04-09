@@ -1,10 +1,5 @@
- /**
-  * Failsafe
-  *
-  * Pretty much pokes the MC to make sure it's still alive.
- **/
-
 GLOBAL_REAL(Failsafe, /datum/controller/failsafe)
+
 
 /datum/controller/failsafe // This thing pretty much just keeps poking the master controller
 	name = "Failsafe"
@@ -97,6 +92,6 @@ GLOBAL_REAL(Failsafe, /datum/controller/failsafe)
 
 /datum/controller/failsafe/stat_entry()
 	if(!statclick)
-		statclick = new/obj/effect/statclick/debug(null, "Initializing...", src)
+		statclick = new/obj/effect/statclick/debug(src, "Initializing...")
 
 	stat("Failsafe Controller:", statclick.update("Defcon: [defcon_pretty()] (Interval: [Failsafe.processing_interval] | Iteration: [Failsafe.master_iteration])"))

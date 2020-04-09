@@ -7,9 +7,7 @@
 /turf/unsimulated/beach/New()
 	..()
 	if(water_overlay_image)
-		var/image/overlay_image = image('icons/misc/beach.dmi', icon_state = water_overlay_image, layer = ABOVE_MOB_LAYER)
-		overlay_image.plane = GAME_PLANE
-		overlays += overlay_image
+		overlays += image("icon"='icons/misc/beach.dmi',"icon_state"= water_overlay_image,"layer"=MOB_LAYER+0.1)
 
 /turf/unsimulated/beach/sand
 	name = "Sand"

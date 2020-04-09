@@ -69,6 +69,11 @@
 			return list[index]
 	return
 
+/proc/islist(list/list)
+	if(istype(list))
+		return 1
+	return 0
+
 //Return either pick(list) or null if list is not of type /list or is empty
 /proc/safepick(list/list)
 	if(!islist(list) || !list.len)
@@ -119,13 +124,9 @@
 			. += A
 
 //Like typesof() or subtypesof(), but returns a typecache instead of a list
-/proc/typecacheof(path, ignore_root_path, only_root_path = FALSE)
+/proc/typecacheof(path, ignore_root_path)
 	if(ispath(path))
-		var/list/types = list()
-		if(only_root_path)
-			types = list(path)
-		else
-			types = ignore_root_path ? subtypesof(path) : typesof(path)
+		var/list/types = ignore_root_path ? subtypesof(path) : typesof(path)
 		var/list/L = list()
 		for(var/T in types)
 			L[T] = TRUE
@@ -139,11 +140,8 @@
 					L[T] = TRUE
 		else
 			for(var/P in pathlist)
-				if(only_root_path)
-					L[P] = TRUE
-				else
-					for(var/T in typesof(P))
-						L[T] = TRUE
+				for(var/T in typesof(P))
+					L[T] = TRUE
 		return L
 
 //Removes any null entries from the list
@@ -348,12 +346,12 @@
 	var/middle = L.len / 2 + 1 // Copy is first,second-1
 	return mergeLists(sortList(L.Copy(0,middle)), sortList(L.Copy(middle))) //second parameter null = to end of list
 
-//Mergsorge: uses sortAssoc() but uses the var's name specifically. This should probably be using mergeAtom() instead
+//Mergsorge: uses sortList() but uses the var's name specifically. This should probably be using mergeAtom() instead
 /proc/sortNames(var/list/L)
 	var/list/Q = new()
 	for(var/atom/x in L)
 		Q[x.name] = x
-	return sortAssoc(Q)
+	return sortList(Q)
 
 /proc/mergeLists(var/list/L, var/list/R)
 	var/Li=1
@@ -794,29 +792,3 @@ proc/dd_sortedObjectList(list/incoming)
 			L.Swap(start++, end--)
 
 	return L
-
-/proc/counterlist_scale(list/L, scalar)
-	var/list/out = list()
-	for(var/key in L)
-		out[key] = L[key] * scalar
-	. = out
-
-/proc/counterlist_sum(list/L)
-	. = 0
-	for(var/key in L)
-		. += L[key]
-
-/proc/counterlist_normalise(list/L)
-	var/avg = counterlist_sum(L)
-	if(avg != 0)
-		. = counterlist_scale(L, 1 / avg)
-	else
-		. = L
-
-/proc/counterlist_combine(list/L1, list/L2)
-	for(var/key in L2)
-		var/other_value = L2[key]
-		if(key in L1)
-			L1[key] += other_value
-		else
-			L1[key] = other_value

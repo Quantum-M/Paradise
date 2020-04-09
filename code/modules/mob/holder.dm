@@ -7,10 +7,10 @@
 
 /obj/item/holder/New()
 	..()
-	START_PROCESSING(SSobj, src)
+	processing_objects.Add(src)
 
 /obj/item/holder/Destroy()
-	STOP_PROCESSING(SSobj, src)
+	processing_objects.Remove(src)
 	return ..()
 
 /obj/item/holder/process()

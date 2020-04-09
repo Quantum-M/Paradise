@@ -1,14 +1,14 @@
 /obj/structure/closet/secure_closet/bar
 	name = "Booze cabinet"
-	req_access = list(ACCESS_BAR)
+	req_access = list(access_bar)
 	icon_state = "cabinetdetective_locked"
 	icon_closed = "cabinetdetective"
 	icon_locked = "cabinetdetective_locked"
 	icon_opened = "cabinetdetective_open"
 	icon_broken = "cabinetdetective_broken"
 	icon_off = "cabinetdetective_broken"
-	resistance_flags = FLAMMABLE
-	max_integrity = 70
+	burn_state = FLAMMABLE
+	burntime = 20
 
 /obj/structure/closet/secure_closet/bar/New()
 	..()

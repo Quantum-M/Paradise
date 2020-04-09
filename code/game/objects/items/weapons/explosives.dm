@@ -48,9 +48,9 @@
 /obj/item/grenade/plastic/receive_signal()
 	prime()
 
-/obj/item/grenade/plastic/Crossed(atom/movable/AM, oldloc)
+/obj/item/grenade/plastic/Crossed(atom/movable/AM)
 	if(nadeassembly)
-		nadeassembly.Crossed(AM, oldloc)
+		nadeassembly.Crossed(AM)
 
 /obj/item/grenade/plastic/on_found(mob/finder)
 	if(nadeassembly)
@@ -109,14 +109,11 @@
 				message_say = "FOR THE REVOLOUTION!"
 			else if(role == "death commando" || role == ROLE_ERT)
 				message_say = "FOR NANOTRASEN!"
-			else if(role == ROLE_DEVIL)
-				message_say = "FOR INFERNO!"
 	user.say(message_say)
 	target = user
 	sleep(10)
 	prime()
 	user.gib()
-	return OBLITERATION
 
 /obj/item/grenade/plastic/update_icon()
 	if(nadeassembly)
@@ -136,16 +133,13 @@
 	var/turf/location
 	if(target)
 		if(!QDELETED(target))
-			if(istype(target, /turf/))
-				location = get_turf(target)	// Set the explosion location to turf if planted directly on a wall or floor
-			else
-				location = get_atom_on_turf(target)	// Otherwise, make sure we're blowing up what's on top of the turf
+			location = get_turf(target)
 			target.overlays -= image_overlay
 	else
-		location = get_atom_on_turf(src)
+		location = get_turf(src)
 	if(location)
-		explosion(location,0,0,3)
 		location.ex_act(2, target)
+		explosion(location,0,0,3)
 	if(istype(target, /mob))
 		var/mob/M = target
 		M.gib()
@@ -166,13 +160,10 @@
 	var/turf/location
 	if(target)
 		if(!QDELETED(target))
-			if(istype(target, /turf/))
-				location = get_turf(target)
-			else
-				location = get_atom_on_turf(target)
+			location = get_turf(target)
 			target.overlays -= image_overlay
 	else
-		location = get_atom_on_turf(src)
+		location = get_turf(src)
 	if(location)
 		if(target && target.density)
 			var/turf/T = get_step(location, aim_dir)
@@ -229,7 +220,6 @@
 	desc = "A C4 charge with an altered chemical composition, designed to blind and deafen the occupants of a room before breaching."
 
 /obj/item/grenade/plastic/c4_shaped/flash/prime()
-	var/turf/T
 	if(target && target.density)
 		T = get_step(get_turf(target), aim_dir)
 	else if(target)
@@ -267,7 +257,6 @@
 			addtimer(CALLBACK(null, .proc/explosion, T, 0, 0, 2), 3)
 			addtimer(CALLBACK(smoke, /datum/effect_system/smoke_spread/.proc/start), 3)
 		else
-			var/turf/T = get_step(location, aim_dir)
 			addtimer(CALLBACK(null, .proc/explosion, T, 0, 0, 2), 3)
 			addtimer(CALLBACK(smoke, /datum/effect_system/smoke_spread/.proc/start), 3)
 

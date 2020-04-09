@@ -1,4 +1,5 @@
-GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
+
+var/global/datum/prizes/global_prizes = new
 
 /datum/prizes
 	var/list/prizes = list()
@@ -13,7 +14,7 @@ GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
 		return
 	if(!prize_counter)
 		return 0
-	var/datum/prize_item/item = GLOB.global_prizes.prizes[itemID]
+	var/datum/prize_item/item = global_prizes.prizes[itemID]
 	if(!item)
 		return 0
 	if(prize_counter.tickets >= item.cost)
@@ -156,8 +157,8 @@ GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
 	cost = 65
 
 /datum/prize_item/plushie
-	name = "Random Plushie"
-	desc = "A colorful plush toy."
+	name = "Random Animal Plushie"
+	desc = "A colorful animal-shaped plush toy."
 	typepath = /obj/item/toy/prizeball/plushie
 	cost = 75
 
@@ -221,12 +222,6 @@ GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
 	typepath = /obj/item/spellbook/oneuse/fake_gib
 	cost = 100
 
-/datum/prize_item/fakefingergun
-	name = "Miming Manual : Finger Gun"
-	desc = "..."
-	typepath = /obj/item/spellbook/oneuse/mime/fingergun/fake
-	cost = 100
-
 /datum/prize_item/magic_conch
 	name = "Magic Conch Shell"
 	desc = "All hail the magic conch!"
@@ -275,12 +270,6 @@ GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
 	typepath = /obj/item/toy/griffin
 	cost = 125
 
-/datum/prize_item/codex_gigas
-	name = "Toy Codex Gigas"
-	desc = "For helping you come up with writing ideas for your diabolical adventures."
-	typepath = /obj/item/toy/codex_gigas/
-	cost = 75
-
 /datum/prize_item/esword
 	name = "Toy Energy Sword"
 	desc = "A plastic replica of an energy blade."
@@ -316,12 +305,6 @@ GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
 	desc = "A full-scale model chainsaw, based on that massacre in Space Texas."
 	typepath = /obj/item/twohanded/toy/chainsaw
 	cost = 200
-
-/datum/prize_item/headpat
-	name = "Gloves of Headpats"
-	desc = "Gloves that fill you with an irresistable urge to give headpats."
-	typepath = /obj/item/clothing/gloves/fingerless/rapid/headpat
-	cost = 150
 
 /datum/prize_item/bike
 	name = "Awesome Bike!"

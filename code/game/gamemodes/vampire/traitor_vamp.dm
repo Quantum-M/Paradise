@@ -32,7 +32,6 @@
 		slaved.masters += vampire
 		vampire.som = slaved //we MIGT want to mindslave someone
 		vampire.restricted_roles = restricted_jobs
-		vampire.special_role = SPECIAL_ROLE_VAMPIRE
 		..()
 		return 1
 	else
@@ -44,5 +43,4 @@
 		vampire.special_role = SPECIAL_ROLE_VAMPIRE
 		forge_vampire_objectives(vampire)
 		greet_vampire(vampire)
-		update_vampire_icons_added(vampire)
 	..()

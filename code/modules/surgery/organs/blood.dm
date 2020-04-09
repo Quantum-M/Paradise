@@ -18,11 +18,23 @@
 
 // Takes care blood loss and regeneration
 /mob/living/carbon/human/handle_blood()
+	var/list/blood_data = get_blood_data(get_blood_id())//PROCCEPTION
+
 	if(NO_BLOOD in dna.species.species_traits)
 		bleed_rate = 0
 		return
 
-	if(bodytemperature >= TCRYO && !(NOCLONE in mutations)) //cryosleep or husked people do not pump the blood.
+	if(bodytemperature >= 225 && !(NOCLONE in mutations)) //cryosleep or husked people do not pump the blood.
+
+		//Blood regeneration if there is some space
+		if(blood_volume < max_blood && blood_volume)
+			if(mind) //Handles vampires "eating" blood that isn't their own.
+				if(mind in ticker.mode.vampires)
+					if(nutrition >= NUTRITION_LEVEL_WELL_FED)
+						return //We don't want blood tranfusions making vampires fat.
+					if(blood_data["donor"] != src)
+						nutrition += (15 * REAGENTS_METABOLISM)
+						return //Only process one blood per tick, to maintain the same metabolism as nutriment for non-vampires.
 		if(blood_volume < BLOOD_VOLUME_NORMAL)
 			blood_volume += 0.1 // regenerate blood VERY slowly
 
@@ -44,7 +56,7 @@
 				if(prob(15))
 					Paralyse(rand(1,3))
 					to_chat(src, "<span class='warning'>You feel extremely [word].</span>")
-			if(-INFINITY to BLOOD_VOLUME_SURVIVE)
+			if(0 to BLOOD_VOLUME_SURVIVE)
 				death()
 
 		var/temp_bleed = 0
@@ -70,15 +82,13 @@
 			if(BP.internal_bleeding)
 				internal_bleeding_rate += 0.5
 
-		bleed_rate = max(bleed_rate - 0.5, temp_bleed)//if no wounds, other bleed effects naturally decreases
-
-		var/additional_bleed = round(Clamp((reagents.get_reagent_amount("heparin") / 10), 0, 2), 1) //Heparin worsens existing bleeding
+		bleed_rate = max(bleed_rate - 0.5, temp_bleed)//if no wounds, other bleed effects (heparin) naturally decreases
 
 		if(internal_bleeding_rate && !(status_flags & FAKEDEATH))
-			bleed_internal(internal_bleeding_rate + additional_bleed)
+			bleed(internal_bleeding_rate)
 
 		if(bleed_rate && !bleedsuppress && !(status_flags & FAKEDEATH))
-			bleed(bleed_rate + additional_bleed)
+			bleed(bleed_rate)
 
 //Makes a blood drop, leaking amt units of blood from the mob
 /mob/living/carbon/proc/bleed(amt)
@@ -94,26 +104,6 @@
 	if(!(NO_BLOOD in dna.species.species_traits))
 		..()
 		if(dna.species.exotic_blood)
-			var/datum/reagent/R = GLOB.chemical_reagents_list[get_blood_id()]
-			if(istype(R) && isturf(loc))
-				R.reaction_turf(get_turf(src), amt * EXOTIC_BLEED_MULTIPLIER)
-
-/mob/living/carbon/proc/bleed_internal(amt) // Return 1 if we've coughed blood up, 2 if we're vomited it.
-	if(blood_volume)
-		blood_volume = max(blood_volume - amt, 0)
-		if(prob(10 * amt)) // +5% chance per internal bleeding site that we'll cough up blood on a given tick.
-			custom_emote(1, "coughs up blood!")
-			add_splatter_floor(loc, 1)
-			return 1
-		else if(amt >= 1 && prob(5 * amt)) // +2.5% chance per internal bleeding site that we'll cough up blood on a given tick. Must be bleeding internally in more than one place to have a chance at this.
-			vomit(0, 1)
-			return 2
-	return 0
-
-/mob/living/carbon/human/bleed_internal(amt)
-	if(!(NO_BLOOD in dna.species.species_traits))
-		.=..()
-		if(dna.species.exotic_blood && .) // Do we have exotic blood, and have we left any on the ground?
 			var/datum/reagent/R = GLOB.chemical_reagents_list[get_blood_id()]
 			if(istype(R) && isturf(loc))
 				R.reaction_turf(get_turf(src), amt * EXOTIC_BLEED_MULTIPLIER)
@@ -157,7 +147,7 @@
 						if((D.spread_flags & SPECIAL) || (D.spread_flags & NON_CONTAGIOUS))
 							continue
 						C.ForceContractDisease(D)
-				if(!(blood_data["blood_type"] in get_safe_blood(C.dna.blood_type)))
+				if(!(blood_data["blood_type"] in get_safe_blood(C.dna.b_type)))
 					C.reagents.add_reagent("toxin", amount * 0.5)
 					return 1
 
@@ -195,12 +185,11 @@
 			blood_data["ckey"] = ckey
 		if(!suiciding)
 			blood_data["cloneable"] = 1
-		blood_data["blood_type"] = copytext(src.dna.blood_type,1,0)
+		blood_data["blood_type"] = copytext(src.dna.b_type,1,0)
 		blood_data["gender"] = gender
 		blood_data["real_name"] = real_name
 		blood_data["blood_color"] = dna.species.blood_color
 		blood_data["factions"] = faction
-		blood_data["dna"] = dna.Clone()
 		return blood_data
 
 //get the id of the substance this mob use as blood.
@@ -255,7 +244,7 @@
 		// Only a certain number of drips (or one large splatter) can be on a given turf.
 		var/obj/effect/decal/cleanable/blood/drip/drop = locate() in T
 		if(drop)
-			if(drop.drips < 5)
+			if(drop.drips < 3)
 				drop.drips++
 				drop.overlays |= pick(drop.random_icon_states)
 				drop.transfer_mob_blood_dna(src)
@@ -280,8 +269,7 @@
 		B = locate() in bloods
 	if(!B)
 		B = new(T)
-	if(B.bloodiness < MAX_SHOE_BLOODINESS) //add more blood, up to a limit
-		B.bloodiness += BLOOD_AMOUNT_PER_DECAL
+
 	B.transfer_mob_blood_dna(src) //give blood info to the blood decal.
 	if(temp_blood_DNA)
 		B.blood_DNA |= temp_blood_DNA

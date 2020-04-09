@@ -25,7 +25,8 @@
 
 /obj/structure/spacepod_frame/attackby(obj/item/W as obj, mob/user as mob, params)
 	if(!construct || !construct.action(W, user))
-		return ..()
+		..()
+	return
 
 /obj/structure/spacepod_frame/attack_hand()
 	return
@@ -53,12 +54,12 @@
 				list(
 					"desc" = "A crudely-wired pod frame.",
 					state_prev = list(
-						"key"      = TOOL_WIRECUTTER,
+						"key"      = /obj/item/wirecutters,
 						"vis_msg"  = "{USER} cuts out the {HOLDER}'s wiring.",
 						"self_msg" = "You remove the {HOLDER}'s wiring."
 					),
 					state_next = list(
-						"key"      = TOOL_SCREWDRIVER,
+						"key"      = /obj/item/screwdriver,
 						"vis_msg"  = "{USER} adjusts the wiring.",
 						"self_msg" = "You adjust the {HOLDER}'s wiring."
 					)
@@ -67,7 +68,7 @@
 				list(
 					"desc" = "A wired pod frame.",
 					state_prev = list(
-						"key"      = TOOL_SCREWDRIVER,
+						"key"      = /obj/item/screwdriver,
 						"vis_msg"  = "{USER} unclips {HOLDER}'s wiring harnesses.",
 						"self_msg" = "You unclip {HOLDER}'s wiring harnesses."
 					),
@@ -82,7 +83,7 @@
 				list(
 					"desc" = "A wired pod frame with a loose mainboard.",
 					state_prev = list(
-						"key"      = TOOL_CROWBAR,
+						"key"      = /obj/item/crowbar,
 						"vis_msg"  = "{USER} pries out the mainboard.",
 						"self_msg" = "You pry out the mainboard.",
 
@@ -90,7 +91,7 @@
 						"amount"   = 1
 					),
 					state_next = list(
-						"key"      = TOOL_SCREWDRIVER,
+						"key"      = /obj/item/screwdriver,
 						"vis_msg"  = "{USER} secures the mainboard.",
 						"self_msg" = "You secure the mainboard."
 					)
@@ -99,7 +100,7 @@
 				list(
 					"desc" = "A wired pod frame with a secured mainboard.",
 					state_prev = list(
-						"key"      = TOOL_SCREWDRIVER,
+						"key"      = /obj/item/screwdriver,
 						"vis_msg"  = "{USER} unsecures the mainboard.",
 						"self_msg" = "You unscrew the mainboard from the {HOLDER}."
 					),
@@ -115,7 +116,7 @@
 				list(
 					"desc" = "A naked space pod with a loose core.",
 					state_prev = list(
-						"key"      = TOOL_CROWBAR,
+						"key"      = /obj/item/crowbar,
 						"vis_msg"  = "{USER} delicately removes the core from the {HOLDER} with a crowbar.",
 						"self_msg" = "You delicately remove the core from the {HOLDER} with a crowbar.",
 
@@ -123,7 +124,7 @@
 						"amount"   = 1
 					),
 					state_next = list(
-						"key"      = TOOL_WRENCH,
+						"key"      = /obj/item/wrench,
 						"vis_msg"  = "{USER} secures the core's bolts.",
 						"self_msg" = "You secure the core's bolts."
 					)
@@ -132,7 +133,7 @@
 				list(
 					"desc" = "A naked space pod with an exposed core. How lewd.",
 					state_prev = list(
-						"key"      = TOOL_WRENCH,
+						"key"      = /obj/item/wrench,
 						"vis_msg"  = "{USER} unsecures the {HOLDER}'s core.",
 						"self_msg" = "You unsecure the {HOLDER}'s core."
 					),
@@ -147,7 +148,7 @@
 				list(
 					"desc" = "A space pod with loose bulkhead panelling exposed.",
 					state_prev = list(
-						"key"      = TOOL_CROWBAR,
+						"key"      = /obj/item/crowbar,
 						"vis_msg"  = "{USER} pops the {HOLDER}'s bulkhead panelling loose.",
 						"self_msg" = "You pop the {HOLDER}'s bulkhead panelling loose.",
 
@@ -155,7 +156,7 @@
 						"amount"   = 5,
 					),
 					state_next = list(
-						"key"      = TOOL_WRENCH,
+						"key"      = /obj/item/wrench,
 						"vis_msg"  = "{USER} secures the {HOLDER}'s bulkhead panelling.",
 						"self_msg" = "You secure the {HOLDER}'s bulkhead panelling."
 					)
@@ -164,12 +165,12 @@
 				list(
 					"desc" = "A space pod with unwelded bulkhead panelling exposed.",
 					state_prev = list(
-						"key"      = TOOL_WRENCH,
+						"key"      = /obj/item/wrench,
 						"vis_msg"  = "{USER} unbolts the {HOLDER}'s bulkhead panelling.",
 						"self_msg" = "You unbolt the {HOLDER}'s bulkhead panelling."
 					),
 					state_next = list(
-						"key"      = TOOL_WELDER,
+						"key"      = /obj/item/weldingtool,
 						"vis_msg"  = "{USER} seals the {HOLDER}'s bulkhead panelling with a weld.",
 						"self_msg" = "You seal the {HOLDER}'s bulkhead panelling with a weld."
 					)
@@ -178,7 +179,7 @@
 				list(
 					"desc" = "A space pod with sealed bulkhead panelling exposed.",
 					state_prev = list(
-						"key"      = TOOL_WELDER,
+						"key"      = /obj/item/weldingtool,
 						"vis_msg"  = "{USER} cuts the {HOLDER}'s bulkhead panelling loose.",
 						"self_msg" = "You cut the {HOLDER}'s bulkhead panelling loose."
 					),
@@ -193,14 +194,14 @@
 				list(
 					"desc" = "A space pod with unsecured armor.",
 					state_prev = list(
-						"key"      = TOOL_CROWBAR,
+						"key"      = /obj/item/crowbar,
 						"vis_msg"  = "{USER} pries off {HOLDER}'s armor.",
 						"self_msg" = "You pry off {HOLDER}'s armor.",
 						"spawn"    = /obj/item/pod_parts/armor,
 						"amount"   = 1
 					),
 					state_next = list(
-						"key"      = TOOL_WRENCH,
+						"key"      = /obj/item/wrench,
 						"vis_msg"  = "{USER} bolts down the {HOLDER}'s armor.",
 						"self_msg" = "You bolt down the {HOLDER}'s armor."
 					)
@@ -209,12 +210,12 @@
 				list(
 					"desc" = "A space pod with unsecured armor.",
 					state_prev = list(
-						"key"      = TOOL_WRENCH,
+						"key"      = /obj/item/wrench,
 						"vis_msg"  = "{USER} unsecures the {HOLDER}'s armor.",
 						"self_msg" = "You unsecure the {HOLDER}'s armor."
 					),
 					state_next = list(
-						"key"      = TOOL_WELDER,
+						"key"      = /obj/item/weldingtool,
 						"vis_msg"  = "{USER} welds the {HOLDER}'s armor.",
 						"self_msg" = "You weld the {HOLDER}'s armor."
 					)

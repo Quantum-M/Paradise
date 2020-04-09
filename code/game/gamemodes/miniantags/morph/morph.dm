@@ -27,8 +27,8 @@
 	melee_damage_lower = 20
 	melee_damage_upper = 20
 	see_in_dark = 8
-	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
-	vision_range = 1 // Only attack when target is close
+	see_invisible = SEE_INVISIBLE_MINIMUM
+	idle_vision_range = 1 // Only attack when target is close
 	wander = 0
 	attacktext = "glomps"
 	attack_sound = 'sound/effects/blobattack.ogg'
@@ -38,32 +38,25 @@
 	var/atom/movable/form = null
 	var/morph_time = 0
 
-	var/list/examine_text_list
-
-	var/playstyle_string = "<b><font size=3 color='red'>You are a morph.</font><br> As an abomination created primarily with changeling cells, \
-							you may take the form of anything nearby by shift-clicking it. This process will alert any nearby \
-							observers, and can only be performed once every five seconds.<br> While morphed, you move faster, but do \
+	var/playstyle_string = "<b><font size=3 color='red'>You are a morph,</font> an abomination of science created primarily with changeling cells. \
+							You may take the form of anything nearby by shift-clicking it. This process will alert any nearby \
+							observers, and can only be performed once every five seconds. While morphed, you move faster, but do \
 							less damage. In addition, anyone within three tiles will note an uncanny wrongness if examining you. \
-							You can restore yourself to your original form while morphed by shift-clicking yourself.<br> \
-							Finally, you can attack any item or dead creature to consume it - creatures will restore 1/3 of your max health.</b>"
-
-/mob/living/simple_animal/hostile/morph/wizard
-	name = "magical morph"
-	real_name = "magical morph"
-	desc = "A revolting, pulsating pile of flesh. This one looks somewhat.. magical."
-
-/mob/living/simple_animal/hostile/morph/wizard/New()
-	. = ..()
-	AddSpell(new /obj/effect/proc_holder/spell/targeted/smoke)
-	AddSpell(new /obj/effect/proc_holder/spell/targeted/forcewall)
+							You can attack any item or dead creature to consume it - creatures will restore 1/3 of your max health. \
+							Finally, you can restore yourself to your original form while morphed by shift-clicking yourself.</b>"
 
 /mob/living/simple_animal/hostile/morph/examine(mob/user)
 	if(morphed)
-		. = examine_text_list.Copy()
-		if(get_dist(user, src) <= 3)
-			. += "<span class='warning'>It doesn't look quite right...</span>"
+		if(form)
+			form.examine(user) // Refactor examine to return desc so it's static? Not sure if worth it
+		// If the object you've disguised as has been deleted, your cover's probably blown
+		else
+			..()
+		if(get_dist(user,src)<=3)
+			to_chat(user, "<span class='warning'>It doesn't look quite right...</span>")
 	else
-		. = ..()
+		..()
+	return
 
 /mob/living/simple_animal/hostile/morph/proc/allowed(atom/movable/A) // make it into property/proc ? not sure if worth it
 	if(istype(A,/obj/screen))
@@ -106,7 +99,7 @@
 	melee_damage_lower = 5
 	melee_damage_upper = 5
 	speed = 0
-	examine_text_list = form.examine(src)
+
 	morph_time = world.time + MORPH_COOLDOWN
 	return
 
@@ -115,7 +108,7 @@
 		return
 	morphed = 0
 	form = null
-	examine_text_list = null // Free that memory
+
 	visible_message("<span class='warning'>[src] suddenly collapses in on itself, dissolving into a pile of green flesh!</span>", \
 					"<span class='notice'>You reform to your normal body.</span>")
 	name = initial(name)
@@ -136,7 +129,7 @@
 		for(var/atom/movable/AM in src)
 			AM.forceMove(loc)
 			if(prob(90))
-				step(AM, pick(GLOB.alldirs))
+				step(AM, pick(alldirs))
 	// Only execute the below if we successfully died
 	if(!.)
 		return FALSE
@@ -150,7 +143,7 @@
 	restore()
 
 /mob/living/simple_animal/hostile/morph/LoseAggro()
-	vision_range = initial(vision_range)
+	vision_range = idle_vision_range
 
 /mob/living/simple_animal/hostile/morph/AIShouldSleep(var/list/possible_targets)
 	. = ..()
@@ -176,4 +169,4 @@
 			if(do_after(src, 20, target = I))
 				eat(I)
 			return
-	return ..()
+	target.attack_animal(src)

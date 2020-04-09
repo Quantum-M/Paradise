@@ -19,7 +19,7 @@
 	var/ui_width = 450
 	var/ui_height = 600
 
-/datum/pai_software/proc/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/proc/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	return list()
 
 /datum/pai_software/proc/toggle(mob/living/silicon/pai/user)
@@ -39,7 +39,7 @@
 	ui_title = "pAI Directives"
 	autoupdate = 1
 
-/datum/pai_software/directives/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/directives/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	var/data[0]
 
 	data["master"] = user.master
@@ -94,7 +94,7 @@
 	ui_width = 300
 	ui_height = 150
 
-/datum/pai_software/radio_config/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/radio_config/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	var/data[0]
 
 	data["listening"] = user.radio.broadcasting
@@ -129,11 +129,11 @@
 	template_file = "pai_manifest.tmpl"
 	ui_title = "Crew Manifest"
 
-/datum/pai_software/crew_manifest/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/crew_manifest/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	var/data[0]
 
-	GLOB.data_core.get_manifest_json()
-	data["manifest"] = GLOB.PDA_Manifest
+	data_core.get_manifest_json()
+	data["manifest"] = PDA_Manifest
 
 	return data
 
@@ -147,7 +147,7 @@
 	template_file = "pai_messenger.tmpl"
 	ui_title = "Digital Messenger"
 
-/datum/pai_software/messenger/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/messenger/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	var/data[0]
 
 	if(!user.pda)
@@ -165,7 +165,7 @@
 
 	var/pdas[0]
 	if(!M.toff)
-		for(var/obj/item/pda/P in GLOB.PDAs)
+		for(var/obj/item/pda/P in PDAs)
 			var/datum/data/pda/app/messenger/PM = P.find_program(/datum/data/pda/app/messenger)
 
 			if(P == user.pda || !PM || !PM.can_receive())
@@ -237,11 +237,11 @@
 	ui_title = "Medical Records"
 
 
-/datum/pai_software/med_records/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/med_records/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	var/data[0]
 
 	var/records[0]
-	for(var/datum/data/record/general in sortRecord(GLOB.data_core.general))
+	for(var/datum/data/record/general in sortRecord(data_core.general))
 		var/record[0]
 		record["name"] = general.fields["name"]
 		record["ref"] = "\ref[general]"
@@ -266,11 +266,11 @@
 		if(record)
 			var/datum/data/record/R = record
 			var/datum/data/record/M = null
-			if(!( GLOB.data_core.general.Find(R) ))
+			if(!( data_core.general.Find(R) ))
 				P.medical_cannotfind = 1
 			else
 				P.medical_cannotfind = 0
-				for(var/datum/data/record/E in GLOB.data_core.medical)
+				for(var/datum/data/record/E in data_core.medical)
 					if((E.fields["name"] == R.fields["name"] || E.fields["id"] == R.fields["id"]))
 						M = E
 				P.medicalActive1 = R
@@ -290,11 +290,11 @@
 	ui_title = "Security Records"
 
 
-/datum/pai_software/sec_records/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/sec_records/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	var/data[0]
 
 	var/records[0]
-	for(var/datum/data/record/general in sortRecord(GLOB.data_core.general))
+	for(var/datum/data/record/general in sortRecord(data_core.general))
 		var/record[0]
 		record["name"] = general.fields["name"]
 		record["ref"] = "\ref[general]"
@@ -319,13 +319,13 @@
 		if(record)
 			var/datum/data/record/R = record
 			var/datum/data/record/S = null
-			if(!( GLOB.data_core.general.Find(R) ))
+			if(!( data_core.general.Find(R) ))
 				P.securityActive1 = null
 				P.securityActive2 = null
 				P.security_cannotfind = 1
 			else
 				P.security_cannotfind = 0
-				for(var/datum/data/record/E in GLOB.data_core.security)
+				for(var/datum/data/record/E in data_core.security)
 					if((E.fields["name"] == R.fields["name"] || E.fields["id"] == R.fields["id"]))
 						S = E
 				P.securityActive1 = R
@@ -348,7 +348,7 @@
 	ui_width = 300
 	ui_height = 150
 
-/datum/pai_software/door_jack/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/door_jack/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	var/data[0]
 
 	data["cable"] = user.cable != null
@@ -424,7 +424,7 @@
 	ui_height = 300
 
 
-/datum/pai_software/atmosphere_sensor/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/atmosphere_sensor/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	var/data[0]
 
 	var/turf/T = get_turf_or_move(user.loc)
@@ -515,7 +515,6 @@
 		user.add_language("Bubblish")
 		user.add_language("Orluum")
 		user.add_language("Clownish")
-		user.add_language("Neo-Russkiya")
 	else
 		user.remove_language("Sinta'unathi")
 		user.remove_language("Siik'tajr")
@@ -527,7 +526,6 @@
 		user.remove_language("Bubblish")
 		user.remove_language("Orluum")
 		user.remove_language("Clownish")
-		user.remove_language("Neo-Russkiya")
 
 /datum/pai_software/translator/is_active(mob/living/silicon/pai/user)
 	return user.translator_on
@@ -543,7 +541,7 @@
 	ui_width = 320
 	ui_height = 150
 
-/datum/pai_software/signaller/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/signaller/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	var/data[0]
 
 	data["frequency"] = format_frequency(user.sradio.frequency)
@@ -586,7 +584,7 @@
 	ui_width = 400
 	ui_height = 350
 
-/datum/pai_software/host_scan/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = GLOB.self_state)
+/datum/pai_software/host_scan/on_ui_data(mob/living/silicon/pai/user, datum/topic_state/state = self_state)
 	var/data[0]
 	var/mob/living/held = user.loc
 	var/count = 0
@@ -611,22 +609,3 @@
 		data["holder"] = 0
 
 	return data
-
-/datum/pai_software/flashlight
-	name = "Flashlight"
-	ram_cost = 5
-	id = "flashlight"
-
-/datum/pai_software/flashlight/toggle(mob/living/silicon/pai/user)
-	var/atom/movable/actual_location = istype(user.loc, /obj/item/paicard) ? user.loc : user
-	if(!user.flashlight_on)
-		actual_location.set_light(2)
-		user.card.set_light(2)
-	else
-		actual_location.set_light(0)
-		user.card.set_light(0)
-
-	user.flashlight_on = !user.flashlight_on
-
-/datum/pai_software/flashlight/is_active(mob/living/silicon/pai/user)
-	return user.flashlight_on

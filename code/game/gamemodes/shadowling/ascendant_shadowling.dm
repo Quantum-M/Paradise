@@ -12,7 +12,7 @@
 	speed = 0
 	var/phasing = 0
 	see_in_dark = 8
-	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
+	see_invisible = SEE_INVISIBLE_MINIMUM
 
 	universal_speak = 1
 

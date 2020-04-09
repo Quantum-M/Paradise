@@ -13,7 +13,6 @@
 	var/brightness = 2
 
 /obj/item/shard/supermatter/New()
-	..()
 	src.icon_state = "supermatter" + pick("large", "medium", "small")
 	switch(src.icon_state)
 		if("supermattersmall")
@@ -42,7 +41,7 @@
 	playsound(loc, 'sound/weapons/bladeslice.ogg', 50, 1, -1)
 	return ..()
 
-/obj/item/shard/supermatter/Crossed(AM as mob|obj, oldloc)
+/obj/item/shard/supermatter/Crossed(AM as mob|obj)
 	if(ismob(AM))
 		var/mob/M = AM
 		to_chat(M, "<span class='danger'>You step on \the [src]!</span>")

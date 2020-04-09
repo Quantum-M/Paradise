@@ -7,6 +7,7 @@
 	name = "treadmill"
 	desc = "A power-generating treadmill."
 	layer = 2.2
+	anchored = 1
 	use_power = NO_POWER_USE
 
 	var/speed = 0
@@ -17,15 +18,15 @@
 	var/list/mobs_running[0]
 	var/id = null			// for linking to monitor
 
-/obj/machinery/power/treadmill/Initialize(mapload)
-	. = ..()
+/obj/machinery/power/treadmill/Initialize()
+	..()
 	if(anchored)
 		connect_to_network()
 
 /obj/machinery/power/treadmill/update_icon()
 	icon_state = speed ? "conveyor-1" : "conveyor0"
 
-/obj/machinery/power/treadmill/Crossed(mob/living/M, oldloc)
+/obj/machinery/power/treadmill/Crossed(mob/living/M)
 	if(anchored && !M.anchored)
 		if(!istype(M) || M.dir != dir)
 			throw_off(M)
@@ -106,7 +107,7 @@
 		speed = 0
 		update_icon()
 		return
-	return ..()
+	..()
 
 #undef BASE_MOVE_DELAY
 #undef MAX_SPEED
@@ -137,8 +138,8 @@
 	var/frame = 0				// on 0, show labels, on 1 show numbers
 	var/redeem_immediately = 0	// redeem immediately for holding cell
 
-/obj/machinery/treadmill_monitor/Initialize(mapload)
-	. = ..()
+/obj/machinery/treadmill_monitor/Initialize()
+	..()
 	if(id)
 		for(var/obj/machinery/power/treadmill/T in GLOB.machines)
 			if(T.id == id)
@@ -168,8 +169,8 @@
 	update_icon()
 
 /obj/machinery/treadmill_monitor/examine(mob/user)
-	. = ..()
-	. += "The display reads:<div style='text-align: center'>[line1]<br>[line2]</div>"
+	..()
+	to_chat(user, "The display reads:<div style='text-align: center'>[line1]<br>[line2]</div>")
 
 /obj/machinery/treadmill_monitor/update_icon()
 	overlays.Cut()

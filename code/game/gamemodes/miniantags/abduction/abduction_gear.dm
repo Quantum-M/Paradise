@@ -14,15 +14,16 @@
 	item_state = "armor"
 	blood_overlay_type = "armor"
 	origin_tech = "magnets=7;biotech=4;powerstorage=4;abductor=4"
-	armor = list("melee" = 15, "bullet" = 15, "laser" = 15, "energy" = 15, "bomb" = 15, "bio" = 15, "rad" = 15, "fire" = 70, "acid" = 70)
+	armor = list(melee = 15, bullet = 15, laser = 15, energy = 15, bomb = 15, bio = 15, rad = 15)
 	actions_types = list(/datum/action/item_action/hands_free/activate)
 	allowed = list(/obj/item/abductor, /obj/item/abductor_baton, /obj/item/melee/baton, /obj/item/gun/energy, /obj/item/restraints/handcuffs)
 	var/mode = VEST_STEALTH
 	var/stealth_active = 0
 	var/combat_cooldown = 10
 	var/datum/icon_snapshot/disguise
-	var/stealth_armor = list("melee" = 15, "bullet" = 15, "laser" = 15, "energy" = 15, "bomb" = 15, "bio" = 15, "rad" = 15, "fire" = 70, "acid" = 70)
-	var/combat_armor = list("melee" = 50, "bullet" = 50, "laser" = 50, "energy" = 50, "bomb" = 50, "bio" = 50, "rad" = 50, "fire" = 90, "acid" = 90)
+	var/stealth_armor = list(melee = 15, bullet = 15, laser = 15, energy = 15, bomb = 15, bio = 15, rad = 15)
+	var/combat_armor = list(melee = 50, bullet = 50, laser = 50, energy = 50, bomb = 50, bio = 50, rad = 50)
+	species_fit = null
 	sprite_sheets = null
 
 /obj/item/clothing/suit/armor/abductor/vest/proc/toggle_nodrop()
@@ -80,8 +81,9 @@
 		M.overlays.Cut()
 		M.regenerate_icons()
 
-/obj/item/clothing/suit/armor/abductor/vest/hit_reaction(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
+/obj/item/clothing/suit/armor/abductor/vest/hit_reaction()
 	DeactivateStealth()
+	return 0
 
 /obj/item/clothing/suit/armor/abductor/vest/IsReflect()
 	DeactivateStealth()
@@ -108,15 +110,15 @@
 		M.SetStunned(0)
 		M.SetWeakened(0)
 		combat_cooldown = 0
-		START_PROCESSING(SSobj, src)
+		processing_objects.Add(src)
 
 /obj/item/clothing/suit/armor/abductor/vest/process()
 	combat_cooldown++
 	if(combat_cooldown==initial(combat_cooldown))
-		STOP_PROCESSING(SSobj, src)
+		processing_objects.Remove(src)
 
 /obj/item/clothing/suit/armor/abductor/Destroy()
-	STOP_PROCESSING(SSobj, src)
+	processing_objects.Remove(src)
 	for(var/obj/machinery/abductor/console/C in GLOB.machines)
 		if(C.vest == src)
 			C.vest = null
@@ -267,9 +269,10 @@
 
 	for(var/obj/I in all_items)
 		if(istype(I, /obj/item/radio))
-			var/obj/item/radio/R = I
-			R.listening = 0 // Prevents the radio from buzzing due to the EMP, preserving possible stealthiness.
-			R.emp_act(1)
+			var/obj/item/radio/r = I
+			r.listening = 0
+			if(!istype(I, /obj/item/radio/headset))
+				r.broadcasting = 0 //goddamned headset hacks
 
 /obj/item/abductor/mind_device
 	name = "mental interface device"
@@ -453,8 +456,8 @@ Congratulations! You are now trained for invasive xenobiology research!"}
 
 	if(ishuman(L))
 		var/mob/living/carbon/human/H = L
-		if(H.check_shields(src, 0, "[user]'s [name]", MELEE_ATTACK))
-			playsound(L, 'sound/weapons/genhit.ogg', 50, 1)
+		if(H.check_shields(0, "[user]'s [name]", src, MELEE_ATTACK))
+			playsound(L, 'sound/weapons/Genhit.ogg', 50, 1)
 			return 0
 
 	switch(mode)
@@ -484,7 +487,7 @@ Congratulations! You are now trained for invasive xenobiology research!"}
 
 	L.visible_message("<span class='danger'>[user] has stunned [L] with [src]!</span>", \
 							"<span class='userdanger'>[user] has stunned you with [src]!</span>")
-	playsound(loc, 'sound/weapons/egloves.ogg', 50, 1, -1)
+	playsound(loc, 'sound/weapons/Egloves.ogg', 50, 1, -1)
 
 	if(ishuman(L))
 		var/mob/living/carbon/human/H = L
@@ -496,7 +499,7 @@ Congratulations! You are now trained for invasive xenobiology research!"}
 	if(L.stunned || L.sleeping)
 		L.visible_message("<span class='danger'>[user] has induced sleep in [L] with [src]!</span>", \
 							"<span class='userdanger'>You suddenly feel very drowsy!</span>")
-		playsound(loc, 'sound/weapons/egloves.ogg', 50, 1, -1)
+		playsound(loc, 'sound/weapons/Egloves.ogg', 50, 1, -1)
 		L.Sleeping(60)
 		add_attack_logs(user, L, "Put to sleep with [src]")
 	else
@@ -562,16 +565,16 @@ Congratulations! You are now trained for invasive xenobiology research!"}
 	. = ..()
 
 /obj/item/abductor_baton/examine(mob/user)
-	. = ..()
+	..()
 	switch(mode)
 		if(BATON_STUN)
-			. += "<span class='warning'>The baton is in stun mode.</span>"
+			to_chat(user, "<span class='warning'>The baton is in stun mode.</span>")
 		if(BATON_SLEEP)
-			. += "<span class='warning'>The baton is in sleep inducement mode.</span>"
+			to_chat(user, "<span class='warning'>The baton is in sleep inducement mode.</span>")
 		if(BATON_CUFF)
-			. += "<span class='warning'>The baton is in restraining mode.</span>"
+			to_chat(user, "<span class='warning'>The baton is in restraining mode.</span>")
 		if(BATON_PROBE)
-			. += "<span class='warning'>The baton is in probing mode.</span>"
+			to_chat(user, "<span class='warning'>The baton is in probing mode.</span>")
 
 /obj/item/radio/headset/abductor
 	name = "alien headset"
@@ -587,8 +590,10 @@ Congratulations! You are now trained for invasive xenobiology research!"}
 	..()
 	make_syndie()
 
-/obj/item/radio/headset/abductor/screwdriver_act()
-	return// Stops humans from disassembling abductor headsets.
+/obj/item/radio/headset/abductor/attackby(obj/item/I, mob/user, params)
+	if(isscrewdriver(I))
+		return // Stops humans from disassembling abductor headsets.
+	return ..()
 
 /obj/item/scalpel/alien
 	name = "alien scalpel"
@@ -681,6 +686,15 @@ Congratulations! You are now trained for invasive xenobiology research!"}
 	density = TRUE
 
 /obj/structure/table_frame/abductor/attackby(obj/item/I, mob/user, params)
+	if(iswrench(I))
+		to_chat(user, "<span class='notice'>You start disassembling [src]...</span>")
+		playsound(loc, I.usesound, 50, 1)
+		if(do_after(user, 30*I.toolspeed, target = src))
+			playsound(loc, 'sound/items/deconstruct.ogg', 50, 1)
+			for(var/i = 1, i <= framestackamount, i++)
+				new framestack(get_turf(src))
+			qdel(src)
+			return
 	if(istype(I, /obj/item/stack/sheet/mineral/abductor))
 		var/obj/item/stack/sheet/P = I
 		if(P.get_amount() < 1)
@@ -702,8 +716,6 @@ Congratulations! You are now trained for invasive xenobiology research!"}
 			P.use(1)
 			new /obj/machinery/optable/abductor(loc)
 			qdel(src)
-		return
-	return ..()
 
 /obj/structure/table/abductor
 	name = "alien table"

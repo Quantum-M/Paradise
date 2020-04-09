@@ -22,6 +22,7 @@
 	max_heat_protection_temperature = SPACE_SUIT_MAX_TEMP_PROTECT
 	siemens_coefficient = 0.2
 	permeability_coefficient = 0.1
+	unacidable = 1
 
 	var/interface_path = "hardsuit.tmpl"
 	var/ai_interface_path = "hardsuit.tmpl"
@@ -83,21 +84,18 @@
 	var/datum/wires/rig/wires
 	var/datum/effect_system/spark_spread/spark_system
 
-/obj/item/rig/examine(mob/user)
-	. = list("This is [src].")
-	. += "[desc]"
+/obj/item/rig/examine()
+	to_chat(usr, "This is [bicon(src)][src.name].")
+	to_chat(usr, "[src.desc]")
 	if(wearer)
 		for(var/obj/item/piece in list(helmet,gloves,chest,boots))
 			if(!piece || piece.loc != wearer)
 				continue
-			. += "[bicon(piece)] \The [piece] [piece.gender == PLURAL ? "are" : "is"] deployed."
+			to_chat(usr, "[bicon(piece)] \The [piece] [piece.gender == PLURAL ? "are" : "is"] deployed.")
 
-	if(loc == usr)
-		. += "The maintenance panel is [open ? "open" : "closed"]."
-		. += "Hardsuit systems are [offline ? "<font color='red'>offline</font>" : "<font color='green'>online</font>"]."
-
-/obj/item/rig/get_cell()
-	return cell
+	if(src.loc == usr)
+		to_chat(usr, "The maintenance panel is [open ? "open" : "closed"].")
+		to_chat(usr, "Hardsuit systems are [offline ? "<font color='red'>offline</font>" : "<font color='green'>online</font>"].")
 
 /obj/item/rig/New()
 	..()
@@ -112,7 +110,7 @@
 	spark_system.set_up(5, 0, src)
 	spark_system.attach(src)
 
-	START_PROCESSING(SSobj, src)
+	processing_objects.Add(src)
 
 	if(initial_modules && initial_modules.len)
 		for(var/path in initial_modules)
@@ -155,6 +153,7 @@
 		if(piece.siemens_coefficient > siemens_coefficient) //So that insulated gloves keep their insulation.
 			piece.siemens_coefficient = siemens_coefficient
 		piece.permeability_coefficient = permeability_coefficient
+		piece.unacidable = unacidable
 		if(islist(armor))
 			var/list/L = armor
 			piece.armor = L.Copy()
@@ -167,7 +166,7 @@
 		if(istype(M))
 			M.unEquip(piece)
 		qdel(piece)
-	STOP_PROCESSING(SSobj, src)
+	processing_objects.Remove(src)
 	QDEL_NULL(wires)
 	QDEL_NULL(spark_system)
 	return ..()
@@ -522,7 +521,7 @@
 	cell.use(cost*10)
 	return 1
 
-/obj/item/rig/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = GLOB.inventory_state)
+/obj/item/rig/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = inventory_state)
 	if(!user)
 		return
 
@@ -532,7 +531,7 @@
 		ui.open()
 		ui.set_auto_update(1)
 
-/obj/item/rig/ui_data(mob/user, ui_key = "main", datum/topic_state/state = GLOB.inventory_state)
+/obj/item/rig/ui_data(mob/user, ui_key = "main", datum/topic_state/state = inventory_state)
 	var/data[0]
 
 	data["primarysystem"] = null
@@ -982,7 +981,7 @@
 			return 0
 
 	if(malfunctioning)
-		direction = pick(GLOB.cardinal)
+		direction = pick(cardinal)
 
 	// Inside an object, tell it we moved.
 	if(isobj(wearer.loc) || ismob(wearer.loc))
@@ -1052,7 +1051,7 @@
 	if(user.restrained())
 		to_chat(user, "<span class='notice'>You need your hands free for this.</span>")
 		return 0
-	if(user.stat || user.paralysis || user.sleeping || user.lying || user.IsWeakened())
+	if(user.stat || user.paralysis || user.sleeping || user.lying || user.weakened)
 		return 0
 	return 1
 #undef ONLY_DEPLOY

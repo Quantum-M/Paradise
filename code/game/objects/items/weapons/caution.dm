@@ -26,7 +26,7 @@
 			return
 		timing = !timing
 		if(timing)
-			START_PROCESSING(SSobj, src)
+			processing_objects.Add(src)
 		else
 			armed = 0
 			timepassed = 0
@@ -34,7 +34,7 @@
 
 /obj/item/caution/proximity_sign/process()
 	if(!timing)
-		STOP_PROCESSING(SSobj, src)
+		processing_objects.Remove(src)
 	timepassed++
 	if(timepassed >= 15 && !armed)
 		armed = 1

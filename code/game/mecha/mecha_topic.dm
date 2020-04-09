@@ -18,8 +18,8 @@
 						.hidden {display: none;}
 						</style>
 						<script language='javascript' type='text/javascript'>
-						[JS_BYJAX]
-						[JS_DROPDOWNS]
+						[js_byjax]
+						[js_dropdowns]
 						function ticker() {
 						    setInterval(function(){
 						        window.location='byond://?src=[UID()]&update_content=1';
@@ -69,7 +69,7 @@
 
 
 /obj/mecha/proc/get_stats_part()
-	var/integrity = obj_integrity/max_integrity*100
+	var/integrity = health/initial(health)*100
 	var/cell_charge = get_charge()
 	var/tank_pressure = internal_tank ? round(internal_tank.return_pressure(),0.01) : "None"
 	var/tank_temperature = internal_tank ? internal_tank.return_temperature() : "Unknown"
@@ -172,17 +172,12 @@
 						<h1>Following keycodes are present in this system:</h1>"}
 	for(var/a in operation_req_access)
 		output += "[get_access_desc(a)] - <a href='?src=[UID()];del_req_access=[a];user=\ref[user];id_card=\ref[id_card]'>Delete</a><br>"
-
-	output += "<a href='?src=[UID()];del_all_req_access=1;user=\ref[user];id_card=\ref[id_card]'><br><b>Delete All</b></a><br>"
-
 	output += "<hr><h1>Following keycodes were detected on portable device:</h1>"
 	for(var/a in id_card.access)
 		if(a in operation_req_access) continue
-		if(!get_access_desc(a))
-			continue //there's some strange access without a name
-		output += "[get_access_desc(a)] - <a href='?src=[UID()];add_req_access=[a];user=\ref[user];id_card=\ref[id_card]'>Add</a><br>"
-
-	output += "<a href='?src=[UID()];add_all_req_access=1;user=\ref[user];id_card=\ref[id_card]'><br><b>Add All</b></a><br>"
+		var/a_name = get_access_desc(a)
+		if(!a_name) continue //there's some strange access without a name
+		output += "[a_name] - <a href='?src=[UID()];add_req_access=[a];user=\ref[user];id_card=\ref[id_card]'>Add</a><br>"
 	output += "<hr><a href='?src=[UID()];finish_req_access=1;user=\ref[user]'>Finish</a> <font color='red'>(Warning! The ID upload panel will be locked. It can be unlocked only through Exosuit Interface.)</font>"
 	output += "</body></html>"
 	user << browse(output, "window=exosuit_add_access")
@@ -200,7 +195,7 @@
 						</head>
 						<body>
 						[add_req_access?"<a href='?src=[UID()];req_access=1;id_card=\ref[id_card];user=\ref[user]'>Edit operation keycodes</a>":null]
-						[maint_access?"<a href='?src=[UID()];maint_access=1;id_card=\ref[id_card];user=\ref[user]'>Initiate/Stop maintenance protocol</a>":null]
+						[maint_access?"<a href='?src=[UID()];maint_access=1;id_card=\ref[id_card];user=\ref[user]'>Initiate maintenance protocol</a>":null]
 						[(state>0) ?"<a href='?src=[UID()];set_internal_tank_valve=1;user=\ref[user]'>Set Cabin Air Pressure</a>":null]
 						</body>
 						</html>"}
@@ -322,13 +317,9 @@
 			if(state==0)
 				state = 1
 				to_chat(user, "The securing bolts are now exposed.")
-				if(occupant)
-					occupant.throw_alert("locked", /obj/screen/alert/mech_maintenance)
 			else if(state==1)
 				state = 0
 				to_chat(user, "The securing bolts are now hidden.")
-				if(occupant)
-					occupant.clear_alert("locked")
 			output_maintenance_dialog(afilter.getObj("id_card"),user)
 		return
 	if(href_list["set_internal_tank_valve"] && state >=1)
@@ -344,25 +335,9 @@
 		operation_req_access += afilter.getNum("add_req_access")
 		output_access_dialog(afilter.getObj("id_card"),afilter.getMob("user"))
 		return
-	if(href_list["add_all_req_access"] && add_req_access && afilter.getObj("id_card"))
-		if(!in_range(src, usr))
-			return
-		var/obj/item/card/id/mycard = afilter.getObj("id_card")
-		var/list/myaccess = mycard.access
-		for(var/a in myaccess)
-			if(get_access_desc(a))
-				operation_req_access += a
-		output_access_dialog(afilter.getObj("id_card"),afilter.getMob("user"))
-		return
 	if(href_list["del_req_access"] && add_req_access && afilter.getObj("id_card"))
 		if(!in_range(src, usr))	return
 		operation_req_access -= afilter.getNum("del_req_access")
-		output_access_dialog(afilter.getObj("id_card"),afilter.getMob("user"))
-		return
-	if(href_list["del_all_req_access"] && add_req_access && afilter.getObj("id_card"))
-		if(!in_range(src, usr))
-			return
-		operation_req_access = list()
 		output_access_dialog(afilter.getObj("id_card"),afilter.getMob("user"))
 		return
 	if(href_list["finish_req_access"])

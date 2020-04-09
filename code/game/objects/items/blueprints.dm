@@ -65,25 +65,9 @@
 
 
 /obj/item/areaeditor/permit/create_area()
-	if(..())
-		qdel(src)
+	..()
+	qdel(src)
 
-//free golem blueprints, like permit but can claim as much as needed
-
-/obj/item/areaeditor/golem
-	name = "Golem Land Claim"
-	desc = "Used to define new areas in space."
-	fluffnotice = "Praise the Liberator!"
-
-/obj/item/areaeditor/golem/attack_self(mob/user)
-	. = ..()
-	var/area/A = get_area()
-	if(get_area_type() == AREA_STATION)
-		. += "<p>According to the [src], you are now in <b>\"[sanitize(A.name)]\"</b>.</p>"
-	var/datum/browser/popup = new(user, "blueprints", "[src]", 700, 500)
-	popup.set_content(.)
-	popup.open()
-	onclose(usr, "blueprints")
 
 //Station blueprints!!!
 /obj/item/areaeditor/blueprints
@@ -92,7 +76,6 @@
 	icon = 'icons/obj/items.dmi'
 	icon_state = "blueprints"
 	fluffnotice = "Property of Nanotrasen. For heads of staff only. Store in high-secure storage."
-	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | ACID_PROOF
 	w_class = WEIGHT_CLASS_NORMAL
 	var/list/showing = list()
 	var/client/viewing
@@ -175,10 +158,14 @@
 	var/list/SPECIALS = list(
 		/area/shuttle,
 		/area/admin,
+		/area/arrival,
 		/area/centcom,
 		/area/asteroid,
 		/area/tdome,
-		/area/wizard_station
+		/area/syndicate_station,
+		/area/wizard_station,
+		/area/prison
+		// /area/derelict //commented out, all hail derelict-rebuilders!
 	)
 	for(var/type in SPECIALS)
 		if( istype(A,type) )
@@ -187,43 +174,43 @@
 
 
 /obj/item/areaeditor/proc/create_area()
-	var/area_created = FALSE
 	var/res = detect_room(get_turf(usr))
 	if(!istype(res,/list))
 		switch(res)
 			if(ROOM_ERR_SPACE)
 				to_chat(usr, "<span class='warning'>The new area must be completely airtight.</span>")
-				return area_created
+				return
 			if(ROOM_ERR_TOOLARGE)
 				to_chat(usr, "<span class='warning'>The new area is too large.</span>")
-				return area_created
+				return
 			else
 				to_chat(usr, "<span class='warning'>Error! Please notify administration.</span>")
-				return area_created
+				return
 	var/list/turf/turfs = res
 	var/str = trim(stripped_input(usr,"New area name:", "Blueprint Editing", "", MAX_NAME_LEN))
 	if(!str || !length(str)) //cancel
-		return area_created
+		return
 	if(length(str) > 50)
 		to_chat(usr, "<span class='warning'>The given name is too long.  The area remains undefined.</span>")
-		return area_created
+		return
 	var/area/A = new
 	A.name = str
-	A.power_equip = FALSE
-	A.power_light = FALSE
-	A.power_environ = FALSE
-	A.always_unpowered = FALSE
-	A.set_dynamic_lighting()
-
-	for(var/i in 1 to turfs.len)
-		var/turf/thing = turfs[i]
-		var/area/old_area = thing.loc
-		A.contents += thing
-		thing.change_area(old_area, A)
+	//var/ma
+	//ma = A.master ? "[A.master]" : "(null)"
+//	to_chat(world, "DEBUG: create_area: <br>A.name=[A.name]<br>A.tag=[A.tag]<br>A.master=[ma]")
+	A.power_equip = 0
+	A.power_light = 0
+	A.power_environ = 0
+	A.always_unpowered = 0
+	move_turfs_to_area(turfs, A)
 
 	interact()
-	area_created = TRUE
-	return area_created
+	return
+
+
+/obj/item/areaeditor/proc/move_turfs_to_area(var/list/turf/turfs, var/area/A)
+	A.contents.Add(turfs)
+
 
 /obj/item/areaeditor/proc/edit_area()
 	var/area/A = get_area()
@@ -265,8 +252,6 @@
 		return BORDER_BETWEEN
 	if(istype(T2, /turf/simulated/wall))
 		return BORDER_2NDTILE
-	if(istype(T2, /turf/simulated/mineral))
-		return BORDER_2NDTILE
 	if(!istype(T2, /turf/simulated))
 		return BORDER_BETWEEN
 
@@ -294,7 +279,7 @@
 			return ROOM_ERR_TOOLARGE
 		var/turf/T = pending[1] //why byond havent list::pop()?
 		pending -= T
-		for(var/dir in GLOB.cardinal)
+		for(var/dir in cardinal)
 			var/skip = 0
 			for(var/obj/structure/window/W in T)
 				if(dir == W.dir || (W.dir in list(NORTHEAST,SOUTHEAST,NORTHWEST,SOUTHWEST)))
@@ -327,4 +312,3 @@
 	name = "station schematics"
 	desc = "A digital copy of the station blueprints stored in your memory."
 	fluffnotice = "Intellectual Property of Nanotrasen. For use in engineering cyborgs only. Wipe from memory upon departure from the station."
-

@@ -5,13 +5,13 @@
 /obj/machinery/porta_turret/tag
 	// Reasonable defaults, in case someone manually spawns us
 	var/lasercolor = "r"	//Something to do with lasertag turrets, blame Sieve for not adding a comment.
-	installation = /obj/item/gun/energy/laser/tag/red
+	installation = /obj/item/gun/energy/laser/redtag
 
 /obj/machinery/porta_turret/tag/red
 
 /obj/machinery/porta_turret/tag/blue
 	lasercolor = "b"
-	installation = /obj/item/gun/energy/laser/tag/blue
+	installation = /obj/item/gun/energy/laser/bluetag
 
 /obj/machinery/porta_turret/tag/New()
 	..()
@@ -19,10 +19,10 @@
 
 /obj/machinery/porta_turret/tag/weapon_setup(var/obj/item/gun/energy/E)
 	switch(E.type)
-		if(/obj/item/gun/energy/laser/tag/blue)
-			eprojectile = /obj/item/gun/energy/laser/tag/blue
+		if(/obj/item/gun/energy/laser/bluetag)
+			eprojectile = /obj/item/gun/energy/laser/bluetag
 			lasercolor = "b"
-			req_access = list(ACCESS_MAINT_TUNNELS, ACCESS_THEATRE)
+			req_access = list(access_maint_tunnels, access_theatre)
 			check_arrest = 0
 			check_records = 0
 			check_weapons = 1
@@ -30,10 +30,10 @@
 			check_anomalies = 0
 			shot_delay = 30
 
-		if(/obj/item/gun/energy/laser/tag/red)
-			eprojectile = /obj/item/gun/energy/laser/tag/red
+		if(/obj/item/gun/energy/laser/redtag)
+			eprojectile = /obj/item/gun/energy/laser/redtag
 			lasercolor = "r"
-			req_access = list(ACCESS_MAINT_TUNNELS, ACCESS_THEATRE)
+			req_access = list(access_maint_tunnels, access_theatre)
 			check_arrest = 0
 			check_records = 0
 			check_weapons = 1
@@ -49,7 +49,7 @@
 		ui.open()
 		ui.set_auto_update(1)
 
-/obj/machinery/porta_turret/tag/ui_data(mob/user, ui_key = "main", datum/topic_state/state = GLOB.default_state)
+/obj/machinery/porta_turret/tag/ui_data(mob/user, ui_key = "main", datum/topic_state/state = default_state)
 	var/data[0]
 	data["access"] = !isLocked(user)
 	data["locked"] = locked
@@ -77,19 +77,21 @@
 		else
 			icon_state = "[lasercolor]grey_target_prism"
 
-/obj/machinery/porta_turret/tag/bullet_act(obj/item/projectile/P)
+/obj/machinery/porta_turret/tag/bullet_act(obj/item/projectile/Proj)
 	..()
-	if(!disabled)
-		if(lasercolor == "b")
-			if(istype(P, /obj/item/projectile/beam/lasertag/redtag))
-				disabled  = TRUE
-				spawn(100)
-					disabled  = FALSE
-		else if(lasercolor == "r")
-			if(istype(P, /obj/item/projectile/beam/lasertag/bluetag))
-				disabled  = TRUE
-				spawn(100)
-					disabled  = FALSE
+
+	if(lasercolor == "b" && disabled == 0)
+		if(istype(Proj, /obj/item/gun/energy/laser/redtag))
+			disabled = 1
+			qdel(Proj) // qdel
+			sleep(100)
+			disabled = 0
+	if(lasercolor == "r" && disabled == 0)
+		if(istype(Proj, /obj/item/gun/energy/laser/bluetag))
+			disabled = 1
+			qdel(Proj) // qdel
+			sleep(100)
+			disabled = 0
 
 /obj/machinery/porta_turret/tag/assess_living(var/mob/living/L)
 	if(!L)
@@ -103,10 +105,10 @@
 	switch(lasercolor)
 		if("b")
 			target_suit = /obj/item/clothing/suit/redtag
-			target_weapon = /obj/item/gun/energy/laser/tag/red
+			target_weapon = /obj/item/gun/energy/laser/redtag
 		if("r")
 			target_suit = /obj/item/clothing/suit/bluetag
-			target_weapon = /obj/item/gun/energy/laser/tag/blue
+			target_weapon = /obj/item/gun/energy/laser/bluetag
 
 
 	if(target_suit)//Lasertag turrets target the opposing team, how great is that? -Sieve

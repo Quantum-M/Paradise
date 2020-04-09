@@ -5,7 +5,7 @@
 	hair_style = "bald"
 	facial_hair_style = "shaved"
 	id_job = "Operative"
-	id_access_list = list(ACCESS_SYNDICATE)
+	id_access_list = list(access_syndicate)
 	outfit = /datum/outfit/syndicatesoldiercorpse
 
 /datum/outfit/syndicatesoldiercorpse
@@ -27,7 +27,7 @@
 	hair_style = "bald"
 	facial_hair_style = "shaved"
 	id_job = "Operative"
-	id_access_list = list(ACCESS_SYNDICATE)
+	id_access_list = list(access_syndicate)
 	outfit = /datum/outfit/syndicatecommandocorpse
 
 /datum/outfit/syndicatecommandocorpse

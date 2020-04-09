@@ -9,30 +9,31 @@
 /area/awaymission/wwmines
 	name = "\improper Wild West Mines"
 	icon_state = "away1"
-	requires_power = FALSE
-	dynamic_lighting = DYNAMIC_LIGHTING_FORCED
+	luminosity = 1
+	requires_power = 0
 
 /area/awaymission/wwgov
 	name = "\improper Wild West Mansion"
 	icon_state = "away2"
-	requires_power = FALSE
-	dynamic_lighting = DYNAMIC_LIGHTING_FORCED
+	luminosity = 1
+	requires_power = 0
 
 /area/awaymission/wwrefine
 	name = "\improper Wild West Refinery"
 	icon_state = "away3"
-	requires_power = FALSE
-	dynamic_lighting = DYNAMIC_LIGHTING_FORCED
+	luminosity = 1
+	requires_power = 0
 
 /area/awaymission/wwvault
 	name = "\improper Wild West Vault"
 	icon_state = "away3"
+	luminosity = 0
 
 /area/awaymission/wwvaultdoors
 	name = "\improper Wild West Vault Doors"  // this is to keep the vault area being entirely lit because of requires_power
 	icon_state = "away2"
-	requires_power = FALSE
-	dynamic_lighting = DYNAMIC_LIGHTING_FORCED
+	requires_power = 0
+	luminosity = 0
 
 /*
  * Wish Granter
@@ -140,7 +141,7 @@
 /obj/effect/meatgrinder/New()
 	icon_state = "blobpod"
 
-/obj/effect/meatgrinder/Crossed(AM as mob|obj, oldloc)
+/obj/effect/meatgrinder/Crossed(AM as mob|obj)
 	Bumped(AM)
 
 /obj/effect/meatgrinder/Bumped(mob/M as mob|obj)

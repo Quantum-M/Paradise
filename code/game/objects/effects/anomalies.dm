@@ -5,6 +5,7 @@
 	icon = 'icons/effects/effects.dmi'
 	desc = "A mysterious anomaly, seen commonly only in the region of space that the station orbits..."
 	icon_state = "bhole3"
+	unacidable = 1
 	density = 0
 	anchored = 1
 	luminosity = 3
@@ -26,7 +27,7 @@
 
 /obj/effect/anomaly/proc/anomalyEffect()
 	if(prob(50))
-		step(src,pick(GLOB.alldirs))
+		step(src,pick(alldirs))
 
 
 /obj/effect/anomaly/proc/anomalyNeutralize()
@@ -124,7 +125,7 @@
 	..()
 	var/turf/simulated/T = get_turf(src)
 	if(istype(T))
-		T.atmos_spawn_air(LINDA_SPAWN_HEAT | LINDA_SPAWN_TOXINS, 3)
+		T.atmos_spawn_air(SPAWN_HEAT | SPAWN_TOXINS, 3)
 
 /////////////////////
 

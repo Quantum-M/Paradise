@@ -23,6 +23,7 @@
 	righthand_file = 'icons/mob/inhands/items_righthand.dmi'
 
 /obj/item/gun/magic/afterattack(atom/target, mob/living/user, flag)
+	newshot()
 	if(no_den_usage)
 		var/area/A = get_area(user)
 		if(istype(A, /area/wizard_station))
@@ -36,13 +37,9 @@
 	return charges
 
 /obj/item/gun/magic/newshot(params)
-	if(charges && chambered && !chambered.BB)
+	if(charges && chambered)
 		chambered.newshot(params)
 	return
-
-/obj/item/gun/magic/process_fire()
-	newshot()
-	return ..()
 
 /obj/item/gun/magic/process_chamber()
 	if(chambered && !chambered.BB) //if BB is null, i.e the shot has been fired...
@@ -54,12 +51,12 @@
 	charges = max_charges
 	chambered = new ammo_type(src)
 	if(can_charge)
-		START_PROCESSING(SSobj, src)
+		processing_objects.Add(src)
 
 
 /obj/item/gun/magic/Destroy()
 	if(can_charge)
-		STOP_PROCESSING(SSobj, src)
+		processing_objects.Remove(src)
 	return ..()
 
 

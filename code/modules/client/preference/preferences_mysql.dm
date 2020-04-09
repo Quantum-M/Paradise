@@ -1,6 +1,6 @@
 /datum/preferences/proc/load_preferences(client/C)
 
-	var/DBQuery/query = GLOB.dbcon.NewQuery({"SELECT
+	var/DBQuery/query = dbcon.NewQuery({"SELECT
 					ooccolor,
 					UI_style,
 					UI_style_color,
@@ -18,10 +18,7 @@
 					ghost_anonsay,
 					exp,
 					clientfps,
-					atklog,
-					fuid,
-					afk_watch,
-					parallax
+					atklog
 					FROM [format_table_name("player")]
 					WHERE ckey='[C.ckey]'"}
 					)
@@ -53,15 +50,12 @@
 		exp = query.item[16]
 		clientfps = text2num(query.item[17])
 		atklog = text2num(query.item[18])
-		fuid = text2num(query.item[19])
-		afk_watch = text2num(query.item[20])
-		parallax = text2num(query.item[21])
 
 	//Sanitize
 	ooccolor		= sanitize_hexcolor(ooccolor, initial(ooccolor))
 	UI_style		= sanitize_inlist(UI_style, list("White", "Midnight"), initial(UI_style))
 	default_slot	= sanitize_integer(default_slot, 1, max_save_slots, initial(default_slot))
-	toggles			= sanitize_integer(toggles, 0, TOGGLES_TOTAL, initial(toggles))
+	toggles			= sanitize_integer(toggles, 0, 65535, initial(toggles))
 	sound			= sanitize_integer(sound, 0, 65535, initial(sound))
 	UI_style_color	= sanitize_hexcolor(UI_style_color, initial(UI_style_color))
 	UI_style_alpha	= sanitize_integer(UI_style_alpha, 0, 255, initial(UI_style_alpha))
@@ -75,9 +69,6 @@
 	exp	= sanitize_text(exp, initial(exp))
 	clientfps = sanitize_integer(clientfps, 0, 1000, initial(clientfps))
 	atklog = sanitize_integer(atklog, 0, 100, initial(atklog))
-	fuid = sanitize_integer(fuid, 0, 10000000, initial(fuid))
-	afk_watch = sanitize_integer(afk_watch, 0, 1, initial(afk_watch))
-	parallax = sanitize_integer(parallax, 0, 16, initial(parallax))
 	return 1
 
 /datum/preferences/proc/save_preferences(client/C)
@@ -88,7 +79,7 @@
 			log_runtime(EXCEPTION("[C.key] had a malformed role entry: '[role]'. Removing!"), src)
 			be_special -= role
 
-	var/DBQuery/query = GLOB.dbcon.NewQuery({"UPDATE [format_table_name("player")]
+	var/DBQuery/query = dbcon.NewQuery({"UPDATE [format_table_name("player")]
 				SET
 					ooccolor='[ooccolor]',
 					UI_style='[UI_style]',
@@ -96,7 +87,7 @@
 					UI_style_alpha='[UI_style_alpha]',
 					be_role='[sanitizeSQL(list2params(be_special))]',
 					default_slot='[default_slot]',
-					toggles='[num2text(toggles, Ceiling(log(10, (TOGGLES_TOTAL))))]',
+					toggles='[toggles]',
 					atklog='[atklog]',
 					sound='[sound]',
 					randomslot='[randomslot]',
@@ -107,9 +98,7 @@
 					windowflashing='[windowflashing]',
 					ghost_anonsay='[ghost_anonsay]',
 					clientfps='[clientfps]',
-					atklog='[atklog]',
-					afk_watch='[afk_watch]',
-					parallax='[parallax]'
+					atklog='[atklog]'
 					WHERE ckey='[C.ckey]'"}
 					)
 
@@ -126,11 +115,11 @@
 	slot = sanitize_integer(slot, 1, max_save_slots, initial(default_slot))
 	if(slot != default_slot)
 		default_slot = slot
-		var/DBQuery/firstquery = GLOB.dbcon.NewQuery("UPDATE [format_table_name("player")] SET default_slot=[slot] WHERE ckey='[C.ckey]'")
+		var/DBQuery/firstquery = dbcon.NewQuery("UPDATE [format_table_name("player")] SET default_slot=[slot] WHERE ckey='[C.ckey]'")
 		firstquery.Execute()
 
 	// Let's not have this explode if you sneeze on the DB
-	var/DBQuery/query = GLOB.dbcon.NewQuery({"SELECT
+	var/DBQuery/query = dbcon.NewQuery({"SELECT
 					OOC_Notes,
 					real_name,
 					name_is_always_random,
@@ -339,11 +328,11 @@
 	if(!isemptylist(gear))
 		gearlist = list2params(gear)
 
-	var/DBQuery/firstquery = GLOB.dbcon.NewQuery("SELECT slot FROM [format_table_name("characters")] WHERE ckey='[C.ckey]' ORDER BY slot")
+	var/DBQuery/firstquery = dbcon.NewQuery("SELECT slot FROM [format_table_name("characters")] WHERE ckey='[C.ckey]' ORDER BY slot")
 	firstquery.Execute()
 	while(firstquery.NextRow())
 		if(text2num(firstquery.item[1]) == default_slot)
-			var/DBQuery/query = GLOB.dbcon.NewQuery({"UPDATE [format_table_name("characters")] SET OOC_Notes='[sanitizeSQL(metadata)]',
+			var/DBQuery/query = dbcon.NewQuery({"UPDATE [format_table_name("characters")] SET OOC_Notes='[sanitizeSQL(metadata)]',
 												real_name='[sanitizeSQL(real_name)]',
 												name_is_always_random='[be_random_name]',
 												gender='[gender]',
@@ -406,7 +395,7 @@
 				return
 			return 1
 
-	var/DBQuery/query = GLOB.dbcon.NewQuery({"
+	var/DBQuery/query = dbcon.NewQuery({"
 					INSERT INTO [format_table_name("characters")] (ckey, slot, OOC_Notes, real_name, name_is_always_random, gender,
 											age, species, language,
 											hair_colour, secondary_hair_colour,
@@ -473,7 +462,7 @@
 	return 1
 
 /datum/preferences/proc/load_random_character_slot(client/C)
-	var/DBQuery/query = GLOB.dbcon.NewQuery("SELECT slot FROM [format_table_name("characters")] WHERE ckey='[C.ckey]' ORDER BY slot")
+	var/DBQuery/query = dbcon.NewQuery("SELECT slot FROM [format_table_name("characters")] WHERE ckey='[C.ckey]' ORDER BY slot")
 	var/list/saves = list()
 
 	if(!query.Execute())
@@ -493,11 +482,8 @@
 
 /datum/preferences/proc/SetChangelog(client/C,hash)
 	lastchangelog=hash
-	if(GLOB.preferences_datums[C.ckey].toggles & UI_DARKMODE)
-		winset(C, "rpane.changelog", "background-color=#40628a;font-color=#ffffff;font-style=none")
-	else
-		winset(C, "rpane.changelog", "background-color=none;font-style=none")
-	var/DBQuery/query = GLOB.dbcon.NewQuery("UPDATE [format_table_name("player")] SET lastchangelog='[lastchangelog]' WHERE ckey='[C.ckey]'")
+	winset(C, "rpane.changelog", "background-color=none;font-style=")
+	var/DBQuery/query = dbcon.NewQuery("UPDATE [format_table_name("player")] SET lastchangelog='[lastchangelog]' WHERE ckey='[C.ckey]'")
 	if(!query.Execute())
 		var/err = query.ErrorMsg()
 		log_game("SQL ERROR during lastchangelog updating. Error : \[[err]\]\n")

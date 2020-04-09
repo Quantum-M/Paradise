@@ -6,7 +6,7 @@
 	icon = 'icons/effects/effects.dmi'
 	anchored = TRUE
 	max_integrity = 1
-	armor = list("melee" = 0, "bullet" = 50, "laser" = 50, "energy" = 50, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 20, "acid" = 20)
+	armor = list("melee" = 0, "bullet" = 50, "laser" = 50, "energy" = 50, "bomb" = 0, "bio" = 0, "rad" = 0)
 	var/obj/item/holosign_creator/projector
 
 /obj/structure/holosign/New(loc, source_projector)
@@ -32,9 +32,9 @@
 /obj/structure/holosign/play_attack_sound(damage_amount, damage_type = BRUTE, damage_flag = 0)
 	switch(damage_type)
 		if(BRUTE)
-			playsound(loc, 'sound/weapons/egloves.ogg', 80, TRUE)
+			playsound(loc, 'sound/weapons/egloves.ogg', 80, 1)
 		if(BURN)
-			playsound(loc, 'sound/weapons/egloves.ogg', 80, TRUE)
+			playsound(loc, 'sound/weapons/egloves.ogg', 80, 1)
 
 /obj/structure/holosign/wetsign
 	name = "wet floor sign"
@@ -57,7 +57,7 @@
 		return TRUE
 	if(iscarbon(mover))
 		var/mob/living/carbon/C = mover
-		if(allow_walk && (C.m_intent == MOVE_INTENT_WALK || (C.pulledby && C.pulledby.m_intent == MOVE_INTENT_WALK)))
+		if(allow_walk && C.m_intent == MOVE_INTENT_WALK)
 			return TRUE
 
 /obj/structure/holosign/barrier/engineering
@@ -82,8 +82,8 @@
 
 /obj/structure/holosign/barrier/atmos/Destroy()
 	var/turf/T = get_turf(src)
-	. = ..()
 	T.air_update_turf(TRUE)
+	return ..()
 
 /obj/structure/holosign/barrier/cyborg
 	name = "Energy Field"
@@ -116,9 +116,9 @@
 	if(.)
 		return
 	if(!shockcd)
-		if(isliving(user))
+		if(ismob(user))
 			var/mob/living/M = user
-			M.electrocute_act(15, "Energy Barrier", safety = TRUE)
+			M.electrocute_act(15,"Energy Barrier", safety=1)
 			shockcd = TRUE
 			addtimer(CALLBACK(src, .proc/cooldown), 5)
 
@@ -130,6 +130,6 @@
 		return
 
 	var/mob/living/M = AM
-	M.electrocute_act(15, "Energy Barrier", safety = TRUE)
+	M.electrocute_act(15, "Energy Barrier", safety = 1)
 	shockcd = TRUE
 	addtimer(CALLBACK(src, .proc/cooldown), 5)

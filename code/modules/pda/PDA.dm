@@ -1,7 +1,7 @@
 
 //The advanced pea-green monochrome lcd of tomorrow.
 
-GLOBAL_LIST_EMPTY(PDAs)
+var/global/list/obj/item/pda/PDAs = list()
 
 
 /obj/item/pda
@@ -12,8 +12,6 @@ GLOBAL_LIST_EMPTY(PDAs)
 	item_state = "electronic"
 	w_class = WEIGHT_CLASS_TINY
 	slot_flags = SLOT_ID | SLOT_BELT | SLOT_PDA
-	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 100, "acid" = 100)
-	resistance_flags = FIRE_PROOF | ACID_PROOF
 	origin_tech = "programming=2"
 
 	//Main variables
@@ -64,10 +62,10 @@ GLOBAL_LIST_EMPTY(PDAs)
 /*
  *	The Actual PDA
  */
-/obj/item/pda/Initialize(mapload)
-	. = ..()
-	GLOB.PDAs += src
-	GLOB.PDAs = sortAtom(GLOB.PDAs)
+/obj/item/pda/New()
+	..()
+	PDAs += src
+	PDAs = sortAtom(PDAs)
 	update_programs()
 	if(default_cartridge)
 		cartridge = new default_cartridge(src)
@@ -101,7 +99,7 @@ GLOBAL_LIST_EMPTY(PDAs)
 	if((!istype(over_object, /obj/screen)) && can_use())
 		return attack_self(M)
 
-/obj/item/pda/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = GLOB.inventory_state)
+/obj/item/pda/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = inventory_state)
 	ui_tick++
 	var/datum/nanoui/old_ui = SSnanoui.get_open_ui(user, src, "main")
 	var/auto_update = 1
@@ -131,7 +129,7 @@ GLOBAL_LIST_EMPTY(PDAs)
 	// auto update every Master Controller tick
 	ui.set_auto_update(auto_update)
 
-/obj/item/pda/ui_data(mob/user, ui_key = "main", datum/topic_state/state = GLOB.inventory_state)
+/obj/item/pda/ui_data(mob/user, ui_key = "main", datum/topic_state/state = inventory_state)
 	var/data[0]
 
 	data["owner"] = owner					// Who is your daddy...
@@ -467,7 +465,7 @@ GLOBAL_LIST_EMPTY(PDAs)
 	return
 
 /obj/item/pda/Destroy()
-	GLOB.PDAs -= src
+	PDAs -= src
 	var/T = get_turf(loc)
 	if(id)
 		id.forceMove(T)
@@ -513,8 +511,3 @@ GLOBAL_LIST_EMPTY(PDAs)
 /obj/item/pda/process()
 	if(current_app)
 		current_app.program_process()
-
-/obj/item/pda/extinguish_light()
-	var/datum/data/pda/utility/flashlight/FL = find_program(/datum/data/pda/utility/flashlight)
-	if(FL && FL.fon)
-		FL.start()

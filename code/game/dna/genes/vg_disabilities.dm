@@ -8,7 +8,7 @@
 
 /datum/dna/gene/disability/speech/loud/New()
 	..()
-	block=GLOB.loudblock
+	block=LOUDBLOCK
 
 
 
@@ -28,7 +28,7 @@
 
 /datum/dna/gene/disability/dizzy/New()
 	..()
-	block=GLOB.dizzyblock
+	block=DIZZYBLOCK
 
 
 /datum/dna/gene/disability/dizzy/OnMobLife(var/mob/living/carbon/human/M)
@@ -36,7 +36,3 @@
 		return
 	if(DIZZY in M.mutations)
 		M.Dizzy(300)
-
-/datum/dna/gene/disability/dizzy/deactivate(mob/living/M, connected, flags)
-	. = ..()
-	M.SetDizzy(0)

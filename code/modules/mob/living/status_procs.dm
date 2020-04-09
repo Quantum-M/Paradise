@@ -297,9 +297,6 @@
 	SetLoseBreath(max(losebreath, amount))
 
 /mob/living/SetLoseBreath(amount)
-	if(BREATHLESS in mutations)
-		losebreath = 0
-		return FALSE
 	losebreath = max(amount, 0)
 
 /mob/living/AdjustLoseBreath(amount, bound_lower = 0, bound_upper = INFINITY)
@@ -344,8 +341,6 @@
 	return SetSleeping(max(sleeping, amount), updating, no_alert)
 
 /mob/living/SetSleeping(amount, updating = 1, no_alert = FALSE)
-	if(frozen) // If the mob has been admin frozen, sleeping should not be changeable
-		return
 	. = STATUS_UPDATE_STAT
 	if((!!amount) == (!!sleeping)) // We're not changing from + to 0 or vice versa
 		updating = FALSE
@@ -399,9 +394,6 @@
 // STUN
 
 /mob/living/Stun(amount, updating = 1, force = 0)
-	if(status_flags & CANSTUN || force)
-		if(absorb_stun(amount, force))
-			return FALSE
 	return SetStunned(max(stunned, amount), updating, force)
 
 /mob/living/SetStunned(amount, updating = 1, force = 0) //if you REALLY need to set stun to a set amount without the whole "can't go below current stunned"
@@ -439,9 +431,6 @@
 // WEAKEN
 
 /mob/living/Weaken(amount, updating = 1, force = 0)
-	if(status_flags & CANWEAKEN || force)
-		if(absorb_stun(amount, force))
-			return FALSE
 	return SetWeakened(max(weakened, amount), updating, force)
 
 /mob/living/SetWeakened(amount, updating = 1, force = 0)
@@ -478,7 +467,7 @@
 	. = val_change ? STATUS_UPDATE_BLIND : STATUS_UPDATE_NONE
 	disabilities &= ~BLIND
 	if(val_change && updating)
-		CureIfHasDisability(GLOB.blindblock)
+		CureIfHasDisability(BLINDBLOCK)
 		update_blind_effects()
 
 // Coughing
@@ -488,7 +477,7 @@
 
 /mob/living/proc/CureCoughing()
 	disabilities &= ~COUGHING
-	CureIfHasDisability(GLOB.coughblock)
+	CureIfHasDisability(COUGHBLOCK)
 
 // Deaf
 
@@ -497,7 +486,7 @@
 
 /mob/living/proc/CureDeaf()
 	disabilities &= ~DEAF
-	CureIfHasDisability(GLOB.deafblock)
+	CureIfHasDisability(DEAFBLOCK)
 
 // Epilepsy
 
@@ -506,7 +495,7 @@
 
 /mob/living/proc/CureEpilepsy()
 	disabilities &= ~EPILEPSY
-	CureIfHasDisability(GLOB.epilepsyblock)
+	CureIfHasDisability(EPILEPSYBLOCK)
 
 // Mute
 
@@ -515,7 +504,7 @@
 
 /mob/living/proc/CureMute()
 	disabilities &= ~MUTE
-	CureIfHasDisability(GLOB.muteblock)
+	CureIfHasDisability(MUTEBLOCK)
 
 // Nearsighted
 
@@ -531,7 +520,7 @@
 	. = val_change ? STATUS_UPDATE_NEARSIGHTED : STATUS_UPDATE_NONE
 	disabilities &= ~NEARSIGHTED
 	if(val_change && updating)
-		CureIfHasDisability(GLOB.glassesblock)
+		CureIfHasDisability(GLASSESBLOCK)
 		update_nearsighted_effects()
 
 // Nervous
@@ -541,7 +530,7 @@
 
 /mob/living/proc/CureNervous()
 	disabilities &= ~NERVOUS
-	CureIfHasDisability(GLOB.nervousblock)
+	CureIfHasDisability(NERVOUSBLOCK)
 
 // Tourettes
 
@@ -550,52 +539,10 @@
 
 /mob/living/proc/CureTourettes()
 	disabilities &= ~TOURETTES
-	CureIfHasDisability(GLOB.twitchblock)
+	CureIfHasDisability(TWITCHBLOCK)
 
 /mob/living/proc/CureIfHasDisability(block)
 	if(dna && dna.GetSEState(block))
 		dna.SetSEState(block, 0, 1) //Fix the gene
 		genemutcheck(src, block,null, MUTCHK_FORCED)
 		dna.UpdateSE()
-
-///////////////////////////////// FROZEN /////////////////////////////////////
-
-/mob/living/proc/IsFrozen()
-	return has_status_effect(/datum/status_effect/freon)
-
-///////////////////////////////////// STUN ABSORPTION /////////////////////////////////////
-
-/mob/living/proc/add_stun_absorption(key, duration, priority, message, self_message, examine_message)
-//adds a stun absorption with a key, a duration in deciseconds, its priority, and the messages it makes when you're stun/examined, if any
-	if(!islist(stun_absorption))
-		stun_absorption = list()
-	if(stun_absorption[key])
-		stun_absorption[key]["end_time"] = world.time + duration
-		stun_absorption[key]["priority"] = priority
-		stun_absorption[key]["stuns_absorbed"] = 0
-	else
-		stun_absorption[key] = list("end_time" = world.time + duration, "priority" = priority, "stuns_absorbed" = 0, \
-		"visible_message" = message, "self_message" = self_message, "examine_message" = examine_message)
-
-/mob/living/proc/absorb_stun(amount, ignoring_flag_presence)
-	if(amount < 0 || stat || ignoring_flag_presence || !islist(stun_absorption))
-		return FALSE
-	if(!amount)
-		amount = 0
-	var/priority_absorb_key
-	var/highest_priority
-	for(var/i in stun_absorption)
-		if(stun_absorption[i]["end_time"] > world.time && (!priority_absorb_key || stun_absorption[i]["priority"] > highest_priority))
-			priority_absorb_key = stun_absorption[i]
-			highest_priority = priority_absorb_key["priority"]
-	if(priority_absorb_key)
-		if(amount) //don't spam up the chat for continuous stuns
-			if(priority_absorb_key["visible_message"] || priority_absorb_key["self_message"])
-				if(priority_absorb_key["visible_message"] && priority_absorb_key["self_message"])
-					visible_message("<span class='warning'>[src][priority_absorb_key["visible_message"]]</span>", "<span class='boldwarning'>[priority_absorb_key["self_message"]]</span>")
-				else if(priority_absorb_key["visible_message"])
-					visible_message("<span class='warning'>[src][priority_absorb_key["visible_message"]]</span>")
-				else if(priority_absorb_key["self_message"])
-					to_chat(src, "<span class='boldwarning'>[priority_absorb_key["self_message"]]</span>")
-			priority_absorb_key["stuns_absorbed"] += amount
-		return TRUE

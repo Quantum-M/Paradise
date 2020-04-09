@@ -1,4 +1,4 @@
-GLOBAL_LIST_EMPTY(rad_collectors)
+var/global/list/rad_collectors = list()
 
 /obj/machinery/power/rad_collector
 	name = "Radiation Collector Array"
@@ -7,22 +7,20 @@ GLOBAL_LIST_EMPTY(rad_collectors)
 	icon_state = "ca"
 	anchored = 0
 	density = 1
-	req_access = list(ACCESS_ENGINE_EQUIP)
+	req_access = list(access_engine_equip)
 //	use_power = NO_POWER_USE
-	max_integrity = 350
-	integrity_failure = 80
 	var/obj/item/tank/plasma/P = null
 	var/last_power = 0
 	var/active = 0
 	var/locked = 0
 	var/drainratio = 1
 
-/obj/machinery/power/rad_collector/Initialize(mapload)
-	. = ..()
-	GLOB.rad_collectors += src
+/obj/machinery/power/rad_collector/New()
+	..()
+	rad_collectors += src
 
 /obj/machinery/power/rad_collector/Destroy()
-	GLOB.rad_collectors -= src
+	rad_collectors -= src
 	return ..()
 
 /obj/machinery/power/rad_collector/process()
@@ -95,12 +93,16 @@ GLOBAL_LIST_EMPTY(rad_collectors)
 			to_chat(user, "<span class='warning'>Access denied!</span>")
 			return 1
 	else
-		return ..()
+		..()
+		return 1
 
-/obj/machinery/power/rad_collector/obj_break(damage_flag)
-	if(!(stat & BROKEN) && !(flags & NODECONSTRUCT))
-		eject()
-		stat |= BROKEN
+
+/obj/machinery/power/rad_collector/ex_act(severity)
+	switch(severity)
+		if(2, 3)
+			eject()
+	return ..()
+
 
 /obj/machinery/power/rad_collector/proc/eject()
 	locked = 0

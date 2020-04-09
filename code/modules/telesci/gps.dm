@@ -1,4 +1,4 @@
-GLOBAL_LIST_EMPTY(GPS_list)
+var/list/GPS_list = list()
 /obj/item/gps
 	name = "global positioning system"
 	desc = "Helping lost spacemen find their way through the planets since 2016."
@@ -11,16 +11,15 @@ GLOBAL_LIST_EMPTY(GPS_list)
 	var/emped = 0
 	var/turf/locked_location
 	var/tracking = TRUE
-	var/local = FALSE	//local gps show up only to gps on same z level
 
 /obj/item/gps/New()
 	..()
-	GLOB.GPS_list.Add(src)
+	GPS_list.Add(src)
 	name = "global positioning system ([gpstag])"
 	overlays += "working"
 
 /obj/item/gps/Destroy()
-	GLOB.GPS_list.Remove(src)
+	GPS_list.Remove(src)
 	return ..()
 
 /obj/item/gps/emp_act(severity)
@@ -35,7 +34,7 @@ GLOBAL_LIST_EMPTY(GPS_list)
 	overlays += "working"
 
 /obj/item/gps/AltClick(mob/user)
-	if(CanUseTopic(user, GLOB.inventory_state) != STATUS_INTERACTIVE)
+	if(CanUseTopic(user, inventory_state) != STATUS_INTERACTIVE)
 		return 1 //user not valid to use gps
 	if(emped)
 		to_chat(user, "<span class='warning'>It's busted!</span>")
@@ -54,7 +53,7 @@ GLOBAL_LIST_EMPTY(GPS_list)
 		return
 
 	var/obj/item/gps/t = ""
-	var/gps_window_height = 110 + GLOB.GPS_list.len * 20 // Variable window height, depending on how many GPS units there are to show
+	var/gps_window_height = 110 + GPS_list.len * 20 // Variable window height, depending on how many GPS units there are to show
 	if(emped)
 		t += "ERROR"
 	else
@@ -64,15 +63,13 @@ GLOBAL_LIST_EMPTY(GPS_list)
 			t += "<BR>Bluespace coordinates saved: [locked_location.loc]"
 			gps_window_height += 20
 
-		var/turf/own_pos = get_turf(src)
-		var/own_z = own_pos.z
-		for(var/obj/item/gps/G in GLOB.GPS_list)
+		for(var/obj/item/gps/G in GPS_list)
 			var/turf/pos = get_turf(G)
 			var/area/gps_area = get_area(G)
 			var/tracked_gpstag = G.gpstag
 			if(G.emped == 1)
 				t += "<BR>[tracked_gpstag]: ERROR"
-			else if(G.tracking && (!G.local || (own_z == pos.z)))
+			else if(G.tracking)
 				t += "<BR>[tracked_gpstag]: [format_text(gps_area.name)] ([pos.x], [pos.y], [pos.z])"
 			else
 				continue
@@ -83,18 +80,19 @@ GLOBAL_LIST_EMPTY(GPS_list)
 	popup.open()
 
 /obj/item/gps/Topic(href, href_list)
-	if(..())
+	if(..(state = inventory_state))
 		return 1
 
 	if(href_list["tag"] )
-		var/tag = input("Please enter desired tag.", name, gpstag) as text|null
-		if(!tag || ..())
-			return TRUE
+		var/a = input("Please enter desired tag.", name, gpstag) as text|null
+		if(!a || ..(state = inventory_state))
+			return 1
 
-		tag = uppertext(sanitize(copytext(tag, 1, 5)))
-		gpstag = tag
-		name = "global positioning system ([gpstag])"
-		attack_self(usr)
+		a = uppertext(sanitize(copytext(a, 1, 5)))
+		if(src.loc == usr)
+			gpstag = a
+			name = "global positioning system ([gpstag])"
+			attack_self(usr)
 
 /obj/item/gps/science
 	icon_state = "gps-s"
@@ -118,7 +116,6 @@ GLOBAL_LIST_EMPTY(GPS_list)
 /obj/item/gps/internal
 	icon_state = null
 	flags = ABSTRACT
-	local = TRUE
 	gpstag = "Eerie Signal"
 	desc = "Report to a coder immediately."
 	invisibility = INVISIBILITY_MAXIMUM
@@ -140,10 +137,10 @@ GLOBAL_LIST_EMPTY(GPS_list)
 		for marking the area around the transition edges."
 	var/list/turf/tagged
 
-/obj/item/gps/visible_debug/Initialize(mapload)
+/obj/item/gps/visible_debug/New()
 	. = ..()
 	tagged = list()
-	START_PROCESSING(SSfastprocess, src)
+	GLOB.fast_processing.Add(src)
 
 /obj/item/gps/visible_debug/process()
 	var/turf/T = get_turf(src)
@@ -164,5 +161,5 @@ GLOBAL_LIST_EMPTY(GPS_list)
 	if(tagged)
 		clear()
 	tagged = null
-	STOP_PROCESSING(SSfastprocess, src)
+	GLOB.fast_processing.Remove(src)
 	. = ..()

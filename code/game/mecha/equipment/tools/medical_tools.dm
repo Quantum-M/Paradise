@@ -4,7 +4,7 @@
 
 /obj/item/mecha_parts/mecha_equipment/medical/New()
 	..()
-	START_PROCESSING(SSobj, src)
+	processing_objects.Add(src)
 
 
 /obj/item/mecha_parts/mecha_equipment/medical/can_attach(obj/mecha/medical/M)
@@ -13,29 +13,29 @@
 
 /obj/item/mecha_parts/mecha_equipment/medical/attach(obj/mecha/M)
 	..()
-	START_PROCESSING(SSobj, src)
+	processing_objects.Add(src)
 
 /obj/item/mecha_parts/mecha_equipment/medical/Destroy()
-	STOP_PROCESSING(SSobj, src)
+	processing_objects.Remove(src)
 	return ..()
 
 /obj/item/mecha_parts/mecha_equipment/medical/process()
 	if(!chassis)
-		STOP_PROCESSING(SSobj, src)
+		processing_objects.Remove(src)
 		return 1
 
 /obj/item/mecha_parts/mecha_equipment/medical/detach()
-	STOP_PROCESSING(SSobj, src)
+	processing_objects.Remove(src)
 	return ..()
 
 /obj/item/mecha_parts/mecha_equipment/medical/sleeper
 	name = "mounted sleeper"
 	desc = "Equipment for medical exosuits. A mounted sleeper that stabilizes patients and can inject reagents in the exosuit's reserves."
-	icon = 'icons/obj/cryogenic2.dmi'
+	icon = 'icons/obj/Cryogenic2.dmi'
 	icon_state = "sleeper"
 	origin_tech = "engineering=3;biotech=3;plasmatech=2"
 	energy_drain = 20
-	range = MECHA_MELEE
+	range = MELEE
 	equip_cooldown = 20
 	var/mob/living/carbon/patient = null
 	var/inject_amount = 10
@@ -66,7 +66,7 @@
 			return
 		target.forceMove(src)
 		patient = target
-		START_PROCESSING(SSobj, src)
+		processing_objects.Add(src)
 		update_equip_info()
 		occupant_message("<span class='notice'>[target] successfully loaded into [src]. Life support functions engaged.</span>")
 		chassis.visible_message("<span class='warning'>[chassis] loads [target] into [src].</span>")
@@ -90,7 +90,7 @@
 	patient.forceMove(get_turf(src))
 	occupant_message("[patient] ejected. Life support functions disabled.")
 	log_message("[patient] ejected. Life support functions disabled.")
-	STOP_PROCESSING(SSobj, src)
+	processing_objects.Remove(src)
 	patient = null
 	update_equip_info()
 
@@ -98,7 +98,7 @@
 	if(patient)
 		occupant_message("<span class='warning'>Unable to detach [src] - equipment occupied!</span>")
 		return
-	STOP_PROCESSING(SSobj, src)
+	processing_objects.Remove(src)
 	return ..()
 
 /obj/item/mecha_parts/mecha_equipment/medical/sleeper/get_equip_info()
@@ -130,7 +130,7 @@
 				<head>
 				<title>[patient] statistics</title>
 				<script language='javascript' type='text/javascript'>
-				[JS_BYJAX]
+				[js_byjax]
 				</script>
 				<style>
 				h3 {margin-bottom:2px;font-size:14px;}
@@ -197,7 +197,7 @@
 	if(to_inject && patient.reagents.get_reagent_amount(R.id) + to_inject <= inject_amount*2)
 		occupant_message("Injecting [patient] with [to_inject] units of [R.name].")
 		log_message("Injecting [patient] with [to_inject] units of [R.name].")
-		add_attack_logs(chassis.occupant, patient, "Injected with [name] containing [R], transferred [to_inject] units", R.harmless ? ATKLOG_ALMOSTALL : null)
+		add_attack_logs(chassis.occupant, patient, "Injected with [name] containing [R], transferred [to_inject] units")
 		SG.reagents.trans_id_to(patient,R.id,to_inject)
 		update_equip_info()
 	return
@@ -221,7 +221,7 @@
 		set_ready_state(1)
 		log_message("Deactivated.")
 		occupant_message("[src] deactivated - no power.")
-		STOP_PROCESSING(SSobj, src)
+		processing_objects.Remove(src)
 		return
 	var/mob/living/carbon/M = patient
 	if(!M)
@@ -250,7 +250,7 @@
 	var/synth_speed = 5 //[num] reagent units per cycle
 	energy_drain = 10
 	var/mode = 0 //0 - fire syringe, 1 - analyze reagents.
-	range = MECHA_MELEE | MECHA_RANGED
+	range = MELEE|RANGED
 	equip_cooldown = 10
 	origin_tech = "materials=3;biotech=4;magnets=4"
 
@@ -263,11 +263,11 @@
 	processed_reagents = new
 
 /obj/item/mecha_parts/mecha_equipment/medical/syringe_gun/detach()
-	STOP_PROCESSING(SSobj, src)
+	processing_objects.Remove(src)
 	return ..()
 
 /obj/item/mecha_parts/mecha_equipment/medical/syringe_gun/Destroy()
-	STOP_PROCESSING(SSobj, src)
+	processing_objects.Remove(src)
 	return ..()
 
 /obj/item/mecha_parts/mecha_equipment/medical/syringe_gun/critfail()
@@ -316,38 +316,40 @@
 	var/mob/originaloccupant = chassis.occupant
 	spawn(0)
 		src = null //if src is deleted, still process the syringe
-		var/max_range = 6
-		for(var/i=0, i<max_range, i++)
+		for(var/i=0, i<6, i++)
 			if(!mechsyringe)
 				break
-			if(!step_towards(mechsyringe,trg))
-				break
-
-			var/list/mobs = new
-			for(var/mob/living/carbon/M in mechsyringe.loc)
-				mobs += M
-			var/mob/living/carbon/M = safepick(mobs)
-			if(M)
-				var/R
-				mechsyringe.visible_message("<span class=\"attack\"> [M] was hit by the syringe!</span>")
-				if(M.can_inject(null, TRUE))
-					if(mechsyringe.reagents)
-						for(var/datum/reagent/A in mechsyringe.reagents.reagent_list)
-							R += A.id + " ("
-							R += num2text(A.volume) + "),"
-					add_attack_logs(originaloccupant, M, "Shot with [src] containing [R], transferred [mechsyringe.reagents.total_volume] units")
-					mechsyringe.reagents.reaction(M, REAGENT_INGEST)
-					mechsyringe.reagents.trans_to(M, mechsyringe.reagents.total_volume)
-					M.take_organ_damage(2)
-				break
-			else if(mechsyringe.loc == trg)
+			if(step_towards(mechsyringe,trg))
+				var/list/mobs = new
+				for(var/mob/living/carbon/M in mechsyringe.loc)
+					mobs += M
+				var/mob/living/carbon/M = safepick(mobs)
+				if(M)
+					var/R
+					mechsyringe.visible_message("<span class=\"attack\"> [M] was hit by the syringe!</span>")
+					if(M.can_inject(null, 1))
+						if(mechsyringe.reagents)
+							for(var/datum/reagent/A in mechsyringe.reagents.reagent_list)
+								R += A.id + " ("
+								R += num2text(A.volume) + "),"
+						add_attack_logs(originaloccupant, M, "Shot with [src] containing [R], transferred [mechsyringe.reagents.total_volume] units")
+						mechsyringe.icon_state = initial(mechsyringe.icon_state)
+						mechsyringe.icon = initial(mechsyringe.icon)
+						mechsyringe.reagents.reaction(M, INGEST)
+						mechsyringe.reagents.trans_to(M, mechsyringe.reagents.total_volume)
+						M.take_organ_damage(2)
+					break
+				else if(mechsyringe.loc == trg)
+					mechsyringe.icon_state = initial(mechsyringe.icon_state)
+					mechsyringe.icon = initial(mechsyringe.icon)
+					mechsyringe.update_icon()
+					break
+			else
+				mechsyringe.icon_state = initial(mechsyringe.icon_state)
+				mechsyringe.icon = initial(mechsyringe.icon)
+				mechsyringe.update_icon()
 				break
 			sleep(1)
-		if(mechsyringe)
-			// Revert the syringe icon to normal one once it stops flying.
-			mechsyringe.icon_state = initial(mechsyringe.icon_state)
-			mechsyringe.icon = initial(mechsyringe.icon)
-			mechsyringe.update_icon()
 	return 1
 
 
@@ -372,7 +374,7 @@
 				m++
 		if(processed_reagents.len)
 			message += " added to production"
-			START_PROCESSING(SSobj, src)
+			processing_objects.Add(src)
 			occupant_message(message)
 			occupant_message("Reagent processing started.")
 			log_message("Reagent processing started.")
@@ -394,7 +396,7 @@
 						<head>
 						<title>Reagent Synthesizer</title>
 						<script language='javascript' type='text/javascript'>
-						[JS_BYJAX]
+						[js_byjax]
 						</script>
 						<style>
 						h3 {margin-bottom:2px;font-size:14px;}
@@ -511,7 +513,7 @@
 	if(!processed_reagents.len || reagents.total_volume >= reagents.maximum_volume || !chassis.has_charge(energy_drain))
 		occupant_message("<span class=\"alert\">Reagent processing stopped.</a>")
 		log_message("Reagent processing stopped.")
-		STOP_PROCESSING(SSobj, src)
+		processing_objects.Remove(src)
 		return
 	var/amount = synth_speed / processed_reagents.len
 	for(var/reagent in processed_reagents)
@@ -535,7 +537,7 @@
 		if(!istype(target, /obj/machinery/door))//early return if we're not trying to open a door
 			return
 		var/obj/machinery/door/D = target	//the door we want to open
-		D.try_to_crowbar(chassis.occupant, src)//use the door's crowbar function
+		D.try_to_crowbar(src, chassis.occupant)//use the door's crowbar function
 	if(isliving(target))	//interact with living beings
 		var/mob/living/M = target
 		if(chassis.occupant.a_intent == INTENT_HARM)//the patented, medical rescue claw is incapable of doing harm. Worry not.

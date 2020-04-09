@@ -13,7 +13,6 @@
 	icon_state = "control_standby"
 	anchored = 1
 	density = 0
-	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
 	var/enabled = 0
 	var/lethal = 0
 	var/locked = 1
@@ -30,7 +29,7 @@
 	var/syndicate = 0
 	var/faction = "" // Turret controls can only access turrets that are in the same faction
 
-	req_access = list(ACCESS_AI_UPLOAD)
+	req_access = list(access_ai_upload)
 
 /obj/machinery/turretid/stun
 	enabled = 1
@@ -57,7 +56,7 @@
 
 	syndicate = 1
 	faction = "syndicate"
-	req_access = list(ACCESS_SYNDICATE_LEADER)
+	req_access = list(access_syndicate_leader)
 
 /obj/machinery/turretid/Destroy()
 	if(control_area)
@@ -143,11 +142,11 @@
 /obj/machinery/turretid/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
 	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, force_open)
 	if(!ui)
-		ui = new(user, src, ui_key, "turret_control.tmpl", "Turret Controls", 500, 350)
+		ui = new(user, src, ui_key, "turret_control.tmpl", "Turret Controls", 500, 300)
 		ui.open()
 		ui.set_auto_update(1)
 
-/obj/machinery/turretid/ui_data(mob/user, ui_key = "main", datum/topic_state/state = GLOB.default_state)
+/obj/machinery/turretid/ui_data(mob/user, ui_key = "main", datum/topic_state/state = default_state)
 	var/data[0]
 	data["access"] = !isLocked(user)
 	data["locked"] = locked

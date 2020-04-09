@@ -7,7 +7,7 @@
 	var/output_dir = SOUTH
 
 /obj/machinery/mineral/proc/unload_mineral(atom/movable/S)
-	S.forceMove(drop_location())
+	S.forceMove(loc)
 	var/turf/T = get_step(src,output_dir)
 	if(T)
 		S.forceMove(T)
@@ -20,27 +20,18 @@
 	anchored = TRUE
 	var/obj/machinery/mineral/processing_unit/machine = null
 	var/machinedir = EAST
-	speed_process = TRUE
 
-/obj/machinery/mineral/processing_unit_console/Initialize(mapload)
-	. = ..()
+/obj/machinery/mineral/processing_unit_console/New()
+	..()
 	machine = locate(/obj/machinery/mineral/processing_unit, get_step(src, machinedir))
 	if(machine)
 		machine.CONSOLE = src
 	else
-		return INITIALIZE_HINT_QDEL
-
-/obj/machinery/mineral/processing_unit_console/attack_ghost(mob/user)
-	return ui_interact(user)
+		qdel(src)
 
 /obj/machinery/mineral/processing_unit_console/attack_hand(mob/user)
 	if(..())
-		return TRUE
-
-	return ui_interact(user)
-
-/obj/machinery/mineral/processing_unit_console/ui_interact(mob/user)
-	. = ..()
+		return
 	if(!machine)
 		return
 
@@ -52,8 +43,7 @@
 
 /obj/machinery/mineral/processing_unit_console/Topic(href, href_list)
 	if(..())
-		return TRUE
-
+		return
 	usr.set_machine(src)
 	add_fingerprint(usr)
 
@@ -69,13 +59,14 @@
 		machine.on = (href_list["set_on"] == "on")
 
 	updateUsrDialog()
-	return TRUE
 
 /obj/machinery/mineral/processing_unit_console/Destroy()
 	machine = null
 	return ..()
 
+
 /**********************Mineral processing unit**************************/
+
 
 /obj/machinery/mineral/processing_unit
 	name = "furnace"
@@ -90,8 +81,8 @@
 	var/datum/research/files
 	speed_process = TRUE
 
-/obj/machinery/mineral/processing_unit/Initialize(mapload)
-	. = ..()
+/obj/machinery/mineral/processing_unit/New()
+	..()
 	AddComponent(/datum/component/material_container, list(MAT_METAL, MAT_GLASS, MAT_SILVER, MAT_GOLD, MAT_DIAMOND, MAT_PLASMA, MAT_URANIUM, MAT_BANANIUM, MAT_TRANQUILLITE, MAT_TITANIUM, MAT_BLUESPACE), INFINITY, TRUE, /obj/item/stack)
 	files = new /datum/research/smelter(src)
 
@@ -108,7 +99,6 @@
 		for(var/obj/item/stack/ore/O in T)
 			process_ore(O)
 			CHECK_TICK
-
 	if(on)
 		if(selected_material)
 			smelt_ore()
@@ -116,8 +106,10 @@
 		else if(selected_alloy)
 			smelt_alloy()
 
+
 		if(CONSOLE)
 			CONSOLE.updateUsrDialog()
+
 
 /obj/machinery/mineral/processing_unit/proc/process_ore(obj/item/stack/ore/O)
 	GET_COMPONENT(materials, /datum/component/material_container)
@@ -174,6 +166,7 @@
 		else
 			var/out = get_step(src, output_dir)
 			materials.retrieve_sheets(sheets_to_remove, selected_material, out)
+
 
 /obj/machinery/mineral/processing_unit/proc/smelt_alloy()
 	var/datum/design/alloy = files.FindDesignByID(selected_alloy) //check if it's a valid design

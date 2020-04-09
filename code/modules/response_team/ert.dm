@@ -7,11 +7,11 @@
 /datum/game_mode
 	var/list/datum/mind/ert = list()
 
-GLOBAL_LIST_EMPTY(response_team_members)
-GLOBAL_VAR_INIT(responseteam_age, 21) // Minimum account age to play as an ERT member
-GLOBAL_DATUM(active_team, /datum/response_team)
-GLOBAL_VAR_INIT(send_emergency_team, FALSE)
-GLOBAL_VAR_INIT(ert_request_answered, FALSE)
+var/list/response_team_members = list()
+var/responseteam_age = 21 // Minimum account age to play as an ERT member
+var/datum/response_team/active_team = null
+var/send_emergency_team = FALSE
+var/ert_request_answered = FALSE
 
 /client/proc/response_team()
 	set name = "Dispatch CentComm Response Team"
@@ -21,15 +21,15 @@ GLOBAL_VAR_INIT(ert_request_answered, FALSE)
 	if(!check_rights(R_EVENT))
 		return
 
-	if(!SSticker)
+	if(!ticker)
 		to_chat(usr, "<span class='warning'>The game hasn't started yet!</span>")
 		return
 
-	if(SSticker.current_state == GAME_STATE_PREGAME)
+	if(ticker.current_state == GAME_STATE_PREGAME)
 		to_chat(usr, "<span class='warning'>The round hasn't started yet!</span>")
 		return
 
-	if(GLOB.send_emergency_team)
+	if(send_emergency_team)
 		to_chat(usr, "<span class='warning'>Central Command has already dispatched an emergency response team!</span>")
 		return
 
@@ -38,7 +38,7 @@ GLOBAL_VAR_INIT(ert_request_answered, FALSE)
 
 
 /mob/dead/observer/proc/JoinResponseTeam()
-	if(!GLOB.send_emergency_team)
+	if(!send_emergency_team)
 		to_chat(src, "<span class='warning'>No emergency response team is currently being sent.</span>")
 		return 0
 
@@ -46,7 +46,7 @@ GLOBAL_VAR_INIT(ert_request_answered, FALSE)
 		to_chat(src, "<span class='warning'>You are jobbanned from playing on an emergency response team!</span>")
 		return 0
 
-	var/player_age_check = check_client_age(client, GLOB.responseteam_age)
+	var/player_age_check = check_client_age(client, responseteam_age)
 	if(player_age_check && config.use_age_restriction_for_antags)
 		to_chat(src, "<span class='warning'>This role is not yet available to you. You need to wait another [player_age_check] days.</span>")
 		return 0
@@ -55,92 +55,87 @@ GLOBAL_VAR_INIT(ert_request_answered, FALSE)
 		to_chat(src, "<span class='boldnotice'>Upon using the antagHUD you forfeited the ability to join the round.</span>")
 		return 0
 
+	if(response_team_members.len > 6)
+		to_chat(src, "<span class='warning'>The emergency response team is already full!</span>")
+		return 0
+
 	return 1
 
-/proc/trigger_armed_response_team(datum/response_team/response_team_type, commander_slots, security_slots, medical_slots, engineering_slots, janitor_slots, paranormal_slots, cyborg_slots)
-	GLOB.response_team_members = list()
-	GLOB.active_team = response_team_type
-	GLOB.active_team.setSlots(commander_slots, security_slots, medical_slots, engineering_slots, janitor_slots, paranormal_slots, cyborg_slots)
+/proc/trigger_armed_response_team(var/datum/response_team/response_team_type, commander_slots, security_slots, medical_slots, engineering_slots, janitor_slots, paranormal_slots, cyborg_slots)
+	response_team_members = list()
+	active_team = response_team_type
+	active_team.setSlots(commander_slots, security_slots, medical_slots, engineering_slots, janitor_slots, paranormal_slots, cyborg_slots)
 
-	GLOB.send_emergency_team = TRUE
-	var/list/ert_candidates = shuffle(pollCandidates("Join the Emergency Response Team?",, GLOB.responseteam_age, 600, 1, GLOB.role_playtime_requirements[ROLE_ERT]))
+	send_emergency_team = TRUE
+	var/list/ert_candidates = pollCandidates("Join the Emergency Response Team?",, responseteam_age, 600, 1, role_playtime_requirements[ROLE_ERT])
 	if(!ert_candidates.len)
-		GLOB.active_team.cannot_send_team()
-		GLOB.send_emergency_team = FALSE
-		return
+		active_team.cannot_send_team()
+		send_emergency_team = FALSE
+		return 0
 
 	// Respawnable players get first dibs
 	for(var/mob/dead/observer/M in ert_candidates)
 		if(jobban_isbanned(M, ROLE_TRAITOR) || jobban_isbanned(M, "Security Officer") || jobban_isbanned(M, "Captain") || jobban_isbanned(M, "Cyborg"))
 			continue
 		if((M in GLOB.respawnable_list) && M.JoinResponseTeam())
-			GLOB.response_team_members |= M
+			response_team_members |= M
 	// If there's still open slots, non-respawnable players can fill them
 	for(var/mob/dead/observer/M in (ert_candidates - GLOB.respawnable_list))
 		if(M.JoinResponseTeam())
-			GLOB.response_team_members |= M
+			response_team_members |= M
 
-	if(!GLOB.response_team_members.len)
-		GLOB.active_team.cannot_send_team()
-		GLOB.send_emergency_team = FALSE
-		return
+	if(!response_team_members.len)
+		active_team.cannot_send_team()
+		send_emergency_team = FALSE
+		return 0
 
-	var/list/ert_gender_prefs = list()
-	for(var/mob/M in GLOB.response_team_members)
-		ert_gender_prefs.Add(input_async(M, "Please select a gender (10 seconds):", list("Male", "Female")))
-	addtimer(CALLBACK(GLOBAL_PROC, .proc/get_ert_role_prefs, GLOB.response_team_members, ert_gender_prefs), 100)
-
-/proc/get_ert_role_prefs(list/response_team_members, list/ert_gender_prefs) // Why the FUCK is this variable the EXACT SAME as the global one
-	var/list/ert_role_prefs = list()
-	for(var/datum/async_input/A in ert_gender_prefs)
-		A.close()
+	var/index = 1
+	var/ert_spawn_seconds = 120
+	spawn(ert_spawn_seconds * 10) // to account for spawn() using deciseconds
+		var/list/unspawnable_ert = list()
+		for(var/mob/M in response_team_members)
+			if(M)
+				unspawnable_ert |= M
+		if(unspawnable_ert.len)
+			message_admins("ERT SPAWN: The following ERT members could not be spawned within [ert_spawn_seconds] seconds:")
+			for(var/mob/M in unspawnable_ert)
+				message_admins("- Unspawned ERT: [ADMIN_FULLMONTY(M)]")
 	for(var/mob/M in response_team_members)
-		ert_role_prefs.Add(input_ranked_async(M, "Please order ERT roles from most to least preferred (20 seconds):", GLOB.active_team.get_slot_list()))
-	addtimer(CALLBACK(GLOBAL_PROC, .proc/dispatch_response_team, response_team_members, ert_gender_prefs, ert_role_prefs), 200)
+		if(index > emergencyresponseteamspawn.len)
+			index = 1
 
-/proc/dispatch_response_team(list/response_team_members, list/ert_gender_prefs, list/ert_role_prefs)
-	var/spawn_index = 1
-
-	for(var/i = 1, i <= response_team_members.len, i++)
-		if(spawn_index > GLOB.emergencyresponseteamspawn.len)
-			break
-		if(!GLOB.active_team.get_slot_list().len)
-			break
-		var/gender_pref = ert_gender_prefs[i].result
-		var/role_pref = ert_role_prefs[i].close()
-		var/mob/M = response_team_members[i]
 		if(!M || !M.client)
 			continue
-		if(!gender_pref || !role_pref)
-			// Player was afk and did not select
+		var/client/C = M.client
+		var/mob/living/new_commando = C.create_response_team(emergencyresponseteamspawn[index])
+		if(!M || !new_commando)
 			continue
-		for(var/role in role_pref)
-			if(GLOB.active_team.check_slot_available(role))
-				var/mob/living/new_commando = M.client.create_response_team(gender_pref, role, GLOB.emergencyresponseteamspawn[spawn_index])
-				GLOB.active_team.reduceSlots(role)
-				spawn_index++
-				if(!M || !new_commando)
-					break
-				new_commando.mind.key = M.key
-				new_commando.key = M.key
-				new_commando.update_icons()
-				break
-	GLOB.send_emergency_team = FALSE
+		new_commando.mind.key = M.key
+		new_commando.key = M.key
+		new_commando.update_icons()
+		index++
 
-	if(GLOB.active_team.count)
-		GLOB.active_team.announce_team()
-		return
-	// Everyone who said yes was afk
-	GLOB.active_team.cannot_send_team()
+	send_emergency_team = FALSE
+	active_team.announce_team()
+	return 1
 
-/client/proc/create_response_team(new_gender, role, turf/spawn_location)
-	if(role == "Cyborg")
-		var/cyborg_unlock = GLOB.active_team.getCyborgUnlock()
+/client/proc/create_response_team(var/turf/spawn_location)
+	var/class = 0
+	while(!class)
+		class = input(src, "Which loadout would you like to choose?") in active_team.get_slot_list()
+		if(!active_team.check_slot_available(class)) // Because the prompt does not update automatically when a slot gets filled.
+			class = 0
+
+	if(class == "Cyborg")
+		active_team.reduceCyborgSlots()
+		var/cyborg_unlock = active_team.getCyborgUnlock()
 		var/mob/living/silicon/robot/ert/R = new /mob/living/silicon/robot/ert(spawn_location, cyborg_unlock)
 		return R
 
 	var/mob/living/carbon/human/M = new(null)
 	var/obj/item/organ/external/head/head_organ = M.get_organ("head")
+
+	var/new_gender = alert(src, "Please select your gender.", "ERT Character Generation", "Male", "Female")
 
 	if(new_gender)
 		if(new_gender == "Male")
@@ -150,7 +145,7 @@ GLOBAL_VAR_INIT(ert_request_answered, FALSE)
 
 	M.set_species(/datum/species/human, TRUE)
 	M.dna.ready_dna(M)
-	M.cleanSE() //No fat/blind/colourblind/epileptic/whatever ERT.
+	M.reagents.add_reagent("mutadone", 1) //No fat/blind/colourblind/epileptic/whatever ERT.
 	M.overeatduration = 0
 
 	var/hair_c = pick("#8B4513","#000000","#FF4500","#FFD700") // Brown, black, red, blonde
@@ -178,29 +173,26 @@ GLOBAL_VAR_INIT(ert_request_answered, FALSE)
 	M.mind.original = M
 	M.mind.assigned_role = SPECIAL_ROLE_ERT
 	M.mind.special_role = SPECIAL_ROLE_ERT
-	if(!(M.mind in SSticker.minds))
-		SSticker.minds += M.mind //Adds them to regular mind list.
-	SSticker.mode.ert += M.mind
+	if(!(M.mind in ticker.minds))
+		ticker.minds += M.mind //Adds them to regular mind list.
+	ticker.mode.ert += M.mind
 	M.forceMove(spawn_location)
 
-	SSjobs.CreateMoneyAccount(M, role, null)
+	job_master.CreateMoneyAccount(M, class, null)
 
-	GLOB.active_team.equip_officer(role, M)
+	active_team.equip_officer(class, M)
 
 	return M
 
 
 /datum/response_team
-	var/list/slots = list(
-		Commander = 0,
-		Security = 0,
-		Engineer = 0,
-		Medic = 0,
-		Janitor = 0,
-		Paranormal = 0,
-		Cyborg = 0
-	)
-	var/count = 0
+	var/command_slots = 1
+	var/engineer_slots = 3
+	var/medical_slots = 3
+	var/security_slots = 3
+	var/janitor_slots = 0
+	var/paranormal_slots = 0
+	var/cyborg_slots = 0
 
 	var/command_outfit
 	var/engineering_outfit
@@ -210,57 +202,99 @@ GLOBAL_VAR_INIT(ert_request_answered, FALSE)
 	var/paranormal_outfit
 	var/cyborg_unlock = 0
 
-/datum/response_team/proc/setSlots(com=1, sec=3, med=3, eng=3, jan=0, par=0, cyb=0)
-	slots["Commander"] = com
-	slots["Security"] = sec
-	slots["Medic"] = med
-	slots["Engineer"] = eng
-	slots["Janitor"] = jan
-	slots["Paranormal"] = par
-	slots["Cyborg"] = cyb
+/datum/response_team/proc/setSlots(com, sec, med, eng, jan, par, cyb)
+	command_slots = com == null ? command_slots : com
+	security_slots = sec == null ? security_slots : sec
+	medical_slots = med == null ? medical_slots : med
+	engineer_slots = eng == null ? engineer_slots : eng
+	janitor_slots = jan == null ? janitor_slots : jan
+	paranormal_slots = par == null ? paranormal_slots : par
+	cyborg_slots = cyb == null ? cyborg_slots : cyb
 
-/datum/response_team/proc/reduceSlots(role)
-	slots[role]--
-	count++
+/datum/response_team/proc/reduceCyborgSlots()
+	cyborg_slots--
 
 /datum/response_team/proc/getCyborgUnlock()
 	return cyborg_unlock
 
 /datum/response_team/proc/get_slot_list()
 	var/list/slots_available = list()
-	for(var/role in slots)
-		if(slots[role])
-			slots_available.Add(role)
+	if(command_slots)
+		slots_available |= "Commander"
+	if(security_slots)
+		slots_available |= "Security"
+	if(engineer_slots)
+		slots_available |= "Engineer"
+	if(medical_slots)
+		slots_available |= "Medic"
+	if(janitor_slots)
+		slots_available |= "Janitor"
+	if(paranormal_slots)
+		slots_available |= "Paranormal"
+	if(cyborg_slots)
+		slots_available |= "Cyborg"
 	return slots_available
 
-/datum/response_team/proc/check_slot_available(role)
-	return slots[role]
+/datum/response_team/proc/check_slot_available(var/slot)
+	switch(slot)
+		if("Commander")
+			return command_slots
+		if("Security")
+			return security_slots
+		if("Engineer")
+			return engineer_slots
+		if("Medic")
+			return medical_slots
+		if("Janitor")
+			return janitor_slots
+		if("Paranormal")
+			return paranormal_slots
+		if("Cyborg")
+			return cyborg_slots
+	return 0
 
 /datum/response_team/proc/equip_officer(var/officer_type, var/mob/living/carbon/human/M)
 	switch(officer_type)
 		if("Engineer")
+			engineer_slots -= 1
 			M.equipOutfit(engineering_outfit)
+			M.job = "ERT Engineering"
 
 		if("Security")
+			security_slots -= 1
 			M.equipOutfit(security_outfit)
+			M.job = "ERT Security"
 
 		if("Medic")
+			medical_slots -= 1
 			M.equipOutfit(medical_outfit)
+			M.job = "ERT Medical"
 
 		if("Janitor")
+			janitor_slots -= 1
 			M.equipOutfit(janitor_outfit)
+			M.job = "ERT Janitor"
 
 		if("Paranormal")
+			paranormal_slots -= 1
 			M.equipOutfit(paranormal_outfit)
+			M.job = "ERT Paranormal"
 
 		if("Commander")
+			command_slots = 0
+
+			// Override name and age for the commander
+			M.rename_character(null, "[pick("Lieutenant", "Captain", "Major")] [pick(GLOB.last_names)]")
+			M.age = rand(35,45)
+
 			M.equipOutfit(command_outfit)
+			M.job = "ERT Commander"
 
 /datum/response_team/proc/cannot_send_team()
-	GLOB.event_announcement.Announce("[station_name()], we are unfortunately unable to send you an Emergency Response Team at this time.", "ERT Unavailable")
+	event_announcement.Announce("[station_name()], we are unfortunately unable to send you an Emergency Response Team at this time.", "ERT Unavailable")
 
 /datum/response_team/proc/announce_team()
-	GLOB.event_announcement.Announce("Attention, [station_name()]. We are sending a team of highly trained assistants to aid(?) you. Standby.", "ERT En-Route")
+	event_announcement.Announce("Attention, [station_name()]. We are sending a team of highly trained assistants to aid(?) you. Standby.", "ERT En-Route")
 
 // -- AMBER TEAM --
 
@@ -273,7 +307,7 @@ GLOBAL_VAR_INIT(ert_request_answered, FALSE)
 	paranormal_outfit = /datum/outfit/job/centcom/response_team/paranormal/amber
 
 /datum/response_team/amber/announce_team()
-	GLOB.event_announcement.Announce("Attention, [station_name()]. We are sending a code AMBER light Emergency Response Team. Standby.", "ERT En-Route")
+	event_announcement.Announce("Attention, [station_name()]. We are sending a code AMBER light Emergency Response Team. Standby.", "ERT En-Route")
 
 // -- RED TEAM --
 
@@ -286,7 +320,7 @@ GLOBAL_VAR_INIT(ert_request_answered, FALSE)
 	paranormal_outfit = /datum/outfit/job/centcom/response_team/paranormal/red
 
 /datum/response_team/red/announce_team()
-	GLOB.event_announcement.Announce("Attention, [station_name()]. We are sending a code RED Emergency Response Team. Standby.", "ERT En-Route")
+	event_announcement.Announce("Attention, [station_name()]. We are sending a code RED Emergency Response Team. Standby.", "ERT En-Route")
 
 // -- GAMMA TEAM --
 
@@ -300,13 +334,12 @@ GLOBAL_VAR_INIT(ert_request_answered, FALSE)
 	cyborg_unlock = 1
 
 /datum/response_team/gamma/announce_team()
-	GLOB.event_announcement.Announce("Attention, [station_name()]. We are sending a code GAMMA elite Emergency Response Team. Standby.", "ERT En-Route")
+	event_announcement.Announce("Attention, [station_name()]. We are sending a code GAMMA elite Emergency Response Team. Standby.", "ERT En-Route")
 
 /datum/outfit/job/centcom/response_team
 	name = "Response team"
 	var/rt_assignment = "Emergency Response Team Member"
 	var/rt_job = "This is a bug"
-	var/rt_mob_job = "This is a bug" // The job set on the actual mob.
 	allow_backbag_choice = FALSE
 	allow_loadout = FALSE
 	pda = /obj/item/pda/heads/ert

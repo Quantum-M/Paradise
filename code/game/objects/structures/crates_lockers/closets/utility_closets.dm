@@ -19,9 +19,6 @@
 	icon_closed = "emergency"
 	icon_opened = "emergencyopen"
 
-/obj/structure/closet/emcloset/anchored
-	anchored = TRUE
-
 /obj/structure/closet/emcloset/New()
 	..()
 
@@ -104,7 +101,6 @@
 	icon_opened = "toolclosetopen"
 
 /obj/structure/closet/toolcloset/New()
-	..()
 	if(prob(40))
 		new /obj/item/clothing/suit/storage/hazardvest(src)
 	if(prob(70))

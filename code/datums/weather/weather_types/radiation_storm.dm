@@ -15,7 +15,7 @@
 
 	end_duration = 100
 	end_message = "<span class='notice'>The air seems to be cooling off again.</span>"
-	var/pre_maint_all_access
+
 	area_type = /area
 	protected_areas = list(/area/maintenance, /area/turret_protected/ai_upload, /area/turret_protected/ai_upload_foyer,
 	/area/turret_protected/ai, /area/storage/emergency, /area/storage/emergency2, /area/crew_quarters/sleep, /area/security/brig, /area/shuttle)
@@ -26,9 +26,7 @@
 /datum/weather/rad_storm/telegraph()
 	..()
 	status_alarm(TRUE)
-	pre_maint_all_access = GLOB.maint_all_access
-	if(!GLOB.maint_all_access)
-		make_maint_all_access()
+	make_maint_all_access()
 
 
 /datum/weather/rad_storm/weather_act(mob/living/L)
@@ -51,10 +49,9 @@
 /datum/weather/rad_storm/end()
 	if(..())
 		return
-	GLOB.priority_announcement.Announce("The radiation threat has passed. Please return to your workplaces.", "Anomaly Alert")
+	priority_announcement.Announce("The radiation threat has passed. Please return to your workplaces.", "Anomaly Alert")
 	status_alarm(FALSE)
-	if(!pre_maint_all_access)
-		revoke_maint_all_access()
+	revoke_maint_all_access()
 
 /datum/weather/rad_storm/proc/status_alarm(active)	//Makes the status displays show the radiation warning for those who missed the announcement.
 	if(active)

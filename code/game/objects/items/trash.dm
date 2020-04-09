@@ -6,7 +6,7 @@
 	icon = 'icons/obj/trash.dmi'
 	w_class = WEIGHT_CLASS_TINY
 	desc = "This is rubbish."
-	resistance_flags = FLAMMABLE
+	burn_state = FLAMMABLE
 
 /obj/item/trash/raisins
 	name = "4no raisins"
@@ -43,15 +43,11 @@
 /obj/item/trash/plate
 	name = "Plate"
 	icon_state = "plate"
-	resistance_flags = NONE
+	burn_state = FIRE_PROOF
 
 /obj/item/trash/snack_bowl
 	name = "Snack bowl"
 	icon_state	= "snack_bowl"
-
-/obj/item/trash/fried_vox
-	name = "Kentucky Fried Vox"
-	icon_state = "fried_vox_empty"
 
 /obj/item/trash/pistachios
 	name = "Pistachios pack"
@@ -64,7 +60,7 @@
 /obj/item/trash/tray
 	name = "Tray"
 	icon_state = "tray"
-	resistance_flags = NONE
+	burn_state = FIRE_PROOF
 
 /obj/item/trash/candle
 	name = "candle"
@@ -80,7 +76,7 @@
 	icon_state = "cola"
 	var/is_glass = 0
 	var/is_plastic = 0
-	resistance_flags = NONE
+	burn_state = FIRE_PROOF
 
 /obj/item/trash/gum
 	name = "chewed gum"
@@ -90,12 +86,6 @@
 /obj/item/trash/tastybread
 	name = "bread tube"
 	icon_state = "tastybread"
-
-/obj/item/trash/spentcasing
-	icon = 'icons/obj/ammo.dmi'
-	name = "bullet casing"
-	desc = "A spent bullet casing. Smells like cordite."
-	icon_state = "gshell"
 
 /obj/item/trash/tapetrash
 	name = "old duct tape"

@@ -33,7 +33,6 @@
 	origin_tech = null
 	ammo_x_offset = 3
 	selfcharge = 1
-	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | ACID_PROOF
 
 /obj/item/gun/energy/laser/captain/scattershot
 	name = "scatter shot laser rifle"
@@ -112,7 +111,7 @@
 
 /obj/item/gun/energy/xray
 	name = "xray laser gun"
-	desc = "A high-power laser gun capable of expelling concentrated xray blasts. These blasts will penetrate solid objects, but will decrease in power the longer they have to travel."
+	desc = "A high-power laser gun capable of expelling concentrated xray blasts."
 	icon_state = "xray"
 	origin_tech = "combat=6;materials=4;magnets=4;syndicate=1"
 	ammo_type = list(/obj/item/ammo_casing/energy/xray)
@@ -141,19 +140,24 @@
 
 ////////Laser Tag////////////////////
 
-/obj/item/gun/energy/laser/tag
+/obj/item/gun/energy/laser/bluetag
 	name = "laser tag gun"
+	icon_state = "bluetag"
 	desc = "Standard issue weapon of the Imperial Guard"
+	ammo_type = list(/obj/item/ammo_casing/energy/laser/bluetag)
 	origin_tech = "combat=2;magnets=2"
 	clumsy_check = 0
 	needs_permit = 0
 	ammo_x_offset = 2
 	selfcharge = 1
 
-/obj/item/gun/energy/laser/tag/blue
-	icon_state = "bluetag"
-	ammo_type = list(/obj/item/ammo_casing/energy/laser/bluetag)
-
-/obj/item/gun/energy/laser/tag/red
+/obj/item/gun/energy/laser/redtag
+	name = "laser tag gun"
 	icon_state = "redtag"
+	desc = "Standard issue weapon of the Imperial Guard"
 	ammo_type = list(/obj/item/ammo_casing/energy/laser/redtag)
+	origin_tech = "combat=2;magnets=2"
+	clumsy_check = 0
+	needs_permit = 0
+	ammo_x_offset = 2
+	selfcharge = 1
