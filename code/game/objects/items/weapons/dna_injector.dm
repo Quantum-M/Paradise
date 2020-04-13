@@ -12,16 +12,18 @@
 	origin_tech = "biotech=1"
 
 	var/damage_coeff = 1
-	var/used = 0
+	var/used = FALSE
 
 	// USE ONLY IN PREMADE SYRINGES.  WILL NOT WORK OTHERWISE.
 	var/datatype = 0
 	var/value = 0
+	var/forcedmutation = FALSE //Will it give the mutation, guaranteed?
 
-/obj/item/dnainjector/New()
+/obj/item/dnainjector/Initialize()
+	. = ..()
 	if(datatype && block)
-		buf=new
-		buf.dna=new
+		buf = new
+		buf.dna = new
 		buf.types = datatype
 		buf.dna.ResetSE()
 		SetValue(value)
@@ -30,53 +32,56 @@
 	QDEL_NULL(buf)
 	return ..()
 
-/obj/item/dnainjector/proc/GetRealBlock(var/selblock)
-	if(selblock==0)
+/obj/item/dnainjector/proc/GetRealBlock(selblock)
+	if(selblock == 0)
 		return block
 	else
 		return selblock
 
-/obj/item/dnainjector/proc/GetState(var/selblock=0)
-	var/real_block=GetRealBlock(selblock)
-	if(buf.types&DNA2_BUF_SE)
+/obj/item/dnainjector/proc/GetState(selblock = 0)
+	var/real_block = GetRealBlock(selblock)
+	if(buf.types & DNA2_BUF_SE)
 		return buf.dna.GetSEState(real_block)
 	else
 		return buf.dna.GetUIState(real_block)
 
-/obj/item/dnainjector/proc/SetState(var/on, var/selblock=0)
-	var/real_block=GetRealBlock(selblock)
-	if(buf.types&DNA2_BUF_SE)
+/obj/item/dnainjector/proc/SetState(on, selblock = 0)
+	var/real_block = GetRealBlock(selblock)
+	if(buf.types & DNA2_BUF_SE)
 		return buf.dna.SetSEState(real_block,on)
 	else
 		return buf.dna.SetUIState(real_block,on)
 
-/obj/item/dnainjector/proc/GetValue(var/selblock=0)
-	var/real_block=GetRealBlock(selblock)
-	if(buf.types&DNA2_BUF_SE)
+/obj/item/dnainjector/proc/GetValue(selblock = 0)
+	var/real_block = GetRealBlock(selblock)
+	if(buf.types & DNA2_BUF_SE)
 		return buf.dna.GetSEValue(real_block)
 	else
 		return buf.dna.GetUIValue(real_block)
 
-/obj/item/dnainjector/proc/SetValue(var/val,var/selblock=0)
-	var/real_block=GetRealBlock(selblock)
-	if(buf.types&DNA2_BUF_SE)
+/obj/item/dnainjector/proc/SetValue(val, selblock = 0)
+	var/real_block = GetRealBlock(selblock)
+	if(buf.types & DNA2_BUF_SE)
 		return buf.dna.SetSEValue(real_block,val)
 	else
 		return buf.dna.SetUIValue(real_block,val)
 
-/obj/item/dnainjector/proc/inject(mob/living/M as mob, mob/user as mob)
+/obj/item/dnainjector/proc/inject(mob/living/M, mob/user)
 	if(used)
 		return
 	if(istype(M,/mob/living))
-		M.apply_effect(rand(20/(damage_coeff  ** 2),50/(damage_coeff  ** 2)),IRRADIATE,0,1)
+		M.apply_effect(rand(20 / (damage_coeff  ** 2), 50 / (damage_coeff  ** 2)), IRRADIATE, 0, 1)
 	var/mob/living/carbon/human/H
 	if(istype(M, /mob/living/carbon/human))
 		H = M
 
+	if(!buf)
+		log_runtime(EXCEPTION("[src] used by [user] on [M] failed to initialize properly."), src)
+		return
+
 	spawn(0) //Some mutations have sleeps in them, like monkey
 		if(!(NOCLONE in M.mutations) && !(H && (NO_DNA in H.dna.species.species_traits))) // prevents drained people from having their DNA changed
 			var/prev_ue = M.dna.unique_enzymes
-			var/mutflags = 0
 			// UI in syringe.
 			if(buf.types & DNA2_BUF_UI)
 				if(!block) //isolated block?
@@ -93,42 +98,41 @@
 					M.dna.SetUIValue(block,src.GetValue())
 					M.UpdateAppearance()
 			if(buf.types & DNA2_BUF_SE)
-				mutflags = MUTCHK_FORCED
 				if(!block) //isolated block?
 					M.dna.SE = buf.dna.SE.Copy()
 					M.dna.UpdateSE()
 				else
 					M.dna.SetSEValue(block,src.GetValue())
-				domutcheck(M, null, mutflags)
+				domutcheck(M, null, forcedmutation ? MUTCHK_FORCED : 0)
 				M.update_mutations()
 			if(H)
 				H.sync_organ_dna(assimilate = 0, old_ue = prev_ue)
 
-/obj/item/dnainjector/attack(mob/M as mob, mob/user as mob)
+/obj/item/dnainjector/attack(mob/M, mob/user)
 	if(used)
 		to_chat(user, "<span class='warning'>This injector is used up!</span>")
 		return
 	if(!M.dna) //You know what would be nice? If the mob you're injecting has DNA, and so doesn't cause runtimes.
-		return 0
+		return FALSE
 
 	if(ishuman(M)) // Would've done this via species instead of type, but the basic mob doesn't have a species, go figure.
 		var/mob/living/carbon/human/H = M
 		if(NO_DNA in H.dna.species.species_traits)
-			return 0
+			return FALSE
 
 	if(!user.IsAdvancedToolUser())
-		return 0
+		return FALSE
 
 	var/attack_log = "injected with the Isolated [name]"
 
-	if(buf.types & DNA2_BUF_SE)
+	if(buf && buf.types & DNA2_BUF_SE)
 		if(block)
-			if(GetState() && block == MONKEYBLOCK && ishuman(M))
+			if(GetState() && block == GLOB.monkeyblock && ishuman(M))
 				attack_log = "injected with the Isolated [name] (MONKEY)"
 				message_admins("[key_name_admin(user)] injected [key_name_admin(M)] with the Isolated [name] <span class='warning'>(MONKEY)</span>")
 
 		else
-			if(GetState(MONKEYBLOCK) && ishuman(M))
+			if(GetState(GLOB.monkeyblock) && ishuman(M))
 				attack_log = "injected with the Isolated [name] (MONKEY)"
 				message_admins("[key_name_admin(user)] injected [key_name_admin(M)] with the Isolated [name] <span class='warning'>(MONKEY)</span>")
 
@@ -149,7 +153,7 @@
 		M.LAssailant = user
 
 	inject(M, user)
-	used = 1
+	used = TRUE
 	icon_state = "dnainjector0"
 	desc += " This one is used up."
 
@@ -158,10 +162,10 @@
 	desc = "This will make you big and strong, but give you a bad skin condition."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/hulkmut/New()
-	block = HULKBLOCK
+/obj/item/dnainjector/hulkmut/Initialize()
+	block = GLOB.hulkblock
 	..()
 
 /obj/item/dnainjector/antihulk
@@ -169,10 +173,10 @@
 	desc = "Cures green skin."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antihulk/New()
-	block = HULKBLOCK
+/obj/item/dnainjector/antihulk/Initialize()
+	block = GLOB.hulkblock
 	..()
 
 /obj/item/dnainjector/xraymut
@@ -180,10 +184,10 @@
 	desc = "Finally you can see what the Captain does."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 8
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/xraymut/New()
-	block = XRAYBLOCK
+/obj/item/dnainjector/xraymut/Initialize()
+	block = GLOB.xrayblock
 	..()
 
 /obj/item/dnainjector/antixray
@@ -191,10 +195,10 @@
 	desc = "It will make you see harder."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 8
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antixray/New()
-	block = XRAYBLOCK
+/obj/item/dnainjector/antixray/Initialize()
+	block = GLOB.xrayblock
 	..()
 
 /obj/item/dnainjector/firemut
@@ -202,10 +206,10 @@
 	desc = "Gives you fire."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 10
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/firemut/New()
-	block = FIREBLOCK
+/obj/item/dnainjector/firemut/Initialize()
+	block = GLOB.fireblock
 	..()
 
 /obj/item/dnainjector/antifire
@@ -213,10 +217,10 @@
 	desc = "Cures fire."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 10
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antifire/New()
-	block = FIREBLOCK
+/obj/item/dnainjector/antifire/Initialize()
+	block = GLOB.fireblock
 	..()
 
 /obj/item/dnainjector/telemut
@@ -224,10 +228,10 @@
 	desc = "Super brain man!"
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 12
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/telemut/New()
-	block = TELEBLOCK
+/obj/item/dnainjector/telemut/Initialize()
+	block = GLOB.teleblock
 	..()
 
 /obj/item/dnainjector/telemut/darkbundle
@@ -240,10 +244,10 @@
 	desc = "Will make you not able to control your mind."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 12
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antitele/New()
-	block = TELEBLOCK
+/obj/item/dnainjector/antitele/Initialize()
+	block = GLOB.teleblock
 	..()
 
 /obj/item/dnainjector/nobreath
@@ -251,10 +255,10 @@
 	desc = "Hold your breath and count to infinity."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/nobreath/New()
-	block = BREATHLESSBLOCK
+/obj/item/dnainjector/nobreath/Initialize()
+	block = GLOB.breathlessblock
 	..()
 
 /obj/item/dnainjector/antinobreath
@@ -262,10 +266,10 @@
 	desc = "Hold your breath and count to 100."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antinobreath/New()
-	block = BREATHLESSBLOCK
+/obj/item/dnainjector/antinobreath/Initialize()
+	block = GLOB.breathlessblock
 	..()
 
 /obj/item/dnainjector/remoteview
@@ -273,10 +277,10 @@
 	desc = "Stare into the distance for a reason."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/remoteview/New()
-	block = REMOTEVIEWBLOCK
+/obj/item/dnainjector/remoteview/Initialize()
+	block = GLOB.remoteviewblock
 	..()
 
 /obj/item/dnainjector/antiremoteview
@@ -284,10 +288,10 @@
 	desc = "Cures green skin."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antiremoteview/New()
-	block = REMOTEVIEWBLOCK
+/obj/item/dnainjector/antiremoteview/Initialize()
+	block = GLOB.remoteviewblock
 	..()
 
 /obj/item/dnainjector/regenerate
@@ -295,10 +299,10 @@
 	desc = "Healthy but hungry."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/regenerate/New()
-	block = REGENERATEBLOCK
+/obj/item/dnainjector/regenerate/Initialize()
+	block = GLOB.regenerateblock
 	..()
 
 /obj/item/dnainjector/antiregenerate
@@ -306,10 +310,10 @@
 	desc = "Sickly but sated."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antiregenerate/New()
-	block = REGENERATEBLOCK
+/obj/item/dnainjector/antiregenerate/Initialize()
+	block = GLOB.regenerateblock
 	..()
 
 /obj/item/dnainjector/runfast
@@ -317,10 +321,10 @@
 	desc = "Running Man."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/runfast/New()
-	block = INCREASERUNBLOCK
+/obj/item/dnainjector/runfast/Initialize()
+	block = GLOB.increaserunblock
 	..()
 
 /obj/item/dnainjector/antirunfast
@@ -328,10 +332,10 @@
 	desc = "Walking Man."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antirunfast/New()
-	block = INCREASERUNBLOCK
+/obj/item/dnainjector/antirunfast/Initialize()
+	block = GLOB.increaserunblock
 	..()
 
 /obj/item/dnainjector/morph
@@ -339,10 +343,10 @@
 	desc = "A total makeover."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/morph/New()
-	block = MORPHBLOCK
+/obj/item/dnainjector/morph/Initialize()
+	block = GLOB.morphblock
 	..()
 
 /obj/item/dnainjector/antimorph
@@ -350,10 +354,10 @@
 	desc = "Cures identity crisis."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antimorph/New()
-	block = MORPHBLOCK
+/obj/item/dnainjector/antimorph/Initialize()
+	block = GLOB.morphblock
 	..()
 
 /obj/item/dnainjector/noprints
@@ -361,10 +365,10 @@
 	desc = "Better than a pair of budget insulated gloves."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/noprints/New()
-	block = NOPRINTSBLOCK
+/obj/item/dnainjector/noprints/Initialize()
+	block = GLOB.noprintsblock
 	..()
 
 /obj/item/dnainjector/antinoprints
@@ -372,10 +376,10 @@
 	desc = "Not quite as good as a pair of budget insulated gloves."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antinoprints/New()
-	block = NOPRINTSBLOCK
+/obj/item/dnainjector/antinoprints/Initialize()
+	block = GLOB.noprintsblock
 	..()
 
 /obj/item/dnainjector/insulation
@@ -383,10 +387,10 @@
 	desc = "Better than a pair of real insulated gloves."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/insulation/New()
-	block = SHOCKIMMUNITYBLOCK
+/obj/item/dnainjector/insulation/Initialize()
+	block = GLOB.shockimmunityblock
 	..()
 
 /obj/item/dnainjector/antiinsulation
@@ -394,10 +398,10 @@
 	desc = "Not quite as good as a pair of real insulated gloves."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antiinsulation/New()
-	block = SHOCKIMMUNITYBLOCK
+/obj/item/dnainjector/antiinsulation/Initialize()
+	block = GLOB.shockimmunityblock
 	..()
 
 /obj/item/dnainjector/midgit
@@ -405,10 +409,10 @@
 	desc = "Makes you shrink."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/midgit/New()
-	block = SMALLSIZEBLOCK
+/obj/item/dnainjector/midgit/Initialize()
+	block = GLOB.smallsizeblock
 	..()
 
 /obj/item/dnainjector/antimidgit
@@ -416,10 +420,10 @@
 	desc = "Makes you grow. But not too much."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antimidgit/New()
-	block = SMALLSIZEBLOCK
+/obj/item/dnainjector/antimidgit/Initialize()
+	block = GLOB.smallsizeblock
 	..()
 
 /////////////////////////////////////
@@ -428,10 +432,10 @@
 	desc = "Toss away those glasses!"
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 1
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antiglasses/New()
-	block = GLASSESBLOCK
+/obj/item/dnainjector/antiglasses/Initialize()
+	block = GLOB.glassesblock
 	..()
 
 /obj/item/dnainjector/glassesmut
@@ -439,10 +443,10 @@
 	desc = "Will make you need dorkish glasses."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 1
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/glassesmut/New()
-	block = GLASSESBLOCK
+/obj/item/dnainjector/glassesmut/Initialize()
+	block = GLOB.glassesblock
 	..()
 
 /obj/item/dnainjector/epimut
@@ -450,10 +454,10 @@
 	desc = "Shake shake shake the room!"
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 3
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/epimut/New()
-	block = EPILEPSYBLOCK
+/obj/item/dnainjector/epimut/Initialize()
+	block = GLOB.epilepsyblock
 	..()
 
 /obj/item/dnainjector/antiepi
@@ -461,10 +465,10 @@
 	desc = "Will fix you up from shaking the room."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 3
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antiepi/New()
-	block = EPILEPSYBLOCK
+/obj/item/dnainjector/antiepi/Initialize()
+	block = GLOB.epilepsyblock
 	..()
 
 /obj/item/dnainjector/anticough
@@ -472,10 +476,10 @@
 	desc = "Will stop that awful noise."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 5
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/anticough/New()
-	block = COUGHBLOCK
+/obj/item/dnainjector/anticough/Initialize()
+	block = GLOB.coughblock
 	..()
 
 /obj/item/dnainjector/coughmut
@@ -483,10 +487,10 @@
 	desc = "Will bring forth a sound of horror from your throat."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 5
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/coughmut/New()
-	block = COUGHBLOCK
+/obj/item/dnainjector/coughmut/Initialize()
+	block = GLOB.coughblock
 	..()
 
 /obj/item/dnainjector/clumsymut
@@ -494,10 +498,10 @@
 	desc = "Makes clumsy minions."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 6
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/clumsymut/New()
-	block = CLUMSYBLOCK
+/obj/item/dnainjector/clumsymut/Initialize()
+	block = GLOB.clumsyblock
 	..()
 
 /obj/item/dnainjector/anticlumsy
@@ -505,10 +509,10 @@
 	desc = "Cleans up confusion."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 6
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/anticlumsy/New()
-	block = CLUMSYBLOCK
+/obj/item/dnainjector/anticlumsy/Initialize()
+	block = GLOB.clumsyblock
 	..()
 
 /obj/item/dnainjector/antitour
@@ -516,10 +520,10 @@
 	desc = "Will cure tourrets."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 7
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antitour/New()
-	block = TWITCHBLOCK
+/obj/item/dnainjector/antitour/Initialize()
+	block = GLOB.twitchblock
 	..()
 
 /obj/item/dnainjector/tourmut
@@ -527,10 +531,10 @@
 	desc = "Gives you a nasty case off tourrets."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 7
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/tourmut/New()
-	block = TWITCHBLOCK
+/obj/item/dnainjector/tourmut/Initialize()
+	block = GLOB.twitchblock
 	..()
 
 /obj/item/dnainjector/stuttmut
@@ -538,10 +542,10 @@
 	desc = "Makes you s-s-stuttterrr"
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 9
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/stuttmut/New()
-	block = NERVOUSBLOCK
+/obj/item/dnainjector/stuttmut/Initialize()
+	block = GLOB.nervousblock
 	..()
 
 
@@ -550,10 +554,10 @@
 	desc = "Fixes that speaking impairment."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 9
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antistutt/New()
-	block = NERVOUSBLOCK
+/obj/item/dnainjector/antistutt/Initialize()
+	block = GLOB.nervousblock
 	..()
 
 /obj/item/dnainjector/blindmut
@@ -561,10 +565,10 @@
 	desc = "Makes you not see anything."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 11
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/blindmut/New()
-	block = BLINDBLOCK
+/obj/item/dnainjector/blindmut/Initialize()
+	block = GLOB.blindblock
 	..()
 
 /obj/item/dnainjector/antiblind
@@ -572,10 +576,10 @@
 	desc = "ITS A MIRACLE!!!"
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 11
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antiblind/New()
-	block = BLINDBLOCK
+/obj/item/dnainjector/antiblind/Initialize()
+	block = GLOB.blindblock
 	..()
 
 /obj/item/dnainjector/telemut
@@ -583,10 +587,10 @@
 	desc = "Super brain man!"
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 12
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/telemut/New()
-	block = TELEBLOCK
+/obj/item/dnainjector/telemut/Initialize()
+	block = GLOB.teleblock
 	..()
 
 /obj/item/dnainjector/antitele
@@ -594,10 +598,10 @@
 	desc = "Will make you not able to control your mind."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 12
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antitele/New()
-	block = TELEBLOCK
+/obj/item/dnainjector/antitele/Initialize()
+	block = GLOB.teleblock
 	..()
 
 /obj/item/dnainjector/deafmut
@@ -605,10 +609,10 @@
 	desc = "Sorry, what did you say?"
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 13
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/deafmut/New()
-	block = DEAFBLOCK
+/obj/item/dnainjector/deafmut/Initialize()
+	block = GLOB.deafblock
 	..()
 
 /obj/item/dnainjector/antideaf
@@ -616,10 +620,10 @@
 	desc = "Will make you hear once more."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 13
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antideaf/New()
-	block = DEAFBLOCK
+/obj/item/dnainjector/antideaf/Initialize()
+	block = GLOB.deafblock
 	..()
 
 /obj/item/dnainjector/hallucination
@@ -627,10 +631,10 @@
 	desc = "What you see isn't always what you get."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/hallucination/New()
-	block = HALLUCINATIONBLOCK
+/obj/item/dnainjector/hallucination/Initialize()
+	block = GLOB.hallucinationblock
 	..()
 
 /obj/item/dnainjector/antihallucination
@@ -638,10 +642,10 @@
 	desc = "What you see is what you get."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 2
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/antihallucination/New()
-	block = HALLUCINATIONBLOCK
+/obj/item/dnainjector/antihallucination/Initialize()
+	block = GLOB.hallucinationblock
 	..()
 
 /obj/item/dnainjector/h2m
@@ -649,10 +653,10 @@
 	desc = "Will make you a flea bag."
 	datatype = DNA2_BUF_SE
 	value = 0xFFF
-	//block = 14
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/h2m/New()
-	block = MONKEYBLOCK
+/obj/item/dnainjector/h2m/Initialize()
+	block = GLOB.monkeyblock
 	..()
 
 /obj/item/dnainjector/m2h
@@ -660,8 +664,31 @@
 	desc = "Will make you...less hairy."
 	datatype = DNA2_BUF_SE
 	value = 0x001
-	//block = 14
+	forcedmutation = TRUE
 
-/obj/item/dnainjector/m2h/New()
-	block = MONKEYBLOCK
+/obj/item/dnainjector/m2h/Initialize()
+	block = GLOB.monkeyblock
+	..()
+
+
+/obj/item/dnainjector/comic
+	name = "DNA-Injector (Comic)"
+	desc = "Honk!"
+	datatype = DNA2_BUF_SE
+	value = 0xFFF
+	forcedmutation = TRUE
+
+/obj/item/dnainjector/comic/Initialize()
+	block = GLOB.comicblock
+	..()
+
+/obj/item/dnainjector/anticomic
+	name = "DNA-Injector (Ant-Comic)"
+	desc = "Honk...?"
+	datatype = DNA2_BUF_SE
+	value = 0x001
+	forcedmutation = TRUE
+
+/obj/item/dnainjector/anticomic/Initialize()
+	block = GLOB.comicblock
 	..()

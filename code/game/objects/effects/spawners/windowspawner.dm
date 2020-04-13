@@ -16,7 +16,7 @@
 		qdel(G) //just in case mappers don't know what they are doing
 
 	if(!useFull)
-		for(var/cdir in cardinal)
+		for(var/cdir in GLOB.cardinal)
 			for(var/obj/effect/spawner/window/WS in get_step(src,cdir))
 				cdir = null
 				break
@@ -47,3 +47,8 @@
 	name = "reinforced plasma window spawner"
 	icon_state = "pwindow_spawner"
 	windowtospawn = /obj/structure/window/plasmareinforced
+
+/obj/effect/spawner/window/shuttle
+	name = "shuttle window spawner"
+	icon_state = "swindow_spawner"
+	windowtospawn = /obj/structure/window/shuttle

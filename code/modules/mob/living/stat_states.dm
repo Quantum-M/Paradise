@@ -7,6 +7,7 @@
 	else if(stat == UNCONSCIOUS)
 		return 0
 	create_attack_log("<font color='red'>Fallen unconscious at [atom_loc_line(get_turf(src))]</font>")
+	add_attack_logs(src, null, "Fallen unconscious", ATKLOG_ALL)
 	log_game("[key_name(src)] fell unconscious at [atom_loc_line(get_turf(src))]")
 	stat = UNCONSCIOUS
 	if(updating)
@@ -22,6 +23,7 @@
 	else if(stat == CONSCIOUS)
 		return 0
 	create_attack_log("<font color='red'>Woken up at [atom_loc_line(get_turf(src))]</font>")
+	add_attack_logs(src, null, "Woken up", ATKLOG_ALL)
 	log_game("[key_name(src)] woke up at [atom_loc_line(get_turf(src))]")
 	stat = CONSCIOUS
 	if(updating)
@@ -33,7 +35,7 @@
 /mob/living/proc/can_be_revived()
 	. = TRUE
 	// if(health <= min_health)
-	if(health <= config.health_threshold_dead)
+	if(health <= HEALTH_THRESHOLD_DEAD)
 		return FALSE
 
 // death() is used to make a mob die
@@ -45,6 +47,7 @@
 	if(!can_be_revived())
 		return 0
 	create_attack_log("<font color='red'>Came back to life at [atom_loc_line(get_turf(src))]</font>")
+	add_attack_logs(src, null, "Came back to life", ATKLOG_ALL)
 	log_game("[key_name(src)] came back to life at [atom_loc_line(get_turf(src))]")
 	stat = CONSCIOUS
 	GLOB.dead_mob_list -= src
@@ -64,4 +67,13 @@
 	for(var/s in sharedSoullinks)
 		var/datum/soullink/S = s
 		S.sharerRevives(src)
+
+	if(mind)
+		for(var/S in mind.spell_list)
+			var/obj/effect/proc_holder/spell/spell = S
+			spell.updateButtonIcon()
+
 	return 1
+
+/mob/living/proc/check_death_method()
+	return TRUE

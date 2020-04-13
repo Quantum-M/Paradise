@@ -1,13 +1,13 @@
 //STRIKE TEAMS
 
-var/const/commandos_possible = 6 //if more Commandos are needed in the future
-var/global/sent_strike_team = 0
+#define COMMANDOS_POSSIBLE 6 //if more Commandos are needed in the future
+GLOBAL_VAR_INIT(sent_strike_team, 0)
 
 /client/proc/strike_team()
-	if(!ticker)
+	if(!SSticker)
 		to_chat(usr, "<span class='userdanger'>The game hasn't started yet!</span>")
 		return
-	if(sent_strike_team == 1)
+	if(GLOB.sent_strike_team == 1)
 		to_chat(usr, "<span class='userdanger'>CentComm is already sending a team.</span>")
 		return
 	if(alert("Do you want to send in the CentComm death squad? Once enabled, this is irreversible.",,"Yes","No")!="Yes")
@@ -23,7 +23,7 @@ var/global/sent_strike_team = 0
 			if(alert("Error, no mission set. Do you want to exit the setup process?",,"Yes","No")=="Yes")
 				return
 
-	if(sent_strike_team)
+	if(GLOB.sent_strike_team)
 		to_chat(usr, "Looks like someone beat you to it.")
 		return
 
@@ -37,15 +37,15 @@ var/global/sent_strike_team = 0
 			break
 
 	// Find ghosts willing to be DS
-	var/list/commando_ghosts = pollCandidatesWithVeto(src, usr, commandos_possible, "Join the DeathSquad?",, 21, 600, 1, role_playtime_requirements[ROLE_DEATHSQUAD], TRUE, FALSE)
+	var/list/commando_ghosts = pollCandidatesWithVeto(src, usr, COMMANDOS_POSSIBLE, "Join the DeathSquad?",, 21, 600, 1, GLOB.role_playtime_requirements[ROLE_DEATHSQUAD], TRUE, FALSE)
 	if(!commando_ghosts.len)
 		to_chat(usr, "<span class='userdanger'>Nobody volunteered to join the DeathSquad.</span>")
 		return
 
-	sent_strike_team = 1
+	GLOB.sent_strike_team = 1
 
 	// Spawns commandos and equips them.
-	var/commando_number = commandos_possible //for selecting a leader
+	var/commando_number = COMMANDOS_POSSIBLE //for selecting a leader
 	var/is_leader = TRUE // set to FALSE after leader is spawned
 
 	for(var/obj/effect/landmark/L in GLOB.landmarks_list)
@@ -85,9 +85,10 @@ var/global/sent_strike_team = 0
 				R.mind.original = R
 				R.mind.assigned_role = SPECIAL_ROLE_DEATHSQUAD
 				R.mind.special_role = SPECIAL_ROLE_DEATHSQUAD
-				if(!(R.mind in ticker.minds))
-					ticker.minds += R.mind
-				ticker.mode.traitors += R.mind
+				R.mind.offstation_role = TRUE
+				if(!(R.mind in SSticker.minds))
+					SSticker.minds += R.mind
+				SSticker.mode.traitors += R.mind
 				R.key = ghost_mob.key
 				if(nuke_code)
 					R.mind.store_memory("<B>Nuke Code:</B> <span class='warning'>[nuke_code].</span>")
@@ -149,7 +150,7 @@ var/global/sent_strike_team = 0
 	new_commando.mind_initialize()
 	new_commando.mind.assigned_role = SPECIAL_ROLE_DEATHSQUAD
 	new_commando.mind.special_role = SPECIAL_ROLE_DEATHSQUAD
-	ticker.mode.traitors |= new_commando.mind//Adds them to current traitor list. Which is really the extra antagonist list.
+	SSticker.mode.traitors |= new_commando.mind//Adds them to current traitor list. Which is really the extra antagonist list.
 	new_commando.equip_death_commando(is_leader)
 	return new_commando
 
@@ -178,7 +179,7 @@ var/global/sent_strike_team = 0
 	equip_to_slot_or_del(new /obj/item/flashlight(src), slot_in_backpack)
 	equip_to_slot_or_del(new /obj/item/pinpointer(src), slot_in_backpack)
 	if(is_leader)
-		equip_to_slot_or_del(new /obj/item/disk/nuclear(src), slot_in_backpack)
+		equip_to_slot_or_del(new /obj/item/disk/nuclear/unrestricted(src), slot_in_backpack)
 	else
 		equip_to_slot_or_del(new /obj/item/grenade/plastic/x4(src), slot_in_backpack)
 

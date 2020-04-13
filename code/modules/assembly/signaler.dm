@@ -13,24 +13,24 @@
 	bomb_name = "remote-control bomb"
 
 	var/code = 30
-	var/frequency = 1457
+	var/frequency = RSD_FREQ
 	var/delay = 0
 	var/datum/radio_frequency/radio_connection
 	var/airlock_wire = null
 
 /obj/item/assembly/signaler/New()
 	..()
-	if(radio_controller)
+	if(SSradio)
 		set_frequency(frequency)
 
 /obj/item/assembly/signaler/Initialize()
 	..()
-	if(radio_controller)
+	if(SSradio)
 		set_frequency(frequency)
 
 /obj/item/assembly/signaler/Destroy()
-	if(radio_controller)
-		radio_controller.remove_object(src, frequency)
+	if(SSradio)
+		SSradio.remove_object(src, frequency)
 	radio_connection = null
 	return ..()
 
@@ -127,7 +127,7 @@
 	var/time = time2text(world.realtime,"hh:mm:ss")
 	var/turf/T = get_turf(src)
 	if(usr)
-		lastsignalers.Add("[time] <B>:</B> [usr.key] used [src] @ location ([T.x],[T.y],[T.z]) <B>:</B> [format_frequency(frequency)]/[code]")
+		GLOB.lastsignalers.Add("[time] <B>:</B> [usr.key] used [src] @ location ([T.x],[T.y],[T.z]) <B>:</B> [format_frequency(frequency)]/[code]")
 
 /obj/item/assembly/signaler/pulse(var/radio = FALSE)
 	if(connected && wires)
@@ -148,15 +148,16 @@
 
 	for(var/mob/O in hearers(1, loc))
 		O.show_message("[bicon(src)] *beep* *beep*", 3, "*beep* *beep*", 2)
+	return TRUE
 
 /obj/item/assembly/signaler/proc/set_frequency(new_frequency)
-	if(!radio_controller)
+	if(!SSradio)
 		sleep(20)
-	if(!radio_controller)
+	if(!SSradio)
 		return
-	radio_controller.remove_object(src, frequency)
+	SSradio.remove_object(src, frequency)
 	frequency = new_frequency
-	radio_connection = radio_controller.add_object(src, frequency, RADIO_CHAT)
+	radio_connection = SSradio.add_object(src, frequency, RADIO_CHAT)
 
 // Embedded signaller used in anomalies.
 /obj/item/assembly/signaler/anomaly
@@ -164,12 +165,13 @@
 	desc = "The neutralized core of an anomaly. It'd probably be valuable for research."
 	icon_state = "anomaly core"
 	item_state = "electronic"
+	resistance_flags = FIRE_PROOF
 	receiving = TRUE
 
 /obj/item/assembly/signaler/anomaly/receive_signal(datum/signal/signal)
-	..()
-	for(var/obj/effect/anomaly/A in orange(0, src))
-		A.anomalyNeutralize()
+	if(..())
+		for(var/obj/effect/anomaly/A in orange(0, src))
+			A.anomalyNeutralize()
 
 /obj/item/assembly/signaler/anomaly/attack_self()
 	return

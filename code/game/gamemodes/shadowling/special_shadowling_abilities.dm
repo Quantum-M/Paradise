@@ -1,5 +1,5 @@
 //In here: Hatch and Ascendance
-var/list/possibleShadowlingNames = list("U'ruan", "Y`shej", "Nex", "Hel-uae", "Noaey'gief", "Mii`mahza", "Amerziox", "Gyrg-mylin", "Kanet'pruunance", "Vigistaezian") //Unpronouncable 2: electric boogalo)
+GLOBAL_LIST_INIT(possibleShadowlingNames, list("U'ruan", "Y`shej", "Nex", "Hel-uae", "Noaey'gief", "Mii`mahza", "Amerziox", "Gyrg-mylin", "Kanet'pruunance", "Vigistaezian")) //Unpronouncable 2: electric boogalo)
 /obj/effect/proc_holder/spell/targeted/shadowling_hatch
 	name = "Hatch"
 	desc = "Casts off your disguise."
@@ -66,8 +66,8 @@ var/list/possibleShadowlingNames = list("U'ruan", "Y`shej", "Nex", "Hel-uae", "N
 				H.status_flags = temp_flags
 				sleep(10)
 				playsound(H.loc, 'sound/effects/ghost.ogg', 100, 1)
-				var/newNameId = pick(possibleShadowlingNames)
-				possibleShadowlingNames.Remove(newNameId)
+				var/newNameId = pick(GLOB.possibleShadowlingNames)
+				GLOB.possibleShadowlingNames.Remove(newNameId)
 				H.real_name = newNameId
 				H.name = user.real_name
 				H.SetStunned(0)
@@ -107,6 +107,10 @@ var/list/possibleShadowlingNames = list("U'ruan", "Y`shej", "Nex", "Hel-uae", "N
 				H.mind.AddSpell(new /obj/effect/proc_holder/spell/targeted/collective_mind(null))
 				H.mind.AddSpell(new /obj/effect/proc_holder/spell/targeted/shadowling_regenarmor(null))
 				H.mind.AddSpell(new /obj/effect/proc_holder/spell/targeted/shadowling_extend_shuttle(null))
+
+				QDEL_NULL(H.hud_used)
+				H.hud_used = new /datum/hud/human(H, ui_style2icon(H.client.prefs.UI_style), H.client.prefs.UI_style_color, H.client.prefs.UI_style_alpha)
+				H.hud_used.show_hud(H.hud_used.hud_version)
 
 /obj/effect/proc_holder/spell/targeted/shadowling_ascend
 	name = "Ascend"
@@ -177,9 +181,9 @@ var/list/possibleShadowlingNames = list("U'ruan", "Y`shej", "Nex", "Hel-uae", "N
 				H.invisibility = 60 //This is pretty bad, but is also necessary for the shuttle call to function properly
 				H.loc = A
 				sleep(50)
-				if(!ticker.mode.shadowling_ascended)
+				if(!SSticker.mode.shadowling_ascended)
 					SSshuttle.emergency.request(null, 0.3)
 					SSshuttle.emergency.canRecall = FALSE
-				ticker.mode.shadowling_ascended = 1
+				SSticker.mode.shadowling_ascended = 1
 				A.mind.RemoveSpell(src)
 				qdel(H)

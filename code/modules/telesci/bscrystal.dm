@@ -11,9 +11,9 @@
 	var/blink_range = 8 // The teleport range when crushed/thrown at someone.
 	refined_type = /obj/item/stack/sheet/bluespace_crystal
 	toolspeed = 1
-	usesound = 'sound/items/Deconstruct.ogg'
+	usesound = 'sound/items/deconstruct.ogg'
 
-/obj/item/stack/ore/bluespace_crystal/New()
+/obj/item/stack/ore/bluespace_crystal/New(loc, new_amount, merge = TRUE)
 	..()
 	pixel_x = rand(-5, 5)
 	pixel_y = rand(-5, 5)
@@ -54,7 +54,7 @@
 
 // Polycrystals, aka stacks
 
-var/global/list/datum/stack_recipe/bluespace_crystal_recipes = list(new/datum/stack_recipe("Breakdown into bluespace crystal", /obj/item/stack/ore/bluespace_crystal/refined, 1))
+GLOBAL_LIST_INIT(bluespace_crystal_recipes, list(new/datum/stack_recipe("Breakdown into bluespace crystal", /obj/item/stack/ore/bluespace_crystal/refined, 1)))
 
 /obj/item/stack/sheet/bluespace_crystal
 	name = "bluespace polycrystal"
@@ -65,10 +65,11 @@ var/global/list/datum/stack_recipe/bluespace_crystal_recipes = list(new/datum/st
 	materials = list(MAT_BLUESPACE = MINERAL_MATERIAL_AMOUNT)
 	attack_verb = list("bluespace polybashed", "bluespace polybattered", "bluespace polybludgeoned", "bluespace polythrashed", "bluespace polysmashed")
 	toolspeed = 1
-	usesound = 'sound/items/Deconstruct.ogg'
+	usesound = 'sound/items/deconstruct.ogg'
+	point_value = 30
 
 /obj/item/stack/sheet/bluespace_crystal/New()
 	..()
-	recipes = bluespace_crystal_recipes
+	recipes = GLOB.bluespace_crystal_recipes
 	pixel_x = rand(0,4)-4
 	pixel_y = rand(0,4)-4

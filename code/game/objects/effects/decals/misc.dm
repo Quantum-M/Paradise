@@ -10,12 +10,16 @@
 	icon = 'icons/obj/chempuff.dmi'
 	pass_flags = PASSTABLE | PASSGRILLE
 
+/obj/effect/decal/chempuff/blob_act(obj/structure/blob/B)
+	return
+
 /obj/effect/decal/snow
 	name = "snow"
 	density = FALSE
 	anchored = TRUE
 	layer = TURF_DECAL_LAYER
 	icon = 'icons/turf/snow.dmi'
+	icon_state = "snow"
 
 /obj/effect/decal/snow/clean/edge
 	icon_state = "snow_corner"
@@ -53,3 +57,16 @@
 
 /obj/effect/decal/straw/edge
 	icon_state = "strawscatterededge"
+
+/obj/effect/decal/ants
+	name = "space ants"
+	desc = "A bunch of space ants."
+	icon = 'icons/goonstation/effects/effects.dmi'
+	icon_state = "spaceants"
+	scoop_reagents = list("ants" = 20)
+
+/obj/effect/decal/ants/Initialize(mapload)
+	. = ..()
+	var/scale = (rand(2, 10) / 10) + (rand(0, 5) / 100)
+	transform = matrix(transform, scale, scale, MATRIX_SCALE)
+	setDir(pick(NORTH, SOUTH, EAST, WEST))

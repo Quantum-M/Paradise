@@ -46,10 +46,11 @@ GLOBAL_LIST_INIT(rcd_door_types, list(
 	materials = list(MAT_METAL = 30000)
 	origin_tech = "engineering=4;materials=2"
 	toolspeed = 1
-	usesound = 'sound/items/Deconstruct.ogg'
+	usesound = 'sound/items/deconstruct.ogg'
 	flags_2 = NO_MAT_REDEMPTION_2
-	req_access = list(access_engine)
-
+	req_access = list(ACCESS_ENGINE)
+	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 100, "acid" = 50)
+	resistance_flags = FIRE_PROOF
 	// Important shit
 	var/datum/effect_system/spark_spread/spark_system
 	var/matter = 0
@@ -82,8 +83,8 @@ GLOBAL_LIST_INIT(rcd_door_types, list(
 
 /obj/item/rcd/examine(mob/user)
 	. = ..()
-	to_chat(user, "MATTER: [matter]/[max_matter] matter-units.")
-	to_chat(user, "MODE: [mode].")
+	. += "MATTER: [matter]/[max_matter] matter-units."
+	. += "MODE: [mode]."
 
 /obj/item/rcd/Destroy()
 	QDEL_NULL(spark_system)
@@ -166,14 +167,14 @@ GLOBAL_LIST_INIT(rcd_door_types, list(
 /obj/item/rcd/attack_self_tk(mob/user)
 	radial_menu(user)
 
-/obj/item/rcd/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = inventory_state)
+/obj/item/rcd/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = GLOB.inventory_state)
 	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, force_open)
 	if(!ui)
 		ui = new(user, src, ui_key, "rcd.tmpl", "[name]", 450, 400, state = state)
 		ui.open()
 		ui.set_auto_update(1)
 
-/obj/item/rcd/ui_data(mob/user, ui_key = "main", datum/topic_state/state = inventory_state)
+/obj/item/rcd/ui_data(mob/user, ui_key = "main", datum/topic_state/state = GLOB.inventory_state)
 	var/data[0]
 	data["mode"] = mode
 	data["door_type"] = door_type
@@ -333,7 +334,7 @@ GLOBAL_LIST_INIT(rcd_door_types, list(
 					return FALSE
 				playsound(loc, usesound, 50, 1)
 				var/turf/AT = A
-				AT.ChangeTurf(/turf/space)
+				AT.ChangeTurf(AT.baseturf)
 				return TRUE
 			return FALSE
 		to_chat(user, "<span class='warning'>ERROR! Not enough matter in unit to deconstruct this floor!</span>")
@@ -373,7 +374,7 @@ GLOBAL_LIST_INIT(rcd_door_types, list(
 		QDEL_NULL(A)
 		for(var/obj/structure/window/W in T1.contents)
 			qdel(W)
-		for(var/cdir in cardinal)
+		for(var/cdir in GLOB.cardinal)
 			var/turf/T2 = get_step(T1, cdir)
 			if(locate(/obj/structure/window/full/shuttle) in T2)
 				continue // Shuttle windows? Nah. We don't need extra windows there.
@@ -407,7 +408,7 @@ GLOBAL_LIST_INIT(rcd_door_types, list(
 		new /obj/structure/grille(A)
 		for(var/obj/structure/window/W in A)
 			qdel(W)
-		for(var/cdir in cardinal)
+		for(var/cdir in GLOB.cardinal)
 			var/turf/T = get_step(A, cdir)
 			if(locate(/obj/structure/grille) in T)
 				for(var/obj/structure/window/W in T)
@@ -456,20 +457,24 @@ GLOBAL_LIST_INIT(rcd_door_types, list(
 /obj/item/rcd/proc/checkResource(amount, mob/user)
 	return matter >= amount
 
+/obj/item/rcd/borg
+	canRwall = 1
+	var/use_multiplier = 160
+
+/obj/item/rcd/borg/syndicate
+	use_multiplier = 80
+
 /obj/item/rcd/borg/useResource(amount, mob/user)
 	if(!isrobot(user))
 		return 0
 	var/mob/living/silicon/robot/R = user
-	return R.cell.use(amount * 160)
+	return R.cell.use(amount * use_multiplier)
 
 /obj/item/rcd/borg/checkResource(amount, mob/user)
 	if(!isrobot(user))
 		return 0
 	var/mob/living/silicon/robot/R = user
-	return R.cell.charge >= (amount * 160)
-
-/obj/item/rcd/borg
-	canRwall = 1
+	return R.cell.charge >= (amount * use_multiplier)
 
 /obj/item/rcd/proc/detonate_pulse()
 	audible_message("<span class='danger'><b>[src] begins to vibrate and \

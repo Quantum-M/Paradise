@@ -14,7 +14,7 @@
 	..(newloc)
 	if(model_info && model)
 		model_info = model
-		var/datum/robolimb/R = all_robolimbs[model]
+		var/datum/robolimb/R = GLOB.all_robolimbs[model]
 		if(R)
 			name = "[R.company] [initial(name)]"
 			desc = "[R.desc]"
@@ -24,7 +24,7 @@
 		name = "robot [initial(name)]"
 
 /obj/item/robot_parts/attack_self(mob/user)
-	var/choice = input(user, "Select the company appearance for this limb.", "Limb Company Selection") as null|anything in selectable_robolimbs
+	var/choice = input(user, "Select the company appearance for this limb.", "Limb Company Selection") as null|anything in GLOB.selectable_robolimbs
 	if(!choice)
 		return
 	if(loc != user)
@@ -245,7 +245,7 @@
 				to_chat(user, "<span class='warning'>Sticking a dead [M] into the frame would sort of defeat the purpose.</span>")
 				return
 
-			if(M.brainmob.mind in ticker.mode.head_revolutionaries)
+			if(M.brainmob.mind in SSticker.mode.head_revolutionaries)
 				to_chat(user, "<span class='warning'>The frame's firmware lets out a shrill sound, and flashes 'Abnormal Memory Engram'. It refuses to accept the [M].</span>")
 				return
 
@@ -306,7 +306,6 @@
 			O.Namepick()
 
 			feedback_inc("cyborg_birth",1)
-			callHook("borgify", list(O))
 
 			forceMove(O)
 			O.robot_suit = src

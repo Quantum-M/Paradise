@@ -11,7 +11,6 @@
 	var/ask_verb = "asks"            // Used when sentence ends in a ?
 	var/exclaim_verb = "exclaims"    // Used when sentence ends in a !
 	var/whisper_verb                 // Optional. When not specified speech_verb + quietly/softly is used instead.
-	var/signlang_verb = list()       // list of emotes that might be displayed if this language has NONVERBAL or SIGNLANG flags
 	var/colour = "body"              // CSS style to use for strings in this language.
 	var/key = "x"                    // Character used to speak in language eg. :o for Unathi.
 	var/flags = 0                    // Various language flags.
@@ -85,11 +84,11 @@
 
 	return scrambled_text
 
-/datum/language/proc/format_message(message, verb)
-	return "[verb], <span class='message'><span class='[colour]'>\"[capitalize(message)]\"</span></span>"
+/datum/language/proc/format_message(message)
+	return "<span class='message'><span class='[colour]'>[message]</span></span>"
 
-/datum/language/proc/format_message_radio(message, verb)
-	return "[verb], <span class='[colour]'>\"[capitalize(message)]\"</span>"
+/datum/language/proc/format_message_radio(message)
+	return "<span class='[colour]'>[message]</span>"
 
 /datum/language/proc/get_talkinto_msg_range(message)
 	// if you yell, you'll be heard from two tiles over instead of one
@@ -99,15 +98,17 @@
 	if(!check_can_speak(speaker))
 		return FALSE
 
-	log_say("([name]-HIVE) [message]", speaker)
+	var/log_message = "([name]-HIVE) [message]"
+	log_say(log_message, speaker)
+	speaker.create_log(SAY_LOG, log_message)
 
 	if(!speaker_mask)
 		speaker_mask = speaker.name
-	var/msg = "<i><span class='game say'>[name], <span class='name'>[speaker_mask]</span> [format_message(message, get_spoken_verb(message))]</span></i>"
+	var/msg = "<i><span class='game say'>[name], <span class='name'>[speaker_mask]</span> [get_spoken_verb(message)], [format_message(message)]</span></i>"
 
 	for(var/mob/player in GLOB.player_list)
 		if(istype(player,/mob/dead) && follow)
-			var/msg_dead = "<i><span class='game say'>[name], <span class='name'>[speaker_mask]</span> ([ghost_follow_link(speaker, ghost=player)]) [format_message(message, get_spoken_verb(message))]</span></i>"
+			var/msg_dead = "<i><span class='game say'>[name], <span class='name'>[speaker_mask]</span> ([ghost_follow_link(speaker, ghost=player)]) [get_spoken_verb(message)], [format_message(message)]</span></i>"
 			to_chat(player, msg_dead)
 			continue
 
@@ -135,10 +136,10 @@
 	key = ""
 	flags = RESTRICTED|NONGLOBAL|INNATE|NO_TALK_MSG|NO_STUTTER
 
-/datum/language/noise/format_message(message, verb)
+/datum/language/noise/format_message(message)
 	return "<span class='message'><span class='[colour]'>[message]</span></span>"
 
-/datum/language/noise/format_message_radio(message, verb)
+/datum/language/noise/format_message_radio(message)
 	return "<span class='[colour]'>[message]</span>"
 
 /datum/language/noise/get_talkinto_msg_range(message)
@@ -247,8 +248,8 @@
 	syllables = list("hs","zt","kr","st","sh")
 
 /datum/language/diona/get_random_name()
-	var/new_name = "[pick(list("To Sleep Beneath", "Wind Over", "Embrace of", "Dreams of", "Witnessing", "To Walk Beneath", "Approaching the", "Glimmer of", "The Ripple of", "Colors of", "The Still of", "Silence of", "Gentle Breeze of", "Glistening Waters under", "Child of", "Blessed Plant-ling of", "Grass-Walker of", "Element of", "Spawn of"))]"
-	new_name += " [pick(list("the Void", "the Sky", "Encroaching Night", "Planetsong", "Starsong", "the Wandering Star", "the Empty Day", "Daybreak", "Nightfall", "the Rain", "the Stars", "the Waves", "Dusk", "Night", "the Wind", "the Summer Wind", "the Blazing Sun", "the Scorching Sun", "Eternal Fields", "the Soothing Plains", "the Undying Fiona", "Mother Nature's Bousum"))]"
+	var/new_name = "[pick(list("To Sleep Beneath", "Wind Over", "Embrace Of", "Dreams Of", "Witnessing", "To Walk Beneath", "Approaching The", "Glimmer Of", "The Ripple Of", "Colors Of", "The Still Of", "Silence Of", "Gentle Breeze Of", "Glistening Waters Under", "Child Of", "Blessed Plant-Ling Of", "Grass-Walker Of", "Element Of", "Spawn Of"))]"
+	new_name += " [pick(list("The Void", "The Sky", "Encroaching Night", "Planetsong", "Starsong", "The Wandering Star", "The Empty Day", "Daybreak", "Nightfall", "The Rain", "The Stars", "The Waves", "Dusk", "Night", "The Wind", "The Summer Wind", "The Blazing Sun", "The Scorching Sun", "Eternal Fields", "The Soothing Plains", "The Undying Fiona", "Mother Nature's Bousum"))]"
 	return new_name
 
 /datum/language/trinary
@@ -415,7 +416,7 @@
 	exclaim_verb = "snarls"
 	colour = "gutter"
 	key = "3"
-	syllables = list ("gra","ba","ba","breh","bra","rah","dur","ra","ro","gro","go","ber","bar","geh","heh", "gra")
+	syllables = list ("gra","ba","ba","breh","bra","rah","dur","ra","ro","gro","go","ber","bar","geh","heh","gra")
 
 /datum/language/clown
 	name = "Clownish"
@@ -427,6 +428,26 @@
 	key = "0"
 	syllables = list ("honk","squeak","bonk","toot","narf","zub","wee","wub","norf")
 
+/datum/language/com_srus
+	name = "Neo-Russkiya"
+	desc = "Neo-Russkiya, a bastard mix of Gutter, Sol Common, and old Russian. The official language of the USSP. It has started to see use outside of the fringe in hobby circles and protest groups. The linguistic spirit of Sol-Gov criticisms."
+	speech_verb = "articulates"
+	whisper_verb = "mutters"
+	exclaim_verb = "exaggerates"
+	colour = "com_srus"
+	key = "?"
+	space_chance = 65
+	english_names = 1
+	syllables = list("dyen","bar","bota","vyek","tvo","slov","slav","syen","doup","vah","laz","gloz","yet",
+					 "nyet","da","sky","glav","glaz","netz","doomat","zat","moch","boz",
+					 "comy","vrad","vrade","tay","bli","ay","nov","livn","tolv","glaz","gliz",
+					 "ouy","zet","yevt","dat","botat","nev","novy","vzy","nov","sho","obsh","dasky",
+					 "key","skey","ovsky","skaya","bib","kiev","studen","var","bul","vyan",
+					 "tzion","vaya","myak","gino","volo","olam","miti","nino","menov","perov",
+					 "odasky","trov","niki","ivano","dostov","sokol","oupa","pervom","schel",
+					 "tizan","chka","tagan","dobry","okt","boda","veta","idi","cyk","blyt","hui","na",
+					 "udi","litchki","casa","linka","toly","anatov","vich","vech","vuch","toi","ka","vod")
+
 /datum/language/wryn
 	name = "Wryn Hivemind"
 	desc = "Wryn have the strange ability to commune over a psychic hivemind."
@@ -435,7 +456,8 @@
 	exclaim_verb = "chitters"
 	colour = "alien"
 	key = "y"
-	flags = RESTRICTED | HIVEMIND
+	flags = RESTRICTED | HIVEMIND | NOBABEL
+	follow = TRUE
 
 /datum/language/wryn/check_special_condition(mob/other)
 	var/mob/living/carbon/M = other
@@ -465,8 +487,8 @@
 	exclaim_verb = "hisses"
 	colour = "alien"
 	key = "a"
-	flags = RESTRICTED | HIVEMIND
-	follow = 1
+	flags = RESTRICTED | HIVEMIND | NOBABEL
+	follow = TRUE
 
 /datum/language/terrorspider
 	name = "Spider Hivemind"
@@ -476,8 +498,8 @@
 	exclaim_verb = "chitters"
 	colour = "terrorspider"
 	key = "ts"
-	flags = RESTRICTED | HIVEMIND
-	follow = 1
+	flags = RESTRICTED | HIVEMIND | NOBABEL
+	follow = TRUE
 
 /datum/language/ling
 	name = "Changeling"
@@ -485,11 +507,12 @@
 	speech_verb = "says"
 	colour = "changeling"
 	key = "g"
-	flags = RESTRICTED | HIVEMIND
+	flags = RESTRICTED | HIVEMIND | NOBABEL
+	follow = TRUE
 
 /datum/language/ling/broadcast(mob/living/speaker, message, speaker_mask)
 	if(speaker.mind && speaker.mind.changeling)
-		..(speaker,message,speaker.mind.changeling.changelingID)
+		..(speaker, message, speaker.mind.changeling.changelingID)
 	else if(speaker.mind && speaker.mind.linglink)
 		..()
 	else
@@ -501,10 +524,13 @@
 	speech_verb = "says"
 	colour = "shadowling"
 	key = "8"
-	flags = RESTRICTED | HIVEMIND
+	flags = RESTRICTED | HIVEMIND | NOBABEL
+	follow = TRUE
 
 /datum/language/shadowling/broadcast(mob/living/speaker, message, speaker_mask)
-	if(speaker.mind && speaker.mind.special_role)
+	if(speaker.mind && speaker.mind.special_role == SPECIAL_ROLE_SHADOWLING)
+		..(speaker,"<font size=3><b>[message]</b></font>", "<span class='shadowling'><font size=3>([speaker.mind.special_role]) [speaker]</font></span>")
+	else if(speaker.mind && speaker.mind.special_role)
 		..(speaker, message, "([speaker.mind.special_role]) [speaker]")
 	else
 		..(speaker, message)
@@ -517,7 +543,8 @@
 	exclaim_verb = "gibbers"
 	colour = "abductor"
 	key = "zw" //doesn't matter, this is their default and only language
-	flags = RESTRICTED | HIVEMIND
+	flags = RESTRICTED | HIVEMIND | NOBABEL
+	follow = TRUE
 
 /datum/language/abductor/broadcast(mob/living/speaker, message, speaker_mask)
 	..(speaker,message,speaker.real_name)
@@ -530,6 +557,13 @@
 			return TRUE
 	return FALSE
 
+/datum/language/abductor/golem
+	name = "Golem Mindlink"
+	desc = "Communicate with other alien alloy golems through a psychic link."
+
+/datum/language/abductor/golem/check_special_condition(mob/living/carbon/human/other, mob/living/carbon/human/speaker)
+	return TRUE
+
 /datum/language/corticalborer
 	name = "Cortical Link"
 	desc = "Cortical borers possess a strange link between their tiny minds."
@@ -538,7 +572,8 @@
 	exclaim_verb = "sings"
 	colour = "alien"
 	key = "bo"
-	flags = RESTRICTED | HIVEMIND
+	flags = RESTRICTED | HIVEMIND | NOBABEL
+	follow = TRUE
 
 /datum/language/corticalborer/broadcast(mob/living/speaker, message, speaker_mask)
 	var/mob/living/simple_animal/borer/B
@@ -561,8 +596,8 @@
 	ask_verb = "queries"
 	exclaim_verb = "declares"
 	key = "b"
-	flags = RESTRICTED | HIVEMIND
-	follow = 1
+	flags = RESTRICTED | HIVEMIND | NOBABEL
+	follow = TRUE
 	var/drone_only
 
 /datum/language/binary/broadcast(mob/living/speaker, message, speaker_mask)
@@ -572,7 +607,10 @@
 	if(!message)
 		return
 
-	log_say("(ROBOT) [message]", speaker)
+	var/log_message = "(ROBOT) [message]"
+	log_say(log_message, speaker)
+	speaker.create_log(SAY_LOG, log_message)
+
 	var/message_start = "<i><span class='game say'>[name], <span class='name'>[speaker.name]</span>"
 	var/message_body = "<span class='message'>[speaker.say_quote(message)],</i><span class='robot'>\"[message]\"</span></span></span>"
 
@@ -607,9 +645,9 @@
 	exclaim_verb = "transmits"
 	colour = "say_quote"
 	key = "d"
-	flags = RESTRICTED | HIVEMIND
-	drone_only = 1
-	follow = 1
+	flags = RESTRICTED | HIVEMIND | NOBABEL
+	drone_only = TRUE
+	follow = TRUE
 
 /datum/language/drone
 	name = "Drone"
@@ -619,7 +657,7 @@
 	exclaim_verb = "declares"
 	key = "]"
 	flags = RESTRICTED
-	follow = 1
+	follow = TRUE
 	syllables = list ("beep", "boop")
 
 /datum/language/swarmer
@@ -630,15 +668,14 @@
 	exclaim_verb = "tones"
 	colour = "say_quote"
 	key = "z"//Zwarmer...Or Zerg!
-	flags = RESTRICTED | HIVEMIND
-	follow = 1
+	flags = RESTRICTED | HIVEMIND | NOBABEL
+	follow = TRUE
 
 // Language handling.
 /mob/proc/add_language(language)
-
 	var/datum/language/new_language = GLOB.all_languages[language]
 
-	if(!istype(new_language) || new_language in languages)
+	if(!istype(new_language) || (new_language in languages))
 		return FALSE
 
 	languages |= new_language
@@ -657,8 +694,7 @@
 
 // Can we speak this language, as opposed to just understanding it?
 /mob/proc/can_speak_language(datum/language/speaking)
-
-	return (universal_speak || (speaking && speaking.flags & INNATE) || speaking in languages)
+	return universal_speak || (speaking && speaking.flags & INNATE) || (speaking in languages)
 
 //TBD
 /mob/proc/check_lang_data()
@@ -731,6 +767,22 @@
 	desc = "Bark bark bark."
 	key = "vu"
 
+/datum/language/zombie
+	name = "Zombie"
+	desc = "BRAAAAAAINS!"
+	speech_verb = "moans"
+	whisper_verb = "mutters"
+	exclaim_verb = "wails"
+	colour = "zombie"
+	key = "zom"
+	flags = RESTRICTED
+	syllables = list("BRAAAAAAAAAAAAAAAAINS", "BRAAINS", "BRAINS")
 
+/mob/proc/grant_all_babel_languages()
+	for(var/la in GLOB.all_languages)
+		var/datum/language/new_language = GLOB.all_languages[la]
+		if(new_language.flags & NOBABEL)
+			continue
+		languages |= new_language
 
 #undef SCRAMBLE_CACHE_LEN

@@ -113,7 +113,6 @@
 	chassis.log_message("Toggled defence mode.")
 	UpdateButtonIcon()
 
-
 /datum/action/innate/mecha/mech_overload_mode
 	name = "Toggle leg actuators overload"
 	button_icon_state = "mech_overload_off"
@@ -121,7 +120,7 @@
 /datum/action/innate/mecha/mech_overload_mode/Activate(forced_state = null)
 	if(!owner || !chassis || chassis.occupant != owner)
 		return
-	if(chassis.health < initial(chassis.health) - initial(chassis.health) / 3)
+	if(chassis.obj_integrity < chassis.max_integrity - chassis.max_integrity / 3)
 		chassis.occupant_message("<span class='danger'>The leg actuators are too damaged to overload!</span>")
 		return // Can't activate them if the mech is too damaged
 	if(!isnull(forced_state))
@@ -187,7 +186,7 @@
 		chassis.occupant_message("<font color='[chassis.zoom_mode ? "blue" : "red"]'>Zoom mode [chassis.zoom_mode ? "en" : "dis"]abled.</font>")
 		if(chassis.zoom_mode)
 			owner.client.AddViewMod("mecha", 12)
-			SEND_SOUND(owner, sound('sound/mecha/imag_enh.ogg',volume=50))
+			SEND_SOUND(owner, sound(chassis.zoomsound, volume = 50))
 		else
 			owner.client.RemoveViewMod("mecha")
 		UpdateButtonIcon()

@@ -5,10 +5,10 @@
 //////Allows admin's to right click on any mob/mech and freeze them in place.///
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-var/global/list/frozen_mob_list = list()
+GLOBAL_LIST_EMPTY(frozen_mob_list)
 /client/proc/freeze(var/mob/living/M as mob in GLOB.mob_list)
-	set category = "Admin"
 	set name = "Freeze"
+	set category = null
 
 	if(!check_rights(R_ADMIN))
 		return
@@ -16,7 +16,7 @@ var/global/list/frozen_mob_list = list()
 	if(!istype(M))
 		return
 
-	if(M in frozen_mob_list)
+	if(M in GLOB.frozen_mob_list)
 		M.admin_unFreeze(src)
 	else
 		M.admin_Freeze(src)
@@ -26,49 +26,50 @@ var/global/list/frozen_mob_list = list()
 /mob/living/var/frozen = null //used for preventing attacks on admin-frozen mobs
 /mob/living/var/admin_prev_sleeping = 0 //used for keeping track of previous sleeping value with admin freeze
 
-/mob/living/proc/admin_Freeze(var/client/admin, skip_overlays = FALSE)
+/mob/living/proc/admin_Freeze(client/admin, skip_overlays = FALSE)
 	if(istype(admin))
-		to_chat(src, "<b><font color= red>You have been frozen by [key_name(admin)]</b></font>")
+		to_chat(src, "<b><font color= red>You have been frozen by [admin]</b></font>")
 		message_admins("<span class='notice'>[key_name_admin(admin)]</span> froze [key_name_admin(src)]")
 		log_admin("[key_name(admin)] froze [key_name(src)]")
 
 	var/obj/effect/overlay/adminoverlay/AO = new
 	if(skip_overlays)
-		src.overlays += AO
+		overlays += AO
 
-	anchored = 1
-	frozen = AO
+	anchored = TRUE
+	canmove = FALSE
 	admin_prev_sleeping = sleeping
 	AdjustSleeping(20000)
-	if(!(src in frozen_mob_list))
-		frozen_mob_list += src
+	frozen = AO
+	if(!(src in GLOB.frozen_mob_list))
+		GLOB.frozen_mob_list += src
 
-/mob/living/proc/admin_unFreeze(var/client/admin, skip_overlays = FALSE)
+/mob/living/proc/admin_unFreeze(client/admin, skip_overlays = FALSE)
 	if(istype(admin))
-		to_chat(src, "<b><font color= red>You have been unfrozen by [key_name(admin)]</b></font>")
+		to_chat(src, "<b><font color= red>You have been unfrozen by [admin]</b></font>")
 		message_admins("<span class='notice'>[key_name_admin(admin)] unfroze [key_name_admin(src)]</span>")
 		log_admin("[key_name(admin)] unfroze [key_name(src)]")
 
-	anchored = 0
 	if(skip_overlays)
 		overlays -= frozen
+
+	anchored = FALSE
+	canmove = TRUE
 	frozen = null
 	SetSleeping(admin_prev_sleeping)
 	admin_prev_sleeping = null
-	if(src in frozen_mob_list)
-		frozen_mob_list -= src
+	if(src in GLOB.frozen_mob_list)
+		GLOB.frozen_mob_list -= src
 
 	update_icons()
 
 
-/mob/living/carbon/slime/admin_Freeze(admin)
+/mob/living/simple_animal/slime/admin_Freeze(admin)
 	..(admin)
-	adjustToxLoss(1010101010) //arbitrary large value
+	adjustHealth(1000) //arbitrary large value
 
-/mob/living/carbon/slime/admin_unFreeze(admin)
+/mob/living/simple_animal/slime/admin_unFreeze(admin)
 	..(admin)
-	adjustToxLoss(-1010101010)
-	stat = 0
 	revive()
 
 
@@ -87,8 +88,8 @@ var/global/list/frozen_mob_list = list()
 //////////////////////////Freeze Mech
 
 /client/proc/freezemecha(var/obj/mecha/O as obj in GLOB.mechas_list)
-	set category = "Admin"
 	set name = "Freeze Mech"
+	set category = null
 
 	if(!check_rights(R_ADMIN))
 		return

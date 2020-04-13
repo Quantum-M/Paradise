@@ -1,6 +1,7 @@
 /obj/machinery/air_sensor
 	icon = 'icons/obj/stationobjs.dmi'
 	icon_state = "gsensor1"
+	resistance_flags = FIRE_PROOF
 	name = "gas sensor"
 	req_one_access_txt = "24;10"
 
@@ -9,7 +10,7 @@
 	var/bolts = 1
 
 	var/id_tag
-	var/frequency = 1439
+	var/frequency = ATMOS_VENTSCRUB
 	Mtoollink = 1
 	settagwhitelist = list("id_tag")
 
@@ -57,14 +58,14 @@
 			output &= ~bitflag_value
 		else//can't not be off
 			output |= bitflag_value
-		return MT_UPDATE
+		return TRUE
 	if("toggle_bolts" in href_list)
 		bolts = !bolts
 		if(bolts)
 			visible_message("You hear a quite click as the [src] bolts to the floor", "You hear a quite click")
 		else
 			visible_message("You hear a quite click as the [src]'s floor bolts raise", "You hear a quite click")
-		return MT_UPDATE
+		return TRUE
 
 /obj/machinery/air_sensor/attackby(var/obj/item/W as obj, var/mob/user as mob)
 	if(istype(W, /obj/item/multitool))
@@ -81,8 +82,8 @@
 			new /obj/item/pipe_gsensor(src.loc)
 			qdel(src)
 			return 1
-	if(..())
-		return 1
+		return
+	return ..()
 
 /obj/machinery/air_sensor/process_atmos()
 	if(on)
@@ -121,9 +122,9 @@
 
 
 /obj/machinery/air_sensor/proc/set_frequency(new_frequency)
-	radio_controller.remove_object(src, frequency)
+	SSradio.remove_object(src, frequency)
 	frequency = new_frequency
-	radio_connection = radio_controller.add_object(src, frequency, RADIO_ATMOSIA)
+	radio_connection = SSradio.add_object(src, frequency, RADIO_ATMOSIA)
 
 /obj/machinery/air_sensor/Initialize()
 	..()
@@ -132,8 +133,8 @@
 
 /obj/machinery/air_sensor/Destroy()
 	SSair.atmos_machinery -= src
-	if(radio_controller)
-		radio_controller.remove_object(src, frequency)
+	if(SSradio)
+		SSradio.remove_object(src, frequency)
 	radio_connection = null
 	return ..()
 
@@ -147,7 +148,7 @@
 
 	name = "Computer"
 
-	var/frequency = 1439
+	var/frequency = ATMOS_VENTSCRUB
 	var/show_sensors=1
 	var/list/sensors = list()
 	Mtoollink = 1
@@ -156,8 +157,8 @@
 	var/datum/radio_frequency/radio_connection
 
 /obj/machinery/computer/general_air_control/Destroy()
-	if(radio_controller)
-		radio_controller.remove_object(src, frequency)
+	if(SSradio)
+		SSradio.remove_object(src, frequency)
 	radio_connection = null
 	return ..()
 
@@ -181,8 +182,8 @@
 /obj/machinery/computer/general_air_control/attackby(I as obj, user as mob, params)
 	if(istype(I, /obj/item/multitool))
 		update_multitool_menu(user)
-	if(..())
 		return 1
+	return ..()
 
 
 /obj/machinery/computer/general_air_control/receive_signal(datum/signal/signal)
@@ -268,9 +269,9 @@
 	return output
 
 /obj/machinery/computer/general_air_control/proc/set_frequency(new_frequency)
-		radio_controller.remove_object(src, frequency)
+		SSradio.remove_object(src, frequency)
 		frequency = new_frequency
-		radio_connection = radio_controller.add_object(src, frequency, RADIO_ATMOSIA)
+		radio_connection = SSradio.add_object(src, frequency, RADIO_ATMOSIA)
 
 /obj/machinery/computer/general_air_control/Initialize()
 	..()
@@ -301,19 +302,19 @@
 				sensor_list|=G.id_tag
 		if(!sensor_list.len)
 			to_chat(user, "<span class=\"warning\">No sensors on this frequency.</span>")
-			return MT_ERROR
+			return FALSE
 
 		// Have the user pick one of them and name its label
 		var/sensor = input(user, "Select a sensor:", "Sensor Data") as null|anything in sensor_list
 		if(!sensor)
-			return MT_ERROR
+			return FALSE
 		var/label = reject_bad_name( input(user, "Choose a sensor label:", "Sensor Label")  as text|null, allow_numbers=1)
 		if(!label)
-			return MT_ERROR
+			return FALSE
 
 		// Add the sensor's information to general_air_controler
 		sensors[sensor] = label
-		return MT_UPDATE
+		return TRUE
 
 	if("edit_sensor" in href_list)
 		var/list/sensor_list = list()
@@ -322,14 +323,14 @@
 				sensor_list|=G.id_tag
 		if(!sensor_list.len)
 			to_chat(user, "<span class=\"warning\">No sensors on this frequency.</span>")
-			return MT_ERROR
+			return FALSE
 		var/label = sensors[href_list["edit_sensor"]]
 		var/sensor = input(user, "Select a sensor:", "Sensor Data", href_list["edit_sensor"]) as null|anything in sensor_list
 		if(!sensor)
-			return MT_ERROR
+			return FALSE
 		sensors.Remove(href_list["edit_sensor"])
 		sensors[sensor] = label
-		return MT_UPDATE
+		return TRUE
 
 /obj/machinery/computer/general_air_control/unlinkFrom(mob/user, obj/O)
 	..()
@@ -356,8 +357,8 @@
 	if(istype(O,/obj/machinery/air_sensor) || istype(O, /obj/machinery/meter))
 		return O:id_tag in sensors
 
-/obj/machinery/computer/general_air_control/linkWith(mob/user, obj/O, link/context)
-	sensors[O:id_tag] = reject_bad_name(input(user, "Choose a sensor label:", "Sensor Label") as text|null, allow_numbers=1)
+/obj/machinery/computer/general_air_control/linkWith(mob/user, obj/O, context)
+	sensors[O:id_tag] = reject_bad_name(clean_input(user, "Choose a sensor label:", "Sensor Label"), allow_numbers=1)
 	return 1
 
 /obj/machinery/computer/general_air_control/large_tank_control
@@ -385,8 +386,8 @@
 /obj/machinery/computer/general_air_control/large_tank_control/attackby(I as obj, user as mob)
 	if(istype(I, /obj/item/multitool))
 		update_multitool_menu(user)
-	if(..())
 		return 1
+	return ..()
 
 
 /obj/machinery/computer/general_air_control/large_tank_control/multitool_menu(mob/user, obj/item/multitool/P)
@@ -597,8 +598,8 @@
 /obj/machinery/computer/general_air_control/fuel_injection/attackby(I as obj, user as mob, params)
 	if(istype(I, /obj/item/multitool))
 		update_multitool_menu(user)
-	if(..())
 		return 1
+	return ..()
 
 /obj/machinery/computer/general_air_control/fuel_injection/process()
 	if(automation)
